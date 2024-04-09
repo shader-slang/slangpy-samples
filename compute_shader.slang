@@ -1,10 +1,13 @@
-StructuredBuffer<float> a;
-StructuredBuffer<float> b;
-RWStructuredBuffer<float> c;
-
 [shader("compute")]
 [numthreads(32, 1, 1)]
-void main(uint3 tid : SV_DispatchThreadID)
+void main(
+    uint tid: SV_DispatchThreadID,
+    uniform uint N,
+    StructuredBuffer<float> a,
+    StructuredBuffer<float> b,
+    RWStructuredBuffer<float> c
+)
 {
-    c[tid.x] = a[tid.x] + b[tid.x];
+    if (tid < N)
+        c[tid] = a[tid] + b[tid];
 }

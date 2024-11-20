@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: SGL Tutorials
 Upstream-Contact: The Khronos Group, Inc.
-Source: https://github.com/MilesHarding/sgl-tutorials
+Source: https://github.com/shader-slang/sgl-tutorials
 
 Files: *
 Copyright: 2024 The Khronos Group, Inc.

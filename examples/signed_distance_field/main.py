@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-import sgl
 import slangpy as spy
 import pathlib
 import numpy as np
@@ -29,8 +28,8 @@ def create_image(width=256, height=256, antialiased=False):
         numpy.ndarray: A floating-point RGBA image array with values normalized to [0,1]
     """
     # Create a bitmap with RGBA format
-    bitmap = sgl.Bitmap(pixel_format=sgl.Bitmap.PixelFormat.rgba,
-                        component_type=sgl.Struct.Type.uint8,
+    bitmap = spy.Bitmap(pixel_format=spy.Bitmap.PixelFormat.rgba,
+                        component_type=spy.Bitmap.ComponentType.uint8,
                         width=width,
                         height=height)
 
@@ -82,11 +81,11 @@ def load_image(image_path):
         tuple: (image array, width, height) where image array is a
         floating-point RGBA image array
     """
-    bitmap = sgl.Bitmap(image_path)
+    bitmap = spy.Bitmap(image_path)
 
     # Convert to grayscale
-    if bitmap.pixel_format != sgl.Bitmap.PixelFormat.rgba:
-        bitmap = bitmap.convert(pixel_format=sgl.Bitmap.PixelFormat.rgba)
+    if bitmap.pixel_format != spy.Bitmap.PixelFormat.rgba:
+        bitmap = bitmap.convert(pixel_format=spy.Bitmap.PixelFormat.rgba)
     image = np.array(bitmap, copy=False)
     gray = np.mean(image[:, :, :3], axis=2)
 
@@ -121,35 +120,35 @@ def process_image(device, module, image, width, height, name_suffix):
     """
     input_tex = device.create_texture(width=width,
                                       height=height,
-                                      format=sgl.Format.rgba32_float,
-                                      usage=sgl.TextureUsage.shader_resource,
+                                      format=spy.Format.rgba32_float,
+                                      usage=spy.TextureUsage.shader_resource,
                                       data=image)
-    sgl.tev.show(input_tex, name=f'input_{name_suffix}')
+    spy.tev.show(input_tex, name=f'input_{name_suffix}')
 
     dist_tex = device.create_texture(width=width,
                                      height=height,
-                                     format=sgl.Format.rg32_float,
-                                     usage=sgl.TextureUsage.shader_resource
-                                     | sgl.TextureUsage.unordered_access)
+                                     format=spy.Format.rg32_float,
+                                     usage=spy.TextureUsage.shader_resource
+                                     | spy.TextureUsage.unordered_access)
 
     # Initialize
     module.init_eikonal(spy.grid((width, height)), input_tex, dist_tex)
-    sgl.tev.show(dist_tex, name=f'initial_distances_{name_suffix}')
+    spy.tev.show(dist_tex, name=f'initial_distances_{name_suffix}')
 
     for i in range(128):
         module.solve_eikonal(spy.grid((width, height)), dist_tex)
 
     distances = dist_tex.to_numpy()
-    sgl.tev.show(dist_tex, name=f'final_distances_{name_suffix}')
+    spy.tev.show(dist_tex, name=f'final_distances_{name_suffix}')
 
     result = module.generate_isolines(distances, _result='numpy')
 
     output_tex = device.create_texture(width=width,
                                        height=height,
-                                       format=sgl.Format.rgba32_float,
-                                       usage=sgl.TextureUsage.shader_resource,
+                                       format=spy.Format.rgba32_float,
+                                       usage=spy.TextureUsage.shader_resource,
                                        data=result)
-    sgl.tev.show(output_tex, name=f'isolines_{name_suffix}')
+    spy.tev.show(output_tex, name=f'isolines_{name_suffix}')
 
     return distances
 

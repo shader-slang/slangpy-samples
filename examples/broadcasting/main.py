@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-import sgl
 import slangpy as spy
 import pathlib
 import numpy as np
 
 print("SlangPy broadcasting example (https://slangpy.shader-slang.org/en/latest/broadcasting.html)")
 
-# Create an SGL device with the local folder for slangpy includes
+# Create a device with the local folder for slangpy includes
 device = spy.create_device(include_paths=[
     pathlib.Path(__file__).parent.absolute(),
 ])
@@ -61,7 +60,7 @@ print(f"Res Shape: {res.shape}")
 print("")
 
 # Add a float3 and an array of 3 floats!
-a = sgl.float3(1, 2, 3)
+a = spy.float3(1, 2, 3)
 b = np.random.rand(3).astype(np.float32)
 res = module.add_floats(a, b, _result='numpy')
 print(f"A Shape:   {a.shape}")
@@ -91,13 +90,13 @@ print("")
 
 # Create a sampler and texture
 sampler = device.create_sampler()
-tex = device.create_texture(width=32, height=32, format=sgl.Format.rgba32_float,
-                            usage=sgl.TextureUsage.shader_resource)
+tex = device.create_texture(width=32, height=32, format=spy.Format.rgba32_float,
+                            usage=spy.TextureUsage.shader_resource)
 tex.copy_from_numpy(np.random.rand(32, 32, 4).astype(np.float32))
 
 # Sample the texture at a single UV coordinate. Results in 1 thread,
 # as the uv coordinate input is a single float 2.
-a = sgl.float2(0.5, 0.5)
+a = spy.float2(0.5, 0.5)
 res = module.sample_texture_at_uv(a, sampler, tex, _result='numpy')
 print(f"A Shape: {a.shape}")
 print(f"Res Shape: {res.shape}")

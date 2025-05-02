@@ -1,42 +1,39 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 from typing import Callable, Optional
-import sgl
-import slangpy
+import slangpy as spy
 from pathlib import Path
-from slangpy.backend import DeviceType
 
 
 class App:
-    def __init__(self, title: str = "BRDF Example", width: int = 1024, height: int = 1024, device_type: sgl.DeviceType = sgl.DeviceType.automatic):
+    def __init__(self, title: str = "BRDF Example", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.automatic):
         super().__init__()
 
-        # Create SGL window
-        self._window = sgl.Window(
+        # Create a window
+        self._window = spy.Window(
             width=width, height=height, title=title, resizable=True
         )
 
         # Create SlangPy device with local include path for shaders
-        self._device = slangpy.create_device(device_type,
-                                             include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(device_type, include_paths=[Path(__file__).parent])
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)
         self.surface.configure(width=self._window.width, height=self._window.height)
 
         # Will contain output texture
-        self._output_texture: 'sgl.Texture' = self.device.create_texture(
-            format=sgl.Format.rgba16_float,
+        self._output_texture: spy.Texture = self.device.create_texture(
+            format=spy.Format.rgba16_float,
             width=width,
             height=height,
             mip_count=1,
-            usage=sgl.TextureUsage.shader_resource
-            | sgl.TextureUsage.unordered_access,
+            usage=spy.TextureUsage.shader_resource
+            | spy.TextureUsage.unordered_access,
             label="output_texture",
         )
 
         # Store mouse pos
-        self._mouse_pos = sgl.float2()
+        self._mouse_pos = spy.float2()
 
         # Internal events
         self._window.on_keyboard_event = self._on_window_keyboard_event
@@ -44,23 +41,23 @@ class App:
         self._window.on_resize = self._on_window_resize
 
         # Hookable events
-        self.on_keyboard_event: Optional[Callable[[sgl.KeyboardEvent], None]] = None
-        self.on_mouse_event: Optional[Callable[[sgl.MouseEvent], None]] = None
+        self.on_keyboard_event: Optional[Callable[[spy.KeyboardEvent], None]] = None
+        self.on_mouse_event: Optional[Callable[[spy.MouseEvent], None]] = None
 
     @property
-    def device(self) -> sgl.Device:
+    def device(self) -> spy.Device:
         return self._device
 
     @property
-    def window(self) -> sgl.Window:
+    def window(self) -> spy.Window:
         return self._window
 
     @property
-    def mouse_pos(self) -> sgl.float2:
+    def mouse_pos(self) -> spy.float2:
         return self._mouse_pos
 
     @property
-    def output(self) -> sgl.Texture:
+    def output(self) -> spy.Texture:
         return self._output_texture
 
     def process_events(self):
@@ -80,46 +77,46 @@ class App:
             or self._output_texture.height != image.height
         ):
             self._output_texture = self.device.create_texture(
-                format=sgl.Format.rgba16_float,
+                format=spy.Format.rgba16_float,
                 width=image.width,
                 height=image.height,
                 mip_count=1,
-                usage=sgl.TextureUsage.shader_resource
-                | sgl.TextureUsage.unordered_access,
+                usage=spy.TextureUsage.shader_resource
+                | spy.TextureUsage.unordered_access,
                 label="output_texture",
             )
 
         command_encoder = self._device.create_command_encoder()
         command_encoder.blit(image, self._output_texture)
-        command_encoder.set_texture_state(image, sgl.ResourceState.present)
+        command_encoder.set_texture_state(image, spy.ResourceState.present)
         self._device.submit_command_buffer(command_encoder.finish())
 
         del image
         self.surface.present()
 
-    def _on_window_keyboard_event(self, event: sgl.KeyboardEvent):
-        if event.type == sgl.KeyboardEventType.key_press:
-            if event.key == sgl.KeyCode.escape:
+    def _on_window_keyboard_event(self, event: spy.KeyboardEvent):
+        if event.type == spy.KeyboardEventType.key_press:
+            if event.key == spy.KeyCode.escape:
                 self._window.close()
                 return
-            elif event.key == sgl.KeyCode.f1:
+            elif event.key == spy.KeyCode.f1:
                 if self._output_texture:
-                    sgl.tev.show_async(self._output_texture)
+                    spy.tev.show_async(self._output_texture)
                 return
-            elif event.key == sgl.KeyCode.f2:
+            elif event.key == spy.KeyCode.f2:
                 if self._output_texture:
                     bitmap = self._output_texture.to_bitmap()
                     bitmap.convert(
-                        sgl.Bitmap.PixelFormat.rgb,
-                        sgl.Bitmap.ComponentType.uint8,
+                        spy.Bitmap.PixelFormat.rgb,
+                        spy.Bitmap.ComponentType.uint8,
                         srgb_gamma=True,
                     ).write_async("screenshot.png")
                 return
         if self.on_keyboard_event:
             self.on_keyboard_event(event)
 
-    def _on_window_mouse_event(self, event: sgl.MouseEvent):
-        if event.type == sgl.MouseEventType.move:
+    def _on_window_mouse_event(self, event: spy.MouseEvent):
+        if event.type == spy.MouseEventType.move:
             self._mouse_pos = event.pos
         if self.on_mouse_event:
             self.on_mouse_event(event)

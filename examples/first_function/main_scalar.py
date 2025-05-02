@@ -5,7 +5,7 @@ import pathlib
 
 print("SlangPy first-function example (https://slangpy.shader-slang.org/en/latest/firstfunctions.html)")
 
-# Create an SGL device with the local folder for slangpy includes
+# Create a device with the local folder for slangpy includes
 device = spy.create_device(include_paths=[
     pathlib.Path(__file__).parent.absolute(),
 ])

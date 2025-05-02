@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// currently, to use custom types with slangpy it needs
-// to be imported
+
 import "slangpy";
 
-// example.slang
 struct Pixel
 {
     float r;

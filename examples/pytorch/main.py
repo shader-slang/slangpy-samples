@@ -9,10 +9,13 @@ print("SlangPy pytorch example (https://slangpy.shader-slang.org/en/latest/pytor
 # Make sure pytorch is in cuda mode
 torch.device('cuda')
 
-# Create an SGL device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+# Create a device with the local folder for slangpy includes
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ],
+    enable_cuda_interop=True,
+)
 
 # Load torch wrapped module.
 module = spy.TorchModule.load_from_file(device, "example.slang")

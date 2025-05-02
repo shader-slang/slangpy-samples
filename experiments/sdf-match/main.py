@@ -20,12 +20,6 @@ def computeRef(input, parameter):
     grad[3] = 2 * diff
     return grad
 
-# Create an SGL device with the local folder for slangpy includes
-#  device = spy.create_device(include_paths=[
-#      pathlib.Path(__file__).parent.absolute(),
-#  ])
-
-
 app = App()
 module = spy.Module.load_from_file(app.device, "example.slang")
 
@@ -68,7 +62,6 @@ def findMachingSDF(iter):
         print("Iteration: {}, Loss: {}".format(iter, loss))
         print("parameter {}".format(params.to_numpy()))
 
-    app.device.run_garbage_collection()
     return forwardResult
 
 

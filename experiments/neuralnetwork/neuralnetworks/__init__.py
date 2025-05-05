@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # pyright: reportUnusedImport=false
 
 from .basetypes import *

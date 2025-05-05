@@ -1,2 +1,4 @@
+*.pyc
+
 # Files produced by notebooks
 tutorials/*.png

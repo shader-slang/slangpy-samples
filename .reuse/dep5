@@ -1,13 +1,13 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: SGL Tutorials
+Upstream-Name: SlangPy Samples
 Upstream-Contact: The Khronos Group, Inc.
-Source: https://github.com/shader-slang/sgl-tutorials
+Source: https://github.com/shader-slang/slangpy-samples
 
 Files: *
 Copyright: 2024 The Khronos Group, Inc.
 License: Apache-2.0 WITH LLVM-exception
 
-Files: CODE_OF_CONDUCT.md 
-       CONTRIBUTING.md 
+Files: CODE_OF_CONDUCT.md
+       CONTRIBUTING.md
 Copyright: 2024 The Khronos Group, Inc.
 License: CC-BY-4.0

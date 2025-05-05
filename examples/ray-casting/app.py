@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title: str = "BRDF Example", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.automatic):
+    def __init__(self, title: str = "ray-casting", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.automatic):
         super().__init__()
 
         # Create a window

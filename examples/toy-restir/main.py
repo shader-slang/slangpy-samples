@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # A toy renderer with ReSTIR (reservoir-based spatiotemporal sample reuse).
 #
 # This example uses ReSTIR to render the view of an animated 2D toy scene. Artificial noise is introduced

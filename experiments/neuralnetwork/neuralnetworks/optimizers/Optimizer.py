@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from ..basetypes import Real
 
-from slangpy import Module, Tensor
+from slangpy import Module, Tensor, CommandEncoder
 from slangpy.core.function import FunctionNode
-import sgl
 
 from typing import Optional
 
@@ -73,7 +72,7 @@ class Optimizer:
             self.states.append(state_type(param))
             self.step_funcs.append(step_func)
 
-    def step(self, cmd: Optional[sgl.CommandEncoder] = None):
+    def step(self, cmd: Optional[CommandEncoder] = None):
         """
         Performs one step of the optimizer and resets network gradients.
 

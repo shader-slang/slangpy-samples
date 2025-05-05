@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import sys
-import sgl
 import time
 import pathlib
 import argparse
@@ -28,7 +27,7 @@ args = parser.parse_args()
 
 # Load texture
 try:
-    loader = sgl.TextureLoader(device)
+    loader = spy.TextureLoader(device)
     input_tex = loader.load_texture(args.input_path, options={"load_as_normalized": True,
                                                               "load_as_srgb": False,
                                                               "extend_alpha": True, })
@@ -41,8 +40,8 @@ except Exception as e:
 # Create output texture
 decoded_tex = device.create_texture(
     width=w, height=h, mip_count=1,
-    format=sgl.Format.rgba32_float,
-    usage=sgl.TextureUsage.unordered_access)
+    format=spy.Format.rgba32_float,
+    usage=spy.TextureUsage.unordered_access)
 
 # Load module and setup encoder kernel
 encoder_fn = spy.Module.load_from_file(device, "tinybc.slang").encoder
@@ -53,7 +52,7 @@ encoder_fn = encoder_fn.set(
     lr=0.1,
     adamBeta1=0.9,
     adamBeta2=0.999,
-    textureDim=sgl.int2(w, h)
+    textureDim=spy.int2(w, h)
 )
 
 # When running in benchmark mode amortize overheads over many runs to measure more accurate GPU times
@@ -83,5 +82,5 @@ print(f"\nPSNR: {psnr:.4g}")
 
 # Output decoded texture
 if args.output_path:
-    img = decoded_tex.to_bitmap().convert(component_type=sgl.Bitmap.ComponentType.uint8, srgb_gamma=False)
+    img = decoded_tex.to_bitmap().convert(component_type=spy.Bitmap.ComponentType.uint8, srgb_gamma=False)
     img.write(args.output_path)

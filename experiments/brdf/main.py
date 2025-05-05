@@ -2,7 +2,6 @@
 
 from app import App
 import slangpy as spy
-import sgl
 from slangpy.types import call_id
 
 
@@ -13,8 +12,8 @@ class Camera:
     # Origin is at 0,0 with 1,1 scale.
     def __init__(self, app: App):
         super().__init__()
-        self.o = sgl.float2(0.0, 0.0)
-        self.scale = sgl.float2(1.0, 1.0)
+        self.o = spy.float2(0.0, 0.0)
+        self.scale = spy.float2(1.0, 1.0)
         self.app = app
 
     # Return a dict with the class variables mapped to the names that the
@@ -23,7 +22,7 @@ class Camera:
         return {
             "o": self.o,
             "scale": self.scale,
-            "frameDim": sgl.float2(self.app._window.width, self.app._window.height),
+            "frameDim": spy.float2(self.app._window.width, self.app._window.height),
             "_type": "Camera"
         }
 
@@ -33,7 +32,7 @@ class Camera:
 
 
 class Properties:
-    def __init__(self, b: sgl.float3, r: float, m: float, s: float):
+    def __init__(self, b: spy.float3, r: float, m: float, s: float):
         super().__init__()
         self.b = b
         self.r = r
@@ -59,7 +58,7 @@ brdf = spy.Module.load_from_file(app.device, "brdf.slang")
 camera = Camera(app)
 
 # BRDF lighting parameters.
-properties = Properties(sgl.float3(0.2, 0.0, 1.0), 0.4, 0.6, 1.0)
+properties = Properties(spy.float3(0.2, 0.0, 1.0), 0.4, 0.6, 1.0)
 
 # Run the app.
 while app.process_events():

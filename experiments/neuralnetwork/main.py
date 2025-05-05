@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-from slangpy.backend import Device, DeviceType, TextureLoader
-from slangpy import Module
+from slangpy import Device, DeviceType, TextureLoader, Module
 from slangpy.types import NDBuffer
 import numpy as np
 import math

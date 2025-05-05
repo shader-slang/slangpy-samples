@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from ..basetypes import IModel, Real, ArrayKind, RealArray, SlangType, Auto, AutoSettable, resolve_auto
 
-from sgl import CoopVecMatrixLayout
-from slangpy import Module, Tensor
+from slangpy import Module, Tensor, CoopVecMatrixLayout
 
 from typing import cast, Any
 import numpy as np

@@ -4,11 +4,12 @@ Welcome to SlangPy examples! Here you'll find well written and documented exampl
 
 ## Standalone Samples
 
-| Name                                                                              | Output                                                        | Description                                                                                                                                                                                                                                           |
-| -------                                                                           | ------------                                                  | -----------------------------------------                                                                                                                                                                                                             |
-| [signed_distance_field](signed_distance_field/readme.md)                          | <img src="signed_distance_field/output.png" height="100">     | Use of SlangPy to generate a signed distance field and execute multiple eikonal passes to obtain accurate distance away from the zero point.                                                                                                          |
-| [toy-restir](toy-restir/README.md)                                                | <img src="toy-restir/toy-restir.png" height="100">            | Uses ReSTIR to render the view of an animated 2D toy scene                                                                                                 
-| [Simplified Splatting](simplified-splatting/README.md)                            | <img src="simplified-splatting/simple-splat-ex.png" height="100"> | A simplified implementation of 3D Gaussian Splatting for educational purposes
+| Name                                                     | Output                                                            | Description                                                                                                                                  |
+|----------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| [signed_distance_field](signed_distance_field/readme.md) | <img src="signed_distance_field/output.png" height="100">         | Use of SlangPy to generate a signed distance field and execute multiple eikonal passes to obtain accurate distance away from the zero point. |
+| [ray-casting](ray-casting/README.md)                     | <img src="ray-casting/thumb.jpg" height="100">                    | Simple kernel that uses ray-casting to render a textured quad                                                                                |
+| [toy-restir](toy-restir/README.md)                       | <img src="toy-restir/toy-restir.png" height="100">                | Uses ReSTIR to render the view of an animated 2D toy scene                                                                                   |
+| [Simplified Splatting](simplified-splatting/README.md)   | <img src="simplified-splatting/simple-splat-ex.png" height="100"> | A simplified implementation of 3D Gaussian Splatting for educational purposes                                                                |
 
 
 ## Documentation Samples

@@ -2,8 +2,6 @@
 
 from app import App
 import slangpy as spy
-import sgl
-import pathlib
 import numpy as np
 import imageio
 from tqdm import tqdm
@@ -13,7 +11,7 @@ image = imageio.imread("./jeep.jpg")
 W = image.shape[0]
 H = image.shape[1]
 
-# Create SGL windowed app and get the device
+# Create a windowed app and get the device
 app = App("Diffusion Splatting 2D", W, H)
 device = app.device
 
@@ -60,8 +58,8 @@ input_image = device.create_texture(
     data=image,
     width=W,
     height=H,
-    format=sgl.Format.rgba32_float,
-    usage=sgl.TextureUsage.shader_resource)
+    format=spy.Format.rgba32_float,
+    usage=spy.TextureUsage.shader_resource)
 
 dispatch_ids = spy.NDBuffer(device, dtype=module.uint2, shape=(W, H))
 dispatch_ids.copy_from_numpy(calcCompressedDispatchIDs(W, H, WORKGROUP_X, WORKGROUP_Y))
@@ -78,8 +76,8 @@ adam_second_moment = spy.Tensor.zeros_like(blobs)
 current_render = device.create_texture(
     width=W,
     height=H,
-    format=sgl.Format.rgba32_float,
-    usage=sgl.TextureUsage.shader_resource | sgl.TextureUsage.unordered_access)
+    format=spy.Format.rgba32_float,
+    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access)
 
 iterations = 10000
 for iter in tqdm(range(iterations)):

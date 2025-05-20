@@ -1,10 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import slangpy as spy
-import pathlib
-import torch
 import numpy as np
-import sgl
 from app import App
 from slangpy.types import call_id
 import time
@@ -19,12 +16,6 @@ def computeRef(input, parameter):
     grad[:3] = -2 * diff * (parameter[:3] - input) / (pred + parameter[3])
     grad[3] = 2 * diff
     return grad
-
-# Create an SGL device with the local folder for slangpy includes
-#  device = spy.create_device(include_paths=[
-#      pathlib.Path(__file__).parent.absolute(),
-#  ])
-
 
 app = App()
 module = spy.Module.load_from_file(app.device, "example.slang")
@@ -68,7 +59,6 @@ def findMachingSDF(iter):
         print("Iteration: {}, Loss: {}".format(iter, loss))
         print("parameter {}".format(params.to_numpy()))
 
-    app.device.run_garbage_collection()
     return forwardResult
 
 
@@ -78,7 +68,7 @@ while app.process_events():
         forwardResult = findMachingSDF(iter)
         iter += 1
     pylist = params.to_numpy().tolist()
-    windowSize = sgl.float2(app._window.width, app._window.height)
+    windowSize = spy.float2(app._window.width, app._window.height)
     module.RunRayMarch(windowSize, call_id(), pylist, _result=app.output)
     time.sleep(0.005)  # Sleep for 10ms to see the evolution of the SDF
     app.present()

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from __future__ import annotations
 
-from slangpy.backend import DataType, TypeReflection
+from slangpy import DataType, TypeReflection
 from slangpy.reflection import SlangType, ScalarType
 
 from typing import Optional

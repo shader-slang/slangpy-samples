@@ -5,7 +5,7 @@ from .Real import Real
 from .CoopVecType import CoopVecType
 
 from slangpy.reflection import SlangType, ScalarType, ArrayType, VectorType
-from slangpy.backend import TypeReflection
+from slangpy import TypeReflection
 from typing import Optional
 from enum import Enum
 

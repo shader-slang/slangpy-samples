@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from app import App
 import slangpy as spy
-import sgl
 from time import time
 
 # Create app
@@ -16,9 +15,9 @@ start = time()
 # Reset time when keyboard hit
 
 
-def kb_event(e: sgl.KeyboardEvent):
+def kb_event(e: spy.KeyboardEvent):
     global start
-    if e.key == sgl.KeyCode.space and e.type == sgl.KeyboardEventType.key_press:
+    if e.key == spy.KeyCode.space and e.type == spy.KeyboardEventType.key_press:
         start = time()
 
 

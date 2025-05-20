@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-import sgl
 import slangpy as spy
 import pathlib
 import numpy as np
@@ -8,7 +7,7 @@ import numpy as np
 print("SlangPy buffers example (https://slangpy.shader-slang.org/en/latest/buffers.html)")
 print("This example requires tev (https://github.com/Tom94/tev) to display results.")
 
-# Create an SGL device with the local folder for slangpy includes
+# Create a device with the local folder for slangpy includes
 device = spy.create_device(include_paths=[
     pathlib.Path(__file__).parent.absolute(),
 ])
@@ -47,5 +46,5 @@ for x in range(16):
 
 # Or if installed, we can use tev to show the result (https://github.com/Tom94/tev)
 tex = device.create_texture(data=result.to_numpy(), width=16,
-                            height=16, format=sgl.Format.rgba32_float)
-sgl.tev.show(tex)
+                            height=16, format=spy.Format.rgba32_float)
+spy.tev.show(tex)

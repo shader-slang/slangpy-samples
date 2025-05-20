@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
 # A toy renderer with ReSTIR (reservoir-based spatiotemporal sample reuse).
 #
 # This example uses ReSTIR to render the view of an animated 2D toy scene. Artificial noise is introduced
@@ -20,15 +21,13 @@
 # This application outputs the ReSTIR frames to 'tev'; first 1spp frames and then ReSTIR frames.
 
 import slangpy as spy
-import sgl
 import numpy as np
-import pathlib
 from app import App
 
 # Size of the image.
 imageWidth = 1024
 imageHeight = 1024
-imageSize = sgl.int2(imageWidth, imageHeight)
+imageSize = spy.int2(imageWidth, imageHeight)
 
 # Create windows app with space for 2 images.
 app = App("Toy ReSTIR", imageWidth * 2, imageHeight)
@@ -61,8 +60,8 @@ spatialOutput = spy.NDBuffer(device, dtype=module.Reservoir, shape=(imageHeight,
 tex = device.create_texture(
     width=imageWidth,
     height=imageHeight,
-    format=sgl.Format.rgba32_float,
-    usage=sgl.TextureUsage.shader_resource | sgl.TextureUsage.unordered_access
+    format=spy.Format.rgba32_float,
+    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access
 )
 
 
@@ -83,7 +82,7 @@ for frameIndex in range(frameCount):
     module.evaluate(initialOutput, tex)
 
     # Copy to app output window texture.
-    module.copyToOutput(spy.grid((imageHeight, imageWidth)), sgl.int2(0, 0), tex, app.output)
+    module.copyToOutput(spy.grid((imageHeight, imageWidth)), spy.int2(0, 0), tex, app.output)
     app.present()
 
 
@@ -112,7 +111,7 @@ for frameIndex in range(frameCount):
 
     # Copy to app output window texture.
     module.copyToOutput(spy.grid((imageHeight, imageWidth)),
-                        sgl.int2(imageWidth, 0), tex, app.output)
+                        spy.int2(imageWidth, 0), tex, app.output)
     app.present()
 
 # Keep window processing events until user closes it.

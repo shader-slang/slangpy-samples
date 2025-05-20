@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from slangpy.reflection import SlangType, SlangProgramLayout, TYPE_OVERRIDES
 from slangpy.core.native import Shape
-from slangpy.backend import TypeReflection
+from slangpy import TypeReflection
 
 
 class CoopVecType(SlangType):

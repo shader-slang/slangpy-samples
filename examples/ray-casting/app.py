@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title: str = "BRDF Example", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.d3d12):
+    def __init__(self, title: str = "ray-casting", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.automatic):
         super().__init__()
 
         # Create a window
@@ -15,8 +15,7 @@ class App:
         )
 
         # Create a device with local include path for shaders
-        self._device = spy.create_device(device_type,
-                                             include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(device_type, include_paths=[Path(__file__).parent])
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)

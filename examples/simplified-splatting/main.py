@@ -1,15 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import slangpy as spy
-import sgl
 import pathlib
 import imageio
 import numpy as np
 
-# Create an SGL device, which will handle setup and invocation of the Slang
+# Create a device, which will handle setup and invocation of the Slang
 # compiler for us. We give it both the slangpy PATH and the local include
 # PATH so that it can find Slang shader files
-device = sgl.Device(compiler_options={
+device = spy.Device(compiler_options={
     "include_paths": [
         spy.SHADER_PATH,
         pathlib.Path(__file__).parent.absolute(),
@@ -49,8 +48,8 @@ input_image = device.create_texture(
     data=image,
     width=W,
     height=H,
-    format=sgl.Format.rgba32_float,
-    usage=sgl.TextureUsage.shader_resource)
+    format=spy.Format.rgba32_float,
+    usage=spy.TextureUsage.shader_resource)
 
 # Create a per_pixel_loss Tensor to hold the calculated loss, and create gradient storage
 per_pixel_loss = spy.Tensor.empty(device, dtype=module.float4, shape=(W, H))
@@ -71,8 +70,8 @@ adam_second_moment = spy.Tensor.zeros_like(blobs)
 current_render = device.create_texture(
     width=W,
     height=H,
-    format=sgl.Format.rgba32_float,
-    usage=sgl.TextureUsage.shader_resource | sgl.TextureUsage.unordered_access)
+    format=spy.Format.rgba32_float,
+    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access)
 
 iterations = 10000
 for iter in range(iterations):
@@ -90,4 +89,4 @@ for iter in range(iterations):
         module.renderBlobsToTexture(current_render,
                                     blobs,
                                     spy.grid(shape=(input_image.width, input_image.height)))
-        sgl.tev.show_async(current_render, name=f"optimization_{(iter // 50):03d}")
+        spy.tev.show_async(current_render, name=f"optimization_{(iter // 50):03d}")

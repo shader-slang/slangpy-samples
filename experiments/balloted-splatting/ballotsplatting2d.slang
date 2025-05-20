@@ -373,8 +373,8 @@ float4 eval(Blobs blobs, uint blob_id, no_diff float2 uv)
  *
  * In Slang, custom derivative functions can be defiened using the `[BackwardDerivative(custom_fn)]` attribute.
  */
- [require (subgroup_ballot)]
- [require (subgroup_vote)]
+[require (subgroup_ballot)]
+[require (subgroup_vote)]
 [BackwardDerivative(fineRasterize_bwd)]
 float4 cullAndApplyBlobs(Blobs blobs, OBB tileBounds, uint localIdx, no_diff float2 uv)
 {

@@ -373,6 +373,8 @@ float4 eval(Blobs blobs, uint blob_id, no_diff float2 uv)
  *
  * In Slang, custom derivative functions can be defiened using the `[BackwardDerivative(custom_fn)]` attribute.
  */
+ [require (subgroup_ballot)]
+ [require (subgroup_vote)]
 [BackwardDerivative(fineRasterize_bwd)]
 float4 cullAndApplyBlobs(Blobs blobs, OBB tileBounds, uint localIdx, no_diff float2 uv)
 {
@@ -511,12 +513,16 @@ float2 calcUV(uint2 dispatchThreadID, int2 renderSize, int2 imageSize)
 /*
  * splatBlobs() is the main rendering routine that computes a final color for the pixel.
  * 
+ * It will check for support of  
  * This function will use a single pass to cull the full blob list to only the ones instersecting
  * with the current workgroup tile, and evaluate them. This avoids having to re-sort the list.
  * This is accomplished by using WaveActiveBallot to allow the entire subgroup to see the result
  * of the intersection test for each lane in the wave.
  */
 [Differentiable]
+[require(subgroup_ballot)]
+[require(subgroup_vote)]
+[require(subgroup_basic)]
 float4 splatBlobs(GradInOutTensor<float, 1> blobsBuffer, uint2 dispatchThreadID, int2 dispatchSize, int2 texSize)
 {
     Blobs blobs = {blobsBuffer};

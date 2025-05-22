@@ -373,8 +373,6 @@ float4 eval(Blobs blobs, uint blob_id, no_diff float2 uv)
  *
  * In Slang, custom derivative functions can be defiened using the `[BackwardDerivative(custom_fn)]` attribute.
  */
- [require (subgroup_ballot)]
- [require (subgroup_vote)]
 [BackwardDerivative(fineRasterize_bwd)]
 float4 cullAndApplyBlobs(Blobs blobs, OBB tileBounds, uint localIdx, no_diff float2 uv)
 {
@@ -520,9 +518,6 @@ float2 calcUV(uint2 dispatchThreadID, int2 renderSize, int2 imageSize)
  * of the intersection test for each lane in the wave.
  */
 [Differentiable]
-[require(subgroup_ballot)]
-[require(subgroup_vote)]
-[require(subgroup_basic)]
 float4 splatBlobs(GradInOutTensor<float, 1> blobsBuffer, uint2 dispatchThreadID, int2 dispatchSize, int2 texSize)
 {
     Blobs blobs = {blobsBuffer};

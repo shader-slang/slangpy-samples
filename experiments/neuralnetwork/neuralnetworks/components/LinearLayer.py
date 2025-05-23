@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 from ..basetypes import IModel, Real, ArrayKind, RealArray, SlangType, Auto, AutoSettable, resolve_auto
 
-from slangpy import Module, Tensor, CoopVecMatrixLayout
+from slangpy import Module, Tensor, CoopVecMatrixLayout, Feature
 
 from typing import cast, Any
 import numpy as np
@@ -72,7 +72,7 @@ class LinearLayer(IModel):
                 self.model_error("LinearLayer currently only supports half precision as input "
                                  f"when using CoopVec. Received {input_array}")
 
-            if "cooperative-vector" not in module.device.features:
+            if Feature.cooperative_vector not in module.device.features:
                 self.model_error("LinearLayer was requested to use the CoopVec API, "
                                  "but the device does not support it.")
         else:

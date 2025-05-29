@@ -128,7 +128,7 @@ float3 disneyBrdf(no_diff float3 albedo, float3 normal, float roughness, no_diff
     float metallic = 0.0;
     float specular = 1.0;
 
-    float lightIntensity = 5.0;
+    float lightIntensity = 3.0;
 
     float3 brdf = DisneyBRDF(albedo, L, V, N, roughness, metallic, specular);
     return brdf * lightIntensity * max(0, dot(N, L));
@@ -173,9 +173,10 @@ float3 phong(no_diff float3 albedo, float3 normal, no_diff float3 lightDir, no_d
 [Differentiable]
 float3 brdf(no_diff float3 albedo, float3 normal, float roughness, no_diff float3 lightDir, no_diff float3 viewDir)
 {
+    //return (normal);
     //return phong(albedo, normal, lightDir, viewDir);
     //return disneyBrdf(albedo, normal, roughness, lightDir, viewDir);
-    return disneyBrdf(albedo, normal, 0.1, lightDir, viewDir);
+    return disneyBrdf(albedo, normal, 0.3, lightDir, viewDir);
 }
 
 // Helper function to turn pixel coordinates into normalized UVs.

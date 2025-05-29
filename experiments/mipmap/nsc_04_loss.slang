@@ -36,6 +36,15 @@ float3 render(int2 pixel, MaterialParameters material, float3 light_dir, float3 
     return brdf_sample * light_intensity;
 }
 
+// Render the difference between the rendered pixel a reference pixel.
+float3 loss(int2 pixel, float3 reference, MaterialParameters material, float3 light_dir, float3 view_dir)
+{
+    float3 color = render(pixel, material,
+                          light_dir, view_dir);
+    float3 error = color - reference;
+    return error * error; // Squared error
+}
+
 float3 downsample(int2 pixel, Tensor<float3, 2> source)
 {
     float3 res = 0;

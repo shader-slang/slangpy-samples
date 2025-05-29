@@ -7,10 +7,23 @@ float2 pixel_to_uv(int2 pixel, int2 resolution)
     return (float2(pixel) + 0.5f) / float2(resolution);
 }
 
+float3 tonemap_aces_film(float3 input)
+{
+    float3 x = input.xyz;
+    float a = 2.51;
+    float b = 0.03;
+    float c = 2.43;
+    float d = 0.59;
+    float e = 0.14;
+    float3 col = saturate((x * (a * x + b)) / (x * (c * x + d) + e));
+    return col;
+}
+
 void blit(
     int2 pixel,
     int2 size,
     int2 offset,
+    bool tonemap,
     Tensor<float3, 2> input,
     RWTexture2D<float4> output,
 )
@@ -27,5 +40,10 @@ void blit(
         uint(shape[1]*uv.x)
     });
 
-    output[offset+pixel] = float4(col, 1.0f);
+    if(tonemap)
+    {
+        col = tonemap_aces_film(col);
+    }
+
+    output[offset + pixel] = float4(col, 1.0f);
 }

@@ -4,7 +4,7 @@ from app import App
 import slangpy as spy
 
 # Create the app and load the slang module.
-app = App(width=1024, height=1024, title="Mipmap Example")
+app = App(width=2058, height=1024, title="Mipmap Example")
 module = spy.Module.load_from_file(app.device, "nsc_02_downsample.slang")
 
 # Load some materials.
@@ -40,6 +40,22 @@ while app.process_events():
 
     # Blit tensor to screen.
     app.blit(output, size=spy.int2(1024, 1024))
+
+    # Quarter res rendered output BRDF from quarter res inputs.
+    lr_output = spy.Tensor.empty_like(output)
+
+    # Render from downsampled inputs.
+    module.render(pixel = spy.call_id(),
+                  material = {
+                        "albedo": downsample(albedo_map, 2),
+                        "normal": downsample(normal_map, 2),
+                  },
+                  light_dir = spy.math.normalize(spy.float3(0.2, 0.2, 1.0)),
+                  view_dir = spy.float3(0, 0, 1),
+                  _result = lr_output)
+
+    # Blit tensor to screen.
+    app.blit(lr_output, size=spy.int2(1024, 1024), offset=spy.int2(1034, 0))
 
     # Present the window.
     app.present()

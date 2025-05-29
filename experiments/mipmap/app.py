@@ -102,7 +102,7 @@ class App:
         self.surface.present()
         #self._device.run_garbage_collection()
 
-    def blit(self, source: spy.Tensor, size: Optional[spy.int2] = None, offset: Optional[spy.int2] = None):
+    def blit(self, source: spy.Tensor, size: Optional[spy.int2] = None, offset: Optional[spy.int2] = None, tonemap: bool = True):
         if len(source.shape) != 2:
             raise ValueError("Source tensor must be 2D (height, width).")
         if size is None:
@@ -112,6 +112,7 @@ class App:
         self._module.blit(spy.grid((size.y,size.x)),
                     size,
                     offset,
+                    tonemap,
                     source,
                     self.output)
 

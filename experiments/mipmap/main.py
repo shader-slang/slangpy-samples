@@ -11,7 +11,7 @@ from pathlib import Path
 MODE_TRAIN = "train"
 MODE_RENDER_FULL_RES = "render_full_res"
 MODE_SIDE_BY_SIDE = "side_by_side"
-MODE = MODE_RENDER_FULL_RES
+MODE = MODE_SIDE_BY_SIDE
 
 if MODE == MODE_TRAIN:
     res = (512, 2048) # (height, width)

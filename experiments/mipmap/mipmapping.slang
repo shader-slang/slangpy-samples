@@ -174,7 +174,8 @@ float3 phong(no_diff float3 albedo, float3 normal, no_diff float3 lightDir, no_d
 float3 brdf(no_diff float3 albedo, float3 normal, float roughness, no_diff float3 lightDir, no_diff float3 viewDir)
 {
     //return phong(albedo, normal, lightDir, viewDir);
-    return disneyBrdf(albedo, normal, roughness, lightDir, viewDir);
+    //return disneyBrdf(albedo, normal, roughness, lightDir, viewDir);
+    return disneyBrdf(albedo, normal, 0.1, lightDir, viewDir);
 }
 
 // Helper function to turn pixel coordinates into normalized UVs.
@@ -213,8 +214,8 @@ float calculateL2Loss(no_diff float3 target, float3 input)
 {
     float3 diff = target - input;
     // Square each component and sum them.
-    float sumSquaredDiff = diff.x * diff.x + 
-                           diff.y * diff.y + 
+    float sumSquaredDiff = diff.x * diff.x +
+                           diff.y * diff.y +
                            diff.z * diff.z;
     // Take the mean (divide by 3 since float3 has 3 components).
     return sumSquaredDiff / 3.0;
@@ -455,4 +456,27 @@ float4 showTrainingProgress(Tensor<float3, 2> avgColor, Tensor<float3, 2> loss, 
     }
 
     return float4(color, 1.0f);
+}
+
+ void blit(
+    int2 pixel,
+    int2 size,
+    int2 offset,
+    Tensor<float3, 2> input,
+    RWTexture2D<float4> output,
+)
+{
+    uint2 output_dimensions;
+    output.GetDimensions(output_dimensions.x, output_dimensions.y);
+
+    float2 uv = pixelToUV(pixel, size);
+
+    uint[2] shape = input.shape;
+
+    float3 col = input.get({
+        uint(shape[0]*uv.y),
+        uint(shape[1]*uv.x)
+    });
+
+    output[offset+pixel] = float4(col, 1.0f);
 }

@@ -11,7 +11,7 @@ class App:
 
         # Create a window
         self._window = spy.Window(
-            width=width, height=height, title=title, resizable=True
+            width=width, height=height, title=title, resizable=False
         )
 
         # Create a device with local include path for shaders

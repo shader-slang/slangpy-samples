@@ -4,8 +4,6 @@ import slangpy as spy
 import pathlib
 import torch
 
-print("spy path is ", spy.__file__)
-
 print("SlangPy pytorch example (https://slangpy.shader-slang.org/en/latest/src/autodiff/pytorch.html)")
 
 if not torch.cuda.is_available():
@@ -20,7 +18,7 @@ device = spy.create_device(
     include_paths=[
         pathlib.Path(__file__).parent.absolute(),
     ],
-    enable_cuda_interop=False,
+    enable_cuda_interop=True,
 )
 
 # Load torch wrapped module.

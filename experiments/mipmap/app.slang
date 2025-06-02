@@ -24,6 +24,7 @@ void blit(
     int2 size,
     int2 offset,
     bool tonemap,
+    bool bilinear,
     Tensor<float3, 2> input,
     RWTexture2D<float4> output,
 )
@@ -35,15 +36,25 @@ void blit(
 
     uint[2] shape = input.shape;
 
-    float3 col = input.get({
-        uint(shape[0]*uv.y),
-        uint(shape[1]*uv.x)
-    });
+    float3 col = bilinear ?
+        input.sample(float2(uv.x, uv.y)) :
+        input.getv(uint2(shape[1]*uv.x, shape[0]*uv.y));
+
+    col = abs(col);
 
     if(tonemap)
     {
         col = tonemap_aces_film(col);
     }
 
-    output[offset + pixel] = float4(col, 1.0f);
+    if(any(isnan(col.x)))
+    {
+        output[offset + pixel] = float4(1,0,1,1);
+    }
+    else
+    {
+        output[offset + pixel] = float4(col, 1.0f);
+
+    }
+
 }

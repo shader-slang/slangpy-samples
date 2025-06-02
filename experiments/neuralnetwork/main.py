@@ -86,10 +86,13 @@ def training_main():
     uv_grid = create_uv_grid(device, resolution)
 
     timer = Timer()
-    command_encoder = device.create_command_encoder()
 
     while app.process_events():
         timer.start()
+
+        # The command encoder has to be created on each iteration since command_encoder.finish()
+        # closes it and the only way to open one is to create a new one.
+        command_encoder = device.create_command_encoder()
 
         # For a bit of extra performance, don't call module.trainTexture(....) directly,
         # but collect multiple calls into a command buffer and dispatch them as a big

@@ -104,17 +104,32 @@ struct LCG
     }
 };
 
-void calculate_grads(uint seed, int2 pixel, float3 reference, MaterialParameters material)
+void calculate_grads(uint seed, int2 pixel, MaterialParameters material, MaterialParameters ref_material)
 {
     LCG lcg = LCG(seed);
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 10000; i++)
     {
-        float3 light_dir = float3(0.2, 0.2, 1.0);//lerp(lcg.next_dir_on_hemisphere(), normalize(float3(0.2, 0.2, 1.0)), 0.75f);
-        float3 view_dir = float3(0,0,1);// lcg.next_dir_on_hemisphere();
-        bwd_diff(loss)(pixel, reference, material, light_dir, view_dir, 1);
+        float3 light_dir = lcg.next_dir_on_hemisphere();
+        float3 view_dir = lcg.next_dir_on_hemisphere();
+
+        int2 hi_res_pixel = pixel * 4;
+
+        float3 sum = 0;
+        for(int x0 = 0; x0 < 4; x0++)
+        {
+            for(int y0 = 0; y0 < 4; y0++)
+            {
+                int2 hi_res_pixel_offset = hi_res_pixel + int2(x0, y0);
+                sum += render(hi_res_pixel_offset, ref_material, light_dir, view_dir);
+            }
+        }
+        sum /= 16.0f;
+
+
+        bwd_diff(loss)(pixel, sum, material, light_dir, view_dir, 1);
     }
-    material.normal_grad.setv(pixel,material.normal_grad.getv(pixel)/1.0f);
+    material.normal_grad.setv(pixel,material.normal_grad.getv(pixel)/10000.0f);
 }
 
 void init_normal(inout float3 val)

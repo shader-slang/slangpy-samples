@@ -15,34 +15,53 @@ albedo_map = spy.Tensor.load_from_image(app.device,
                                         "PavingStones070_2K.diffuse.jpg", linearize=True)
 normal_map = spy.Tensor.load_from_image(app.device,
                                         "PavingStones070_2K.normal.jpg", scale=2, offset=-1)
+roughness_map = spy.Tensor.load_from_image(app.device,
+                                        "PavingStones070_2K.roughness.jpg",
+                                        grayscale=True)
 
-def downsample(source: spy.Tensor, steps: int) -> spy.Tensor:
+# fill roughness map with 0.3
+roughness_map.copy_from_numpy(np.full(roughness_map.shape, 0.3, dtype=np.float32))
+
+def downsample1(source: spy.Tensor, steps: int) -> spy.Tensor:
     for i in range(steps):
         dest = spy.Tensor.empty(device=app.device, shape=(source.shape[0] // 2, source.shape[1] // 2), dtype=source.dtype)
-        module.downsample(spy.call_id(), source, _result=dest)
+        module.downsample1(spy.call_id(), source, _result=dest)
+        source = dest
+    return source
+
+def downsample3(source: spy.Tensor, steps: int) -> spy.Tensor:
+    for i in range(steps):
+        dest = spy.Tensor.empty(device=app.device, shape=(source.shape[0] // 2, source.shape[1] // 2), dtype=source.dtype)
+        module.downsample3(spy.call_id(), source, _result=dest)
         source = dest
     return source
 
 # Downsampled maps
-lr_albedo_map = downsample(albedo_map, 2)
-lr_normal_map =  downsample(normal_map, 2)
+lr_albedo_map = downsample3(albedo_map, 2)
+lr_normal_map =  downsample3(normal_map, 2)
+lr_roughness_map =  downsample1(roughness_map, 2)
 
 lr_trained_albedo_map = spy.Tensor.zeros_like(lr_albedo_map)
 lr_trained_normal_map = spy.Tensor.zeros_like(lr_normal_map)
+lr_trained_roughness_map = spy.Tensor.zeros_like(lr_roughness_map)
 
 module.init_normal(lr_trained_normal_map)
 
 #lr_trained_normal_map.copy_from_numpy(lr_normal_map.to_numpy())
 #lr_trained_albedo_map.copy_from_numpy(lr_albedo_map.to_numpy())
+lr_trained_roughness_map.copy_from_numpy(lr_roughness_map.to_numpy())
 
 # Corresponding gradients
 lr_albedo_grad = spy.Tensor.zeros_like(lr_albedo_map)
 lr_normal_grad = spy.Tensor.zeros_like(lr_normal_map)
+lr_roughness_grad = spy.Tensor.zeros_like(lr_roughness_map)
 
 m_albedo = spy.Tensor.zeros_like(lr_albedo_grad)
 v_albedo = spy.Tensor.zeros_like(lr_albedo_grad)
 m_normal = spy.Tensor.zeros_like(lr_normal_grad)
 v_normal = spy.Tensor.zeros_like(lr_normal_grad)
+m_roughness = spy.Tensor.zeros_like(lr_roughness_grad)
+v_roughness = spy.Tensor.zeros_like(lr_roughness_grad)
 
 def getRandomDir():
     r = math.sqrt(np.random.rand())
@@ -58,7 +77,7 @@ while app.process_events():
 
     light_dir = spy.math.normalize(spy.float3(0.2, 0.2, 1.0))
     xpos = 0
-    bilinear_output = False
+    bilinear_output = True
 
     # Full res rendered output BRDF from full res inputs.
     output = spy.Tensor.empty_like(albedo_map)
@@ -66,6 +85,7 @@ while app.process_events():
                   material = {
                         "albedo": albedo_map,
                         "normal": normal_map,
+                        "roughness": roughness_map,
                   },
                   light_dir = light_dir,
                   view_dir = spy.float3(0, 0, 1),
@@ -73,7 +93,7 @@ while app.process_events():
 
 
     # Downsample the output tensor.
-    output = downsample(output, 2)
+    output = downsample3(output, 2)
 
 
      # Blit tensor to screen.
@@ -86,6 +106,7 @@ while app.process_events():
                   material = {
                         "albedo": lr_albedo_map,
                         "normal": lr_normal_map,
+                        "roughness": lr_roughness_map,
                   },
                   light_dir = light_dir,
                   view_dir = spy.float3(0, 0, 1),
@@ -101,6 +122,7 @@ while app.process_events():
                   material = {
                         "albedo": lr_trained_albedo_map,
                         "normal": lr_trained_normal_map,
+                        "roughness": lr_trained_roughness_map,
                   },
                   light_dir = light_dir,
                   view_dir = spy.float3(0, 0, 1),
@@ -116,6 +138,7 @@ while app.process_events():
                   material = {
                         "albedo": lr_albedo_map,
                         "normal": lr_normal_map,
+                        "roughness": lr_roughness_map,
                   },
                   reference = output,
                   light_dir = light_dir,
@@ -129,6 +152,7 @@ while app.process_events():
                   material = {
                         "albedo": lr_trained_albedo_map,
                         "normal": lr_trained_normal_map,
+                        "roughness": lr_trained_roughness_map,
                   },
                   reference = output,
                   light_dir = light_dir,
@@ -146,12 +170,15 @@ while app.process_events():
         material = {
                 "albedo": lr_trained_albedo_map,
                 "normal": lr_trained_normal_map,
+                "roughness": lr_trained_roughness_map,
                 "albedo_grad": lr_albedo_grad,
                 "normal_grad": lr_normal_grad,
+                "roughness_grad": lr_roughness_grad,
         },
         ref_material = {
                 "albedo": albedo_map,
                 "normal": normal_map,
+                "roughness": roughness_map,
         })
     optimize_counter += 1
 
@@ -159,8 +186,9 @@ while app.process_events():
     # Blit tensor to screen.
     #app.blit(lr_normal_grad, size=spy.int2(1024, 1024), offset=spy.int2(1034, 0), tonemap=False)
 
-    module.optimize(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, 1, False)
-    module.optimize(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, 1, True)
+    module.optimize3(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, 1, False)
+    module.optimize3(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, 1, True)
+    module.optimize1(lr_trained_roughness_map, lr_roughness_grad, m_roughness, v_roughness, 1)
 
     # read loss output to numpy tensor and sum abs values
     orig_loss_np = orig_loss_output.to_numpy()

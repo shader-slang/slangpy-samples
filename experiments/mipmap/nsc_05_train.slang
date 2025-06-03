@@ -6,9 +6,11 @@ struct MaterialParameters
 {
     RWTensor<float3, 2> albedo;
     RWTensor<float3, 2> normal;
+    RWTensor<float, 2> roughness;
 
     RWTensor<float3, 2> albedo_grad;
     RWTensor<float3, 2> normal_grad;
+    RWTensor<float, 2> roughness_grad;
 
     [Differentiable]
     float3 get_albedo(int2 pixel)
@@ -33,6 +35,17 @@ struct MaterialParameters
     {
         normal_grad.setv(pixel, normal_grad.getv(pixel)+grad);
     }
+
+    [Differentiable]
+    float get_roughness(int2 pixel)
+    {
+        return roughness.getv(pixel);
+    }
+    [BackwardDerivativeOf(get_roughness)]
+    void get_roughness_bwd(int2 pixel, float grad)
+    {
+        roughness_grad.setv(pixel, roughness_grad.getv(pixel)+grad);
+    }
 };
 
 // Render full res BRDF from given inputs.
@@ -47,7 +60,7 @@ float3 render(int2 pixel, no_diff MaterialParameters material, no_diff float3 li
                normalize(light_dir),        // light direction
                normalize(view_dir),         // view direction
                normalize(material.get_normal(pixel)),  // normal map sample
-               0.3,                         // roughness
+               material.get_roughness(pixel), // roughness
                0.0,                         // metallic (no metal)
                1.0                          // specular
                );
@@ -142,8 +155,35 @@ void scale(inout float3 val, float k)
     val = val * k;
 }
 
+void optimize1(inout float primal, inout float grad, inout float m_prev, inout float v_prev, float learning_rate)
+{
+    // Standard Adam default values.
+    const float ADAM_ETA = 0.002;
+    const float ADAM_BETA_1 = 0.9;
+    const float ADAM_BETA_2 = 0.999;
+    const float ADAM_EPSILON = 1e-8;
 
-void optimize(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, bool renormalize)
+    // Adam optimization.
+    float gradient2 = grad * grad;
+
+    float m = ADAM_BETA_1 * m_prev + (1.0 - ADAM_BETA_1) * grad;
+    float v = ADAM_BETA_2 * v_prev + (1.0 - ADAM_BETA_2) * gradient2;
+
+    m_prev = m;
+    v_prev = v;
+
+    float mHat = m / (1.0f - ADAM_BETA_1);
+    float vHat = v / (1.0f - ADAM_BETA_2);
+
+    float update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
+
+    // Subtract the optimized result from the trained normal and reset the gradient.
+    primal -= update;
+
+    grad = 0;
+}
+
+void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, bool renormalize)
 {
     // Standard Adam default values.
     const float ADAM_ETA = 0.002;
@@ -174,7 +214,17 @@ void optimize(inout float3 primal, inout float3 grad, inout float3 m_prev, inout
     grad = float3(0.0f);
 }
 
-float3 downsample(int2 pixel, Tensor<float3, 2> source)
+float downsample1(int2 pixel, Tensor<float, 2> source)
+{
+    float res = 0;
+    res += source.getv(pixel * 2 + int2(0, 0));
+    res += source.getv(pixel * 2 + int2(1, 0));
+    res += source.getv(pixel * 2 + int2(0, 1));
+    res += source.getv(pixel * 2 + int2(1, 1));
+    return res * 0.25;
+}
+
+float3 downsample3(int2 pixel, Tensor<float3, 2> source)
 {
     float3 res = 0;
     res += source.getv(pixel * 2 + int2(0, 0));

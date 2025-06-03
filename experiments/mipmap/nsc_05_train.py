@@ -19,9 +19,6 @@ roughness_map = spy.Tensor.load_from_image(app.device,
                                         "PavingStones070_2K.roughness.jpg",
                                         grayscale=True)
 
-# fill roughness map with 0.3
-roughness_map.copy_from_numpy(np.full(roughness_map.shape, 0.3, dtype=np.float32))
-
 def downsample1(source: spy.Tensor, steps: int) -> spy.Tensor:
     for i in range(steps):
         dest = spy.Tensor.empty(device=app.device, shape=(source.shape[0] // 2, source.shape[1] // 2), dtype=source.dtype)

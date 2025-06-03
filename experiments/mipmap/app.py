@@ -16,6 +16,7 @@ class App:
 
         # Create spy device with local include path for shaders
         self._device = spy.create_device(device_type,
+                                         enable_debug_layers=True,
                                              include_paths=[Path(__file__).parent])
 
         # Load module of helpers

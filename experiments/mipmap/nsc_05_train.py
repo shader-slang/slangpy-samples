@@ -172,10 +172,7 @@ while app.process_events():
         })
     optimize_counter += 1
 
-
-    # Blit tensor to screen.
-    #app.blit(lr_normal_grad, size=spy.int2(1024, 1024), offset=spy.int2(1034, 0), tonemap=False)
-
+    # Optimize the trained maps using the gradients.
     module.optimize3(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, 1, False)
     module.optimize3(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, 1, True)
     module.optimize1(lr_trained_roughness_map, lr_roughness_grad, m_roughness, v_roughness, 1)

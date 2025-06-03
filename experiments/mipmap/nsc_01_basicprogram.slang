@@ -34,7 +34,7 @@ float3 render(int2 pixel, MaterialParameters material, float3 light_dir, float3 
                normalize(view_dir),          // view direction
                material.get_normal(pixel),   // normal map sample
                material.get_roughness(pixel),// roughness
-               0.5,                          // metallic (no metal)
+               0.0,                          // metallic (no metal)
                1.0                           // specular
                );
 

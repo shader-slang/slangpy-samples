@@ -19,24 +19,20 @@ roughness_map = spy.Tensor.load_from_image(app.device,
                                         "PavingStones070_2K.roughness.jpg",
                                         grayscale=True)
 
-def downsample1(source: spy.Tensor, steps: int) -> spy.Tensor:
+def downsample(source: spy.Tensor, steps: int) -> spy.Tensor:
     for i in range(steps):
         dest = spy.Tensor.empty(device=app.device, shape=(source.shape[0] // 2, source.shape[1] // 2), dtype=source.dtype)
-        module.downsample1(spy.call_id(), source, _result=dest)
-        source = dest
-    return source
-
-def downsample3(source: spy.Tensor, steps: int) -> spy.Tensor:
-    for i in range(steps):
-        dest = spy.Tensor.empty(device=app.device, shape=(source.shape[0] // 2, source.shape[1] // 2), dtype=source.dtype)
-        module.downsample3(spy.call_id(), source, _result=dest)
+        if dest.dtype.name == 'vector':
+            module.downsample3(spy.call_id(), source, _result=dest)
+        else:
+            module.downsample1(spy.call_id(), source, _result=dest)
         source = dest
     return source
 
 # Downsampled maps
-lr_albedo_map = downsample3(albedo_map, 2)
-lr_normal_map =  downsample3(normal_map, 2)
-lr_roughness_map =  downsample1(roughness_map, 2)
+lr_albedo_map = downsample(albedo_map, 2)
+lr_normal_map =  downsample(normal_map, 2)
+lr_roughness_map =  downsample(roughness_map, 2)
 
 lr_trained_albedo_map = spy.Tensor.zeros_like(lr_albedo_map)
 lr_trained_normal_map = spy.Tensor.zeros_like(lr_normal_map)
@@ -88,8 +84,7 @@ while app.process_events():
 
 
     # Downsample the output tensor.
-    output = downsample3(output, 2)
-
+    output = downsample(output, 2)
 
      # Blit tensor to screen.
     app.blit(output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), bilinear=bilinear_output)

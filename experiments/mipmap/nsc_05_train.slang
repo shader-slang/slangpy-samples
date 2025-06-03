@@ -75,8 +75,7 @@ float3 loss(int2 pixel, no_diff float3 reference, no_diff MaterialParameters mat
     float3 color = render(pixel, material,
                           light_dir, view_dir);
     float3 error = color - reference;
-    error = abs(error);
-    return (error.x + error.y + error.z) / 3.0f; // Average RGB error
+    return error * error; // Squared error
 }
 
 #define PI 3.14159265358979323846f

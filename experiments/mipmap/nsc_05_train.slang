@@ -149,6 +149,14 @@ void init_normal(inout float3 val)
 {
     val = float3(0,0,1);
 }
+void init3(inout float3 val, float3 v)
+{
+    val = v;
+}
+void init1(inout float val, float v)
+{
+    val = v;
+}
 
 void scale(inout float3 val, float k)
 {

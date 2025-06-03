@@ -45,11 +45,9 @@ lr_trained_albedo_map = spy.Tensor.zeros_like(lr_albedo_map)
 lr_trained_normal_map = spy.Tensor.zeros_like(lr_normal_map)
 lr_trained_roughness_map = spy.Tensor.zeros_like(lr_roughness_map)
 
+module.init3(lr_trained_albedo_map, spy.float3(0.5, 0.5, 0.5))
 module.init_normal(lr_trained_normal_map)
-
-#lr_trained_normal_map.copy_from_numpy(lr_normal_map.to_numpy())
-#lr_trained_albedo_map.copy_from_numpy(lr_albedo_map.to_numpy())
-lr_trained_roughness_map.copy_from_numpy(lr_roughness_map.to_numpy())
+module.init1(lr_trained_roughness_map, 0.5)
 
 # Corresponding gradients
 lr_albedo_grad = spy.Tensor.zeros_like(lr_albedo_map)

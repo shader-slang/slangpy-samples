@@ -27,12 +27,20 @@ def downsample(source: spy.Tensor, steps: int) -> spy.Tensor:
 lr_albedo_map = downsample(albedo_map, 2)
 lr_normal_map =  downsample(normal_map, 2)
 
-module.init_normal(lr_normal_map)
+lr_trained_albedo_map = spy.Tensor.zeros_like(lr_albedo_map)
+lr_trained_normal_map = spy.Tensor.zeros_like(lr_normal_map)
+
+module.init_normal(lr_trained_normal_map)
+
+#lr_trained_normal_map.copy_from_numpy(lr_normal_map.to_numpy())
+#lr_trained_albedo_map.copy_from_numpy(lr_albedo_map.to_numpy())
 
 # Corresponding gradients
 lr_albedo_grad = spy.Tensor.zeros_like(lr_albedo_map)
 lr_normal_grad = spy.Tensor.zeros_like(lr_normal_map)
 
+m_albedo = spy.Tensor.zeros_like(lr_albedo_grad)
+v_albedo = spy.Tensor.zeros_like(lr_albedo_grad)
 m_normal = spy.Tensor.zeros_like(lr_normal_grad)
 v_normal = spy.Tensor.zeros_like(lr_normal_grad)
 
@@ -49,6 +57,8 @@ optimize_counter = 0
 while app.process_events():
 
     light_dir = spy.math.normalize(spy.float3(0.2, 0.2, 1.0))
+    xpos = 0
+    bilinear_output = False
 
     # Full res rendered output BRDF from full res inputs.
     output = spy.Tensor.empty_like(albedo_map)
@@ -61,11 +71,14 @@ while app.process_events():
                   view_dir = spy.float3(0, 0, 1),
                   _result = output)
 
+
     # Downsample the output tensor.
     output = downsample(output, 2)
 
-    # Blit tensor to screen.
-    app.blit(output, size=spy.int2(1024, 1024), bilinear=True)
+
+     # Blit tensor to screen.
+    app.blit(output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), bilinear=bilinear_output)
+    xpos += 1024+10
 
     # Quarter res rendered output BRDF from quarter res inputs.
     lr_output = spy.Tensor.empty_like(output)
@@ -79,10 +92,26 @@ while app.process_events():
                   _result = lr_output)
 
     # Blit tensor to screen.
-    app.blit(lr_output, size=spy.int2(1024, 1024), offset=spy.int2(2068, 0), bilinear=True)
+    app.blit(lr_output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), bilinear=bilinear_output)
+    xpos += 1024+10
+
+    # Same but using trained normal map res rendered output BRDF from quarter res inputs.
+    lr_output = spy.Tensor.empty_like(output)
+    module.render(pixel = spy.call_id(),
+                  material = {
+                        "albedo": lr_trained_albedo_map,
+                        "normal": lr_trained_normal_map,
+                  },
+                  light_dir = light_dir,
+                  view_dir = spy.float3(0, 0, 1),
+                  _result = lr_output)
+
+    # Blit tensor to screen.
+    app.blit(lr_output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), bilinear=bilinear_output)
+    xpos += 1024+10
 
     # Loss between downsampled output and quarter res rendered output.
-    loss_output = spy.Tensor.empty_like(output)
+    orig_loss_output = spy.Tensor.empty_like(output)
     module.loss(pixel = spy.call_id(),
                   material = {
                         "albedo": lr_albedo_map,
@@ -91,22 +120,32 @@ while app.process_events():
                   reference = output,
                   light_dir = light_dir,
                   view_dir = spy.float3(0, 0, 1),
+                  _result = orig_loss_output)
+
+
+    # Loss between downsampled output and quarter res rendered output.
+    loss_output = spy.Tensor.empty_like(output)
+    module.loss(pixel = spy.call_id(),
+                  material = {
+                        "albedo": lr_trained_albedo_map,
+                        "normal": lr_trained_normal_map,
+                  },
+                  reference = output,
+                  light_dir = light_dir,
+                  view_dir = spy.float3(0, 0, 1),
                   _result = loss_output)
 
-
     # Blit tensor to screen.
-    app.blit(loss_output, size=spy.int2(1024, 1024), offset=spy.int2(1034, 0), tonemap=True)
-
-    # Blit tensor to screen.
-    app.blit(lr_normal_map, size=spy.int2(1024, 1024), offset=spy.int2(3102, 0), tonemap=False)
+    app.blit(loss_output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), tonemap=bilinear_output)
+    xpos += 1024+10
 
     # Loss between downsampled output and quarter res rendered output.
     module.calculate_grads(
         seed = spy.wang_hash(seed=optimize_counter, warmup=2),
         pixel = spy.grid(shape=lr_albedo_map.shape),
         material = {
-                "albedo": lr_albedo_map,
-                "normal": lr_normal_map,
+                "albedo": lr_trained_albedo_map,
+                "normal": lr_trained_normal_map,
                 "albedo_grad": lr_albedo_grad,
                 "normal_grad": lr_normal_grad,
         },
@@ -120,13 +159,15 @@ while app.process_events():
     # Blit tensor to screen.
     #app.blit(lr_normal_grad, size=spy.int2(1024, 1024), offset=spy.int2(1034, 0), tonemap=False)
 
-    module.optimize(lr_normal_map, lr_normal_grad, m_normal, v_normal, 0.1)
-    lr_normal_grad.clear()
+    module.optimize(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, 1, False)
+    module.optimize(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, 1, True)
 
     # read loss output to numpy tensor and sum abs values
+    orig_loss_np = orig_loss_output.to_numpy()
+    orig_loss_value = np.sum(np.abs(orig_loss_np))
     loss_np = loss_output.to_numpy()
     loss_value = np.sum(np.abs(loss_np))
-    print(f"Loss: {loss_value:.6f}")
+    print(f"Loss: {loss_value:.6f}, Original Loss: {orig_loss_value:.6f}")
 
     # Present the window.
     app.present()

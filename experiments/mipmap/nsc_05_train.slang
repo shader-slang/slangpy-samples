@@ -19,7 +19,7 @@ struct MaterialParameters
     [BackwardDerivativeOf(get_albedo)]
     void get_albedo_bwd(int2 pixel, float3 grad)
     {
-        albedo_grad.setv(pixel, grad);
+        albedo_grad.setv(pixel, albedo_grad.getv(pixel)+grad);
     }
 
     [Differentiable]
@@ -143,7 +143,7 @@ void scale(inout float3 val, float k)
 }
 
 
-void optimize(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate)
+void optimize(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, bool renormalize)
 {
     // Standard Adam default values.
     const float ADAM_ETA = 0.002;
@@ -167,7 +167,8 @@ void optimize(inout float3 primal, inout float3 grad, inout float3 m_prev, inout
 
     // Subtract the optimized result from the trained normal and reset the gradient.
     primal -= update;
-    //primal = normalize(primal); // Ensure the normal is still normalized.
+    if(renormalize)
+        primal = normalize(primal); // Ensure the normal is still normalized.
     //primal = primal; // Ensure the normal is still normalized.
 
     grad = float3(0.0f);

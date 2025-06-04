@@ -152,7 +152,10 @@ while app.process_events():
     # Blit tensor to screen.
     app.blit(loss_output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), tonemap=bilinear_output)
     xpos += 1024+10
-    learning_rate = 0.002
+
+    # Extra credit: Start with a fast learning rate and slowly ramp down
+    training_progress_percentage = min(optimize_counter / 3000, 1.0)
+    learning_rate = 0.002 * (1.0 - training_progress_percentage) + 0.0002 * training_progress_percentage
 
     # Loss between downsampled output and quarter res rendered output.
     module.calculate_grads(

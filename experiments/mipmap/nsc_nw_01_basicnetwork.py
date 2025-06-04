@@ -33,8 +33,7 @@ class NetworkParameters(spy.InstanceList):
 
 network = {
     "layer0": NetworkParameters(2, 32),
-    "layer1": NetworkParameters(32, 32),
-    "layer2": NetworkParameters(32, 3)
+    "layer1": NetworkParameters(32, 3)
 }
 
 optimize_counter = 0
@@ -71,7 +70,7 @@ while app.process_events():
 
     learning_rate = 0.001
 
-    for i in range(1):
+    for i in range(50):
         # Loss between downsampled output and quarter res rendered output.
         module.calculate_grads(
             seed = spy.wang_hash(seed=optimize_counter, warmup=2),

@@ -188,6 +188,9 @@ void optimize1(inout float primal, inout float grad, inout float m_prev, inout f
     // Subtract the optimized result from the trained normal and reset the gradient.
     primal -= update;
 
+    // Make sure we stay in [0, 1]
+    primal = saturate(primal);
+
     grad = 0;
 }
 
@@ -216,6 +219,8 @@ void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inou
     primal -= update;
     if(renormalize)
         primal = normalize(primal); // Ensure the normal is still normalized.
+    else
+        primal = saturate(primal); // Make sure we stay in [0, 1]
     //primal = primal; // Ensure the normal is still normalized.
 
     grad = float3(0.0f);

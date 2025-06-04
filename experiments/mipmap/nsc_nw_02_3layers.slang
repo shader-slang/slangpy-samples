@@ -53,17 +53,27 @@ struct NetworkParameters<int Inputs, int Outputs>
 }
 
 struct Network {
-    NetworkParameters<2, 3>  layer;
+    NetworkParameters<2, 32>  layer0;
+    NetworkParameters<32, 32> layer1;
+    NetworkParameters<32, 3>  layer2;
 
     [Differentiable]
     float3 eval(no_diff float2 uv)
     {
         float inputs[2] = {uv.x, uv.y};
-        float output0[3] = layer.forward(inputs);
+        float output0[32] = layer0.forward(inputs);
+        [ForceUnroll]
+        for (int i = 0; i < 32; ++i)
+            output0[i] = activation(output0[i]);
+        float output1[32] = layer1.forward(output0);
+        [ForceUnroll]
+        for (int i = 0; i < 32; ++i)
+            output1[i] = activation(output1[i]);
+        float output2[3] = layer2.forward(output1);
         [ForceUnroll]
         for (int i = 0; i < 3; ++i)
-            output0[i] = sigmoid(output0[i]);
-        return float3(output0[0], output0[1], output0[2]);
+            output2[i] = activation(output2[i]);
+        return float3(output2[0], output2[1], output2[2]);
     }
 }
 

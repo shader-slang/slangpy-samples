@@ -6,7 +6,7 @@ import numpy as np
 
 # Create the app and load the slang module.
 app = App(width=512*3+10*2, height=512, title="Mipmap Example")
-module = spy.Module.load_from_file(app.device, "nsc_nw_01_basicnetwork.slang")
+module = spy.Module.load_from_file(app.device, "nsc_nw_02_3layers.slang")
 
 # Load some materials.
 image = spy.Tensor.load_from_image(app.device,
@@ -40,11 +40,15 @@ class NetworkParameters(spy.InstanceList):
 class Network(spy.InstanceList):
     def __init__(self):
         super().__init__(module["Network"])
-        self.layer = NetworkParameters(2,3)
+        self.layer0 = NetworkParameters(2,32)
+        self.layer1 = NetworkParameters(32,32)
+        self.layer2 = NetworkParameters(32,3)
 
     # Calls the Slang 'optimize' function for the layer.
     def optimize(self, learning_rate: float, optimize_counter: int):
-        self.layer.optimize(learning_rate, optimize_counter)
+        self.layer0.optimize(learning_rate, optimize_counter)
+        self.layer1.optimize(learning_rate, optimize_counter)
+        self.layer2.optimize(learning_rate, optimize_counter)
 
 network = Network()
 

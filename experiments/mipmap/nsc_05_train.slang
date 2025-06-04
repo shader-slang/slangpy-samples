@@ -120,7 +120,9 @@ void calculate_grads(uint seed, int2 pixel, MaterialParameters material, Materia
 {
     LCG lcg = LCG(seed);
 
-    for(int i = 0; i < 10000; i++)
+    const int N = 1;
+
+    for(int i = 0; i < N; i++)
     {
         float3 light_dir = lcg.next_dir_on_hemisphere();
         float3 view_dir = lcg.next_dir_on_hemisphere();
@@ -141,7 +143,7 @@ void calculate_grads(uint seed, int2 pixel, MaterialParameters material, Materia
 
         bwd_diff(loss)(pixel, sum, material, light_dir, view_dir, 1);
     }
-    material.normal_grad.setv(pixel,material.normal_grad.getv(pixel)/10000.0f);
+    material.normal_grad.setv(pixel,material.normal_grad.getv(pixel)/float(N));
 }
 
 void init_normal(inout float3 val)
@@ -162,10 +164,9 @@ void scale(inout float3 val, float k)
     val = val * k;
 }
 
-void optimize1(inout float primal, inout float grad, inout float m_prev, inout float v_prev, float learning_rate)
+void optimize1(inout float primal, inout float grad, inout float m_prev, inout float v_prev, float learning_rate, int iteration)
 {
     // Standard Adam default values.
-    const float ADAM_ETA = 0.002;
     const float ADAM_BETA_1 = 0.9;
     const float ADAM_BETA_2 = 0.999;
     const float ADAM_EPSILON = 1e-8;
@@ -179,21 +180,23 @@ void optimize1(inout float primal, inout float grad, inout float m_prev, inout f
     m_prev = m;
     v_prev = v;
 
-    float mHat = m / (1.0f - ADAM_BETA_1);
-    float vHat = v / (1.0f - ADAM_BETA_2);
+    float mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
+    float vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
 
-    float update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
+    float update = learning_rate * (mHat / (sqrt(vHat) + ADAM_EPSILON));
 
     // Subtract the optimized result from the trained normal and reset the gradient.
     primal -= update;
 
+    // Make sure we stay in [0, 1]
+    primal = saturate(primal);
+
     grad = 0;
 }
 
-void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, bool renormalize)
+void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, int iteration, bool renormalize)
 {
     // Standard Adam default values.
-    const float ADAM_ETA = 0.002;
     const float ADAM_BETA_1 = 0.9;
     const float ADAM_BETA_2 = 0.999;
     const float ADAM_EPSILON = 1e-8;
@@ -207,15 +210,17 @@ void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inou
     m_prev = m;
     v_prev = v;
 
-    float3 mHat = m / (1.0f - ADAM_BETA_1);
-    float3 vHat = v / (1.0f - ADAM_BETA_2);
+    float3 mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
+    float3 vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
 
-    float3 update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
+    float3 update = learning_rate * (mHat / (sqrt(vHat) + ADAM_EPSILON));
 
     // Subtract the optimized result from the trained normal and reset the gradient.
     primal -= update;
     if(renormalize)
         primal = normalize(primal); // Ensure the normal is still normalized.
+    else
+        primal = saturate(primal); // Make sure we stay in [0, 1]
     //primal = primal; // Ensure the normal is still normalized.
 
     grad = float3(0.0f);

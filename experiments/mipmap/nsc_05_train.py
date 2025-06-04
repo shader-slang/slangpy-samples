@@ -153,29 +153,35 @@ while app.process_events():
     app.blit(loss_output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), tonemap=bilinear_output)
     xpos += 1024+10
 
-    # Loss between downsampled output and quarter res rendered output.
-    module.calculate_grads(
-        seed = spy.wang_hash(seed=optimize_counter, warmup=2),
-        pixel = spy.grid(shape=lr_albedo_map.shape),
-        material = {
-                "albedo": lr_trained_albedo_map,
-                "normal": lr_trained_normal_map,
-                "roughness": lr_trained_roughness_map,
-                "albedo_grad": lr_albedo_grad,
-                "normal_grad": lr_normal_grad,
-                "roughness_grad": lr_roughness_grad,
-        },
-        ref_material = {
-                "albedo": albedo_map,
-                "normal": normal_map,
-                "roughness": roughness_map,
-        })
-    optimize_counter += 1
+    # Extra credit: Start with a fast learning rate and slowly ramp down
+    training_progress_percentage = min(optimize_counter / 3000, 1.0)
+    learning_rate = 0.002 * (1.0 - training_progress_percentage) + 0.0002 * training_progress_percentage
 
-    # Optimize the trained maps using the gradients.
-    module.optimize3(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, 1, False)
-    module.optimize3(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, 1, True)
-    module.optimize1(lr_trained_roughness_map, lr_roughness_grad, m_roughness, v_roughness, 1)
+    # Loss between downsampled output and quarter res rendered output.
+    # This runs fast, so crank out a few iterations before the next render
+    for i in range(50):
+        module.calculate_grads(
+            seed = spy.wang_hash(seed=optimize_counter, warmup=2),
+            pixel = spy.grid(shape=lr_albedo_map.shape),
+            material = {
+                    "albedo": lr_trained_albedo_map,
+                    "normal": lr_trained_normal_map,
+                    "roughness": lr_trained_roughness_map,
+                    "albedo_grad": lr_albedo_grad,
+                    "normal_grad": lr_normal_grad,
+                    "roughness_grad": lr_roughness_grad,
+            },
+            ref_material = {
+                    "albedo": albedo_map,
+                    "normal": normal_map,
+                    "roughness": roughness_map,
+            })
+        optimize_counter += 1
+
+        # Optimize the trained maps using the gradients.
+        module.optimize3(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, learning_rate, optimize_counter, False)
+        module.optimize3(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, learning_rate, optimize_counter, True)
+        module.optimize1(lr_trained_roughness_map, lr_roughness_grad, m_roughness, v_roughness, learning_rate, optimize_counter)
 
     # read loss output to numpy tensor and sum abs values
     orig_loss_np = orig_loss_output.to_numpy()

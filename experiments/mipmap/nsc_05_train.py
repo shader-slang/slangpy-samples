@@ -152,6 +152,7 @@ while app.process_events():
     # Blit tensor to screen.
     app.blit(loss_output, size=spy.int2(1024, 1024), offset=spy.int2(xpos, 0), tonemap=bilinear_output)
     xpos += 1024+10
+    learning_rate = 0.002
 
     # Loss between downsampled output and quarter res rendered output.
     module.calculate_grads(
@@ -173,9 +174,9 @@ while app.process_events():
     optimize_counter += 1
 
     # Optimize the trained maps using the gradients.
-    module.optimize3(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, 1, optimize_counter, False)
-    module.optimize3(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, 1, optimize_counter, True)
-    module.optimize1(lr_trained_roughness_map, lr_roughness_grad, m_roughness, v_roughness, 1, optimize_counter)
+    module.optimize3(lr_trained_albedo_map, lr_albedo_grad, m_albedo, v_albedo, learning_rate, optimize_counter, False)
+    module.optimize3(lr_trained_normal_map, lr_normal_grad, m_normal, v_normal, learning_rate, optimize_counter, True)
+    module.optimize1(lr_trained_roughness_map, lr_roughness_grad, m_roughness, v_roughness, learning_rate, optimize_counter)
 
     # read loss output to numpy tensor and sum abs values
     orig_loss_np = orig_loss_output.to_numpy()

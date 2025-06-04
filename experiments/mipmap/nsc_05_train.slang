@@ -183,7 +183,7 @@ void optimize1(inout float primal, inout float grad, inout float m_prev, inout f
     float mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
     float vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
 
-    float update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
+    float update = learning_rate * (mHat / (sqrt(vHat) + ADAM_EPSILON));
 
     // Subtract the optimized result from the trained normal and reset the gradient.
     primal -= update;
@@ -210,7 +210,7 @@ void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inou
     float3 mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
     float3 vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
 
-    float3 update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
+    float3 update = learning_rate * (mHat / (sqrt(vHat) + ADAM_EPSILON));
 
     // Subtract the optimized result from the trained normal and reset the gradient.
     primal -= update;

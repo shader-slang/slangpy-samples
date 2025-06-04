@@ -2,3 +2,5 @@
 
 # Files produced by notebooks
 tutorials/*.png
+
+experiments/mipmap/.temp/

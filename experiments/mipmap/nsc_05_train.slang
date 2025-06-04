@@ -120,7 +120,9 @@ void calculate_grads(uint seed, int2 pixel, MaterialParameters material, Materia
 {
     LCG lcg = LCG(seed);
 
-    for(int i = 0; i < 10000; i++)
+    const int N = 1;
+
+    for(int i = 0; i < N; i++)
     {
         float3 light_dir = lcg.next_dir_on_hemisphere();
         float3 view_dir = lcg.next_dir_on_hemisphere();
@@ -141,7 +143,7 @@ void calculate_grads(uint seed, int2 pixel, MaterialParameters material, Materia
 
         bwd_diff(loss)(pixel, sum, material, light_dir, view_dir, 1);
     }
-    material.normal_grad.setv(pixel,material.normal_grad.getv(pixel)/10000.0f);
+    material.normal_grad.setv(pixel,material.normal_grad.getv(pixel)/float(N));
 }
 
 void init_normal(inout float3 val)

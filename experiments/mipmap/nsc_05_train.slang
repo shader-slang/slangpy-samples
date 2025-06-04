@@ -164,10 +164,9 @@ void scale(inout float3 val, float k)
     val = val * k;
 }
 
-void optimize1(inout float primal, inout float grad, inout float m_prev, inout float v_prev, float learning_rate)
+void optimize1(inout float primal, inout float grad, inout float m_prev, inout float v_prev, float learning_rate, int iteration)
 {
     // Standard Adam default values.
-    const float ADAM_ETA = 0.002;
     const float ADAM_BETA_1 = 0.9;
     const float ADAM_BETA_2 = 0.999;
     const float ADAM_EPSILON = 1e-8;
@@ -181,8 +180,8 @@ void optimize1(inout float primal, inout float grad, inout float m_prev, inout f
     m_prev = m;
     v_prev = v;
 
-    float mHat = m / (1.0f - ADAM_BETA_1);
-    float vHat = v / (1.0f - ADAM_BETA_2);
+    float mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
+    float vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
 
     float update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
 
@@ -192,10 +191,9 @@ void optimize1(inout float primal, inout float grad, inout float m_prev, inout f
     grad = 0;
 }
 
-void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, bool renormalize)
+void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inout float3 v_prev, float learning_rate, int iteration, bool renormalize)
 {
     // Standard Adam default values.
-    const float ADAM_ETA = 0.002;
     const float ADAM_BETA_1 = 0.9;
     const float ADAM_BETA_2 = 0.999;
     const float ADAM_EPSILON = 1e-8;
@@ -209,8 +207,8 @@ void optimize3(inout float3 primal, inout float3 grad, inout float3 m_prev, inou
     m_prev = m;
     v_prev = v;
 
-    float3 mHat = m / (1.0f - ADAM_BETA_1);
-    float3 vHat = v / (1.0f - ADAM_BETA_2);
+    float3 mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
+    float3 vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
 
     float3 update = (ADAM_ETA / (sqrt(vHat) + ADAM_EPSILON)) * mHat;
 

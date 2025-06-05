@@ -52,27 +52,71 @@ struct NetworkParameters<int Inputs, int Outputs>
     }
 }
 
+#define PI 3.14159265358979323846f
+
 struct Network {
-    NetworkParameters<2, 32>  layer0;
-    NetworkParameters<32, 32> layer1;
-    NetworkParameters<32, 3>  layer2;
+    RWTensor<float, 2> latent;
+    AtomicTensor<float, 2> latent_grad;
+
+    NetworkParameters<17, 16>  layer0;
+    NetworkParameters<16, 16> layer1;
+    NetworkParameters<16, 3>  layer2;
+
+    [Differentiable]
+    float get_latent(int2 index)
+    {
+        return latent.getv(index);
+    }
+    [BackwardDerivativeOf(get_latent)]
+    void get_latent_bwd(int2 index, float grad)
+    {
+        latent_grad.setv(index, grad);
+    }
+
+    [Differentiable]
+    float sample_latent(float2 uv)
+    {
+        int2 shape = int2(latent.shape[1], latent.shape[0]);
+        int2 maxidx = shape - 1;
+        int2 texel = int2(uv * shape);
+        float2 frac = frac(uv * shape);
+
+        float c00 = get_latent(texel);
+        float c10 = get_latent(min(texel + int2(1, 0),maxidx));
+        float c01 = get_latent(min(texel + int2(0, 1),maxidx));
+        float c11 = get_latent(min(texel + int2(1, 1),maxidx));
+
+        return lerp(lerp(c00, c10, frac.x), lerp(c01, c11, frac.x), frac.y);
+    }
 
     [Differentiable]
     float3 eval(no_diff float2 uv)
     {
-        float inputs[2] = {uv.x, uv.y};
-        float output0[32] = layer0.forward(inputs);
+        float latent_value = sample_latent(uv);
+
+        float inputs[17];
         [ForceUnroll]
-        for (int i = 0; i < 32; ++i)
+        for (int i = 0; i < 4; ++i) {
+            float scale = float(2 << i);
+            inputs[i * 4 + 0] = sin(uv.x * PI * scale);
+            inputs[i * 4 + 1] = cos(uv.x * PI * scale);
+            inputs[i * 4 + 2] = sin(uv.y * PI * scale);
+            inputs[i * 4 + 3] = cos(uv.y * PI * scale);
+        }
+        inputs[16] = latent_value;
+
+        float output0[16] = layer0.forward(inputs);
+        [ForceUnroll]
+        for (int i = 0; i < 16; ++i)
             output0[i] = activation(output0[i]);
-        float output1[32] = layer1.forward(output0);
+        float output1[16] = layer1.forward(output0);
         [ForceUnroll]
-        for (int i = 0; i < 32; ++i)
+        for (int i = 0; i < 16; ++i)
             output1[i] = activation(output1[i]);
         float output2[3] = layer2.forward(output1);
         [ForceUnroll]
         for (int i = 0; i < 3; ++i)
-            output2[i] = activation(output2[i]);
+            output2[i] = sigmoid(output2[i]);
         return float3(output2[0], output2[1], output2[2]);
     }
 }

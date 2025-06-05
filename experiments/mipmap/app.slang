@@ -19,7 +19,50 @@ float3 tonemap_aces_film(float3 input)
     return col;
 }
 
-void blit(
+void blit1(
+    int2 pixel,
+    int2 size,
+    int2 offset,
+    bool tonemap,
+    bool bilinear,
+    Tensor<float, 2> input,
+    RWTexture2D<float4> output,
+)
+{
+    uint2 output_dimensions;
+    output.GetDimensions(output_dimensions.x, output_dimensions.y);
+
+    float2 uv = pixel_to_uv(pixel, size);
+
+    uint[2] shape = input.shape;
+
+    float3 col = bilinear ?
+        input.sample(float2(uv.x, uv.y)) :
+        input.getv(uint2(shape[1]*uv.x, shape[0]*uv.y));
+
+    if (col.x < 0)
+        col = float3(-col.x, 0, 0);
+    else
+        col = float3(0, col.x, 0);
+
+    if(tonemap)
+    {
+        col = tonemap_aces_film(col);
+    }
+
+    if(any(isnan(col.x)))
+    {
+        output[offset + pixel] = float4(1,0,1,1);
+    }
+    else
+    {
+        output[offset + pixel] = float4(col, 1.0f);
+
+    }
+
+}
+
+void blit3(
     int2 pixel,
     int2 size,
     int2 offset,

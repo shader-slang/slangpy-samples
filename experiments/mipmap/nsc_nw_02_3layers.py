@@ -5,7 +5,7 @@ import slangpy as spy
 import numpy as np
 
 # Create the app and load the slang module.
-app = App(width=512*3+10*2, height=512, title="Mipmap Example")
+app = App(width=512*4+10*3, height=512, title="Mipmap Example")
 module = spy.Module.load_from_file(app.device, "nsc_nw_02_3layers.slang")
 
 # Load some materials.
@@ -40,12 +40,18 @@ class NetworkParameters(spy.InstanceList):
 class Network(spy.InstanceList):
     def __init__(self):
         super().__init__(module["Network"])
-        self.layer0 = NetworkParameters(2,32)
-        self.layer1 = NetworkParameters(32,32)
-        self.layer2 = NetworkParameters(32,3)
+        self.latent = spy.Tensor.from_numpy(app.device, np.zeros((64, 64)).astype('float32'))
+        self.latent_grad = spy.Tensor.zeros_like(self.latent)
+        self.m_latent = spy.Tensor.zeros_like(self.latent)
+        self.v_latent = spy.Tensor.zeros_like(self.latent)
+        self.layer0 = NetworkParameters(17,16)
+        self.layer1 = NetworkParameters(16,16)
+        self.layer2 = NetworkParameters(16,3)
 
     # Calls the Slang 'optimize' function for the layer.
     def optimize(self, learning_rate: float, optimize_counter: int):
+        module.optimize1(self.latent, self.latent_grad, self.m_latent, self.v_latent, learning_rate, optimize_counter)
+
         self.layer0.optimize(learning_rate, optimize_counter)
         self.layer1.optimize(learning_rate, optimize_counter)
         self.layer2.optimize(learning_rate, optimize_counter)
@@ -84,9 +90,13 @@ while app.process_events():
     app.blit(loss_output, size=spy.int2(512, 512), offset=spy.int2(offset, 0), tonemap=False)
     offset += 512 + 10
 
+   # Blit latent to screen.
+    app.blit(network.latent, size=spy.int2(512, 512), offset=spy.int2(offset, 0), tonemap=False)
+    offset += 512 + 10
+
     learning_rate = 0.001
 
-    for i in range(50):
+    for i in range(1):
         # Loss between downsampled output and quarter res rendered output.
         module.calculate_grads(
             seed = spy.wang_hash(seed=optimize_counter, warmup=2),

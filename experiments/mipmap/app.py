@@ -110,13 +110,23 @@ class App:
             size = spy.int2(source.shape[1], source.shape[0])
         if offset is None:
             offset = spy.int2(0, 0)
-        self._module.blit(spy.grid((size.y,size.x)),
-                    size,
-                    offset,
-                    tonemap,
-                    bilinear,
-                    source,
-                    self.output)
+
+        if source.dtype.name == 'vector':
+            self._module.blit3(spy.grid((size.y,size.x)),
+                        size,
+                        offset,
+                        tonemap,
+                        bilinear,
+                        source,
+                        self.output)
+        else:
+            self._module.blit1(spy.grid((size.y,size.x)),
+                        size,
+                        offset,
+                        tonemap,
+                        bilinear,
+                        source,
+                        self.output)
 
     def _on_window_keyboard_event(self, event: spy.KeyboardEvent):
         if event.type == spy.KeyboardEventType.key_press:

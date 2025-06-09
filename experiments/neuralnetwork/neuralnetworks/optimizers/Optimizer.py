@@ -59,6 +59,8 @@ class OptimizerPool:
         # Create the packed batch data
         self.batches_packed = pack(self.optim_type.module, self.batches)
 
+        # Workaround for Slang reflection issue - explicitly specialize batch_step
+        # for the number of batches we have, so that Slang can find the correct function.
         self.batch_step_func = self.optim_type.module.find_function_in_struct(self.optim_type, f"batch_step<{len(self.batches)}>")
 
     def add_parameter(self, param: Tensor):
@@ -77,7 +79,6 @@ class OptimizerPool:
 
         # Append to the mapping array 1 entry for each element of the tensor,
         # where the entry is [param_idx, element_idx]
-        # Efficiently append all [param_idx, i] pairs for i in range(param.element_count)
         new_mapping = np.column_stack((
             np.full(param.element_count, param_idx, dtype=np.int32),
             np.arange(param.element_count, dtype=np.int32)
@@ -119,11 +120,7 @@ class Optimizer:
         """
         self._initialized = True
         self.parameters = parameters
-        self.packed_primals = [pack(module,param) for param in parameters]
-        self.packed_grads = [pack(module,param.grad) for param in parameters]
-        self.states = []
         self.pools: dict[str, OptimizerPool] = {}
-        self.step_funcs: list[FunctionNode] = []
 
         for i, param in enumerate(parameters):
             dtype = Real.from_slangtype(param.dtype)
@@ -136,30 +133,8 @@ class Optimizer:
             pool = self._get_or_create_optimizer_pool(module, type_name)
             pool.add_parameter(param)
 
-            optim_type = module.find_struct(type_name)
-            if optim_type is None:
-                raise ValueError(f"Could not find optimizer type '{type_name}' in slang module '{module.name}'. "
-                                 "This could be due to a missing import or a type error. Make sure "
-                                 "this is a valid type in the module, e.g. by pasting in the type above "
-                                 "and checking for compile errors")
-
-            state_type = module.find_struct(f"{type_name}::State")
-            if state_type is None:
-                raise ValueError(f"Could not find optimizer state type '{type_name}::State' in slang module "
-                                 f"'{module.name}'. Make sure the type {type_name} implements IOptimizer<{dtype.slang()}>")
-
-            step_func = module.find_function_in_struct(optim_type, "step")
-            if step_func is None:
-                raise ValueError(f"Could not find method '{type_name}::step()' in slang module '{module.name}'. "
-                                 f"Make sure the type {type_name} implements IOptimizer<{dtype.slang()}>")
-
-            self.states.append(pack(module,state_type(param)))
-            self.step_funcs.append(step_func)
-
         for pool in self.pools.values():
             pool.finalise()
-
-        pass
 
     def _get_or_create_optimizer_pool(self, module: Module, optim_type_name: str) -> OptimizerPool:
         """
@@ -178,17 +153,6 @@ class Optimizer:
         self.check_initialized()
 
         this = self.get_this()
-        #for primal, grad, state, step_func in zip(self.packed_primals, self.packed_grads, self.states, self.step_funcs):
-        #    if cmd is None:
-        #        step_func(this, state, primal, grad)
-        #    else:
-        #        step_func.append_to(cmd, this, state, primal, grad)
-        #for pool in self.pools.values():
-        #    for batch in pool.batches:
-        #        if cmd is None:
-        #            pool.step_func(this, batch["states"], batch["params"], batch["grads"])
-        #        else:
-        #            pool.step_func.append_to(cmd, this, batch["states"], batch["params"], batch["grads"])
         for pool in self.pools.values():
             if cmd is None:
                 pool.batch_step_func(this, pool.batches_packed, pool.mapping_buffer)

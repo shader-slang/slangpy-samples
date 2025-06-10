@@ -4,7 +4,7 @@ import numpy as np
 from slangpy.types import NDBuffer
 from ..basetypes import Real
 
-from slangpy import InstanceList, Module, Tensor, CommandEncoder, pack
+from slangpy import Buffer, InstanceList, Module, Tensor, CommandEncoder, pack
 from slangpy.core.function import FunctionNode
 
 from typing import Any, Optional
@@ -63,7 +63,7 @@ class OptimizerPool:
         # for the number of batches we have, so that Slang can find the correct function.
         self.batch_step_func = self.optim_type.module.find_function_in_struct(self.optim_type, f"batch_step<{len(self.batches)}>")
 
-    def add_parameter(self, param: Tensor):
+    def add_parameter(self, param: Tensor, existing_state: Optional[Buffer] = None):
         """
         Adds a parameter to the optimizer pool.
         """
@@ -71,10 +71,17 @@ class OptimizerPool:
         param_idx = len(self.params)
         self.params.append(param)
 
+        # If no existing state is provided, create a new state for the parameter
+        if existing_state is None:
+            state = self.state_type(param).storage
+        else:
+            assert existing_state.size == param.element_count * self.state_type.buffer_layout.stride
+            state = existing_state
+
         self.batches.append(InstanceList(self.batch_type,{
             "params": param.detach().storage,
             "grads": param.grad.storage,
-            "states": self.state_type(param).storage,
+            "states": state,
         }))
 
         # Append to the mapping array 1 entry for each element of the tensor,
@@ -84,6 +91,26 @@ class OptimizerPool:
             np.arange(param.element_count, dtype=np.int32)
         ))
         self.mapping = np.vstack([self.mapping, new_mapping])
+
+    def prune(self, parameters_to_keep: set[Tensor]):
+        """
+        Prunes the optimizer pool, removing any parameters that are no longer needed.
+        This is called when the optimizer is no longer used.
+        """
+        curr_params = self.params
+        curr_states = [x.states for x in self.batches]
+
+        self.params = []
+        self.mapping = np.ndarray((0,2), dtype=np.int32)
+        self.batches = []
+
+        for (param,state) in zip(curr_params, curr_states):
+            if param in parameters_to_keep:
+                self.add_parameter(param, existing_state=state)
+
+        self.finalise()
+
+
 
 class Optimizer:
     """

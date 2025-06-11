@@ -66,7 +66,15 @@ def training_main():
     # Load slang module containing our eval/training code and initialize the model and optimizer
     module = Module.load_from_file(device, "NeuralTexture.slang")
     model.initialize(module, module.float2)
-    optim.initialize(module, model.parameters())
+    # Retrieve model parameters and pass them to the optimizer
+    # For efficiency, we'll first merge the many parameter tensors of the model
+    # into one combined parameter tensor. This reduces the number of dispatches
+    # the optimizer needs to do.
+    # For safety, we'll align everything to the coopvec alignment requirements
+    # (although this is only needed by the weights of the linear layer)
+    params = model.parameters()
+    params = nn.merge_tensors(params, alignment=nn.coopvec_matrix_alignment(device))
+    optim.initialize(module, params)
 
     # Optimize in increments of 256x256 samples per batch
     batch_shape = (256, 256)

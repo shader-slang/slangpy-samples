@@ -81,7 +81,7 @@ def training_main():
     # Load target texture to be learned and create a uv_grid of 0...1 values for
     # evaluating the trained model as we train
     loader = TextureLoader(device)
-    target_tex = loader.load_texture("bernie.jpg", {"load_as_normalized": True})
+    target_tex = loader.load_texture("bernie.jpg", {"load_as_srgb": False})
     sampler = device.create_sampler(min_lod=0, max_lod=0)
     uv_grid = create_uv_grid(device, resolution)
 

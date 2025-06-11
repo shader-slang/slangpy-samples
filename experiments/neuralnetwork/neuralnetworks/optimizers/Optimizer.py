@@ -54,16 +54,20 @@ class OptimizerPool:
         Finalizes the optimizer pool, preparing it for use.
         This is called after all parameters have been added.
         """
-        # Convert the mapping to a packed array
-        self.mapping_buffer = NDBuffer(self.optim_type.module.device, dtype="int2", element_count=self.mapping.shape[0])
-        self.mapping_buffer.copy_from_numpy(self.mapping)
+        if len(self.batched_params) > 0:
+            # Convert the mapping to a packed array
+            self.mapping_buffer = NDBuffer(self.optim_type.module.device, dtype="int2", element_count=self.mapping.shape[0])
+            self.mapping_buffer.copy_from_numpy(self.mapping)
 
-        # Create the packed batch data
-        self.batches_packed = pack(self.optim_type.module, self.batched_params)
+            # Create the packed batch data
+            self.batches_packed = pack(self.optim_type.module, self.batched_params)
 
-        # Workaround for Slang reflection issue - explicitly specialize batch_step
-        # for the number of batches we have, so that Slang can find the correct function.
-        self.batch_step_func = self.optim_type.module.find_function_in_struct(self.optim_type, f"batch_step<{len(self.batched_params)}>")
+            # Workaround for Slang reflection issue - explicitly specialize batch_step
+            # for the number of batches we have, so that Slang can find the correct function.
+            self.batch_step_func = self.optim_type.module.find_function_in_struct(self.optim_type, f"batch_step<{len(self.batched_params)}>")
+        else:
+            self.mapping_buffer = None
+            self.batches_packed = None
 
     def add_parameter(self, param: Tensor, existing_state: Optional[NDBuffer] = None):
         """
@@ -196,11 +200,13 @@ class Optimizer:
         this = self.get_this()
         for pool in self.pools.values():
             if cmd is None:
-                pool.batch_step_func(this, pool.batches_packed, pool.mapping_buffer)
+                if pool.batches_packed is not None:
+                    pool.batch_step_func(this, pool.batches_packed, pool.mapping_buffer)
                 for param in pool.unbatched_params:
                     pool.step_func(this, param['states'], param['params'], param['grads'])
             else:
-                pool.batch_step_func.append_to(cmd, this, pool.batches_packed, pool.mapping_buffer)
+                if pool.batches_packed is not None:
+                    pool.batch_step_func.append_to(cmd, this, pool.batches_packed, pool.mapping_buffer)
                 for param in pool.unbatched_params:
                     pool.step_func.append_to(cmd, this, param['states'], param['params'], param['grads'])
 

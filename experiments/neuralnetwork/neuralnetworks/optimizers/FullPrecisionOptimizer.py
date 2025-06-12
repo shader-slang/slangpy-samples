@@ -18,6 +18,9 @@ class FullPrecisionOptimizer(Optimizer):
         self.nested_optim = nested_optimizer
         self.gradient_scale = gradient_scale
 
+    def update_state(self):
+        self.nested_optim.update_state()
+
     def get_type_name(self, dtype: Real) -> str:
         return f"FullPrecisionOptimizer<{dtype}, {self.nested_optim.get_type_name(Real.float)}>"
 

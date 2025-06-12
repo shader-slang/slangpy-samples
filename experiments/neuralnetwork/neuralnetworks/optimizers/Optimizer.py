@@ -211,6 +211,12 @@ class Optimizer:
                     pool.step_func.append_to(cmd, this, param['states'], param['params'], param['grads'])
 
 
+        self.update_state()
+
+    def update_state(self):
+        """Overridable function called after a step() completes to allow updating internal state"""
+        pass
+
     def get_type_name(self, dtype: Real) -> str:
         """Returns the name of a slang type implementing IOptimizer<dtype>"""
         raise NotImplementedError()

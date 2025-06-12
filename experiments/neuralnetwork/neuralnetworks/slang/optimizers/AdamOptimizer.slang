@@ -20,15 +20,6 @@ public struct AdamOptimizer<T : IReal> : IOptimizer<T>
     }
     public typealias State = AdamState<T>;
 
-    // Batch of adam optimizer parameters, gradients and states
-    public struct AdamBatch<S : IReal>
-    {
-        RWStructuredBuffer<S> params;
-        RWStructuredBuffer<S> grads;
-        RWStructuredBuffer<AdamState<S>> states;
-    }
-    public typealias Batch = AdamBatch<T>;
-
     // Adam parameters
     public T beta1;
     public T beta2;
@@ -49,22 +40,5 @@ public struct AdamOptimizer<T : IReal> : IOptimizer<T>
 
         param -= learningRate * meanCorrected / (sqrt(varianceCorrected) + epsilon);
         grad = T(0.0f);
-    }
-
-    public void batch_step<let N : int>(Batch[N] batches, int2 batch_index)
-    {
-        AdamBatch<T> batch = batches[batch_index.x];
-
-        int i = batch_index.y;
-
-        T param = batch.params[i];
-        T grad = batch.grads[i];
-        AdamState<T> state = batch.states[i];
-
-        step(state, param, grad);
-
-        batch.params[i] = param;
-        batch.grads[i] = grad;
-        batch.states[i] = state;
     }
 }

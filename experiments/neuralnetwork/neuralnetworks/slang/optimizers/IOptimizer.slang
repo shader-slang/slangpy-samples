@@ -20,8 +20,33 @@ public interface IOptimizerState<T : IReal>
 public interface IOptimizer<T : IReal>
 {
     public associatedtype State : IOptimizerState<T>;
-    public associatedtype Batch;
 
     public void step(inout State state, inout T param, inout T grad);
-    public void batch_step<let N : int>(Batch[N] batches, int2 batch_index);
+}
+
+public extension<T : IReal, Optimizer : IOptimizer<T>> Optimizer
+{
+    public struct Batch
+    {
+        RWStructuredBuffer<T> params;
+        RWStructuredBuffer<T> grads;
+        RWStructuredBuffer<Optimizer::State> states;
+    }
+
+    public void batch_step<int N>(Batch[N] batches, int2 batch_index)
+    {
+        Batch batch = batches[batch_index.x];
+
+        int i = batch_index.y;
+
+        T param = batch.params[i];
+        T grad = batch.grads[i];
+        Optimizer::State state = batch.states[i];
+
+        step(state, param, grad);
+
+        batch.params[i] = param;
+        batch.grads[i] = grad;
+        batch.states[i] = state;
+    }
 }

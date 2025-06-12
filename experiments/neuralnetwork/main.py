@@ -24,7 +24,7 @@ def training_main():
     device = app.device
 
     # If the device supports cooperative vector, run MLP at half precision and in coopvec mode
-    if "cooperative-vector" in device.features:
+    if spy.Feature.cooperative_vector in device.features:
         print("Cooperative vector enabled!")
         mlp_input = nn.ArrayKind.coopvec
         mlp_precision = nn.Real.half
@@ -66,7 +66,15 @@ def training_main():
     # Load slang module containing our eval/training code and initialize the model and optimizer
     module = Module.load_from_file(device, "NeuralTexture.slang")
     model.initialize(module, module.float2)
-    optim.initialize(module, model.parameters())
+    # Retrieve model parameters and pass them to the optimizer
+    # For efficiency, we'll first merge the many parameter tensors of the model
+    # into one combined parameter tensor. This reduces the number of dispatches
+    # the optimizer needs to do.
+    # For safety, we'll align everything to the coopvec alignment requirements
+    # (although this is only needed by the weights of the linear layer)
+    params = model.parameters()
+    params = nn.merge_tensors(params, alignment=nn.coopvec_matrix_alignment(device))
+    optim.initialize(module, params)
 
     # Optimize in increments of 256x256 samples per batch
     batch_shape = (256, 256)
@@ -81,7 +89,7 @@ def training_main():
     # Load target texture to be learned and create a uv_grid of 0...1 values for
     # evaluating the trained model as we train
     loader = TextureLoader(device)
-    target_tex = loader.load_texture("bernie.jpg", {"load_as_normalized": True})
+    target_tex = loader.load_texture("bernie.jpg", {"load_as_srgb": False})
     sampler = device.create_sampler(min_lod=0, max_lod=0)
     uv_grid = create_uv_grid(device, resolution)
 

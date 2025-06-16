@@ -22,15 +22,10 @@ public struct FullPrecisionOptimizer<T : IReal, NestedOptimizer : IOptimizer<flo
 public extension<NestedOptimizer : IOptimizer<float>> FullPrecisionOptimizer<float, NestedOptimizer> : IOptimizer<float>
 {
     public typealias State = NestedOptimizer::State;
-    public typealias Batch = NestedOptimizer::Batch;
 
     public void step(inout State state, inout float param, inout float grad)
     {
         nestedOptim.step(state, param, grad);
-    }
-    public void batch_step<let N : int>(Batch[N] batches, int2 batch_index)
-    {
-        nestedOptim.batch_step(batches, batch_index);
     }
 }
 
@@ -40,7 +35,6 @@ public extension<NestedOptimizer : IOptimizer<float>> FullPrecisionOptimizer<flo
 public extension<NestedOptimizer : IOptimizer<float>> FullPrecisionOptimizer<half, NestedOptimizer> : IOptimizer<half>
 {
     public typealias State = FullPrecisionParameterHalfState<NestedOptimizer>;
-    public typealias Batch = FullPrecisionParameterHalfBatch<NestedOptimizer>;
 
     public void step(inout State state, inout half paramH, inout half gradH)
     {
@@ -48,23 +42,6 @@ public extension<NestedOptimizer : IOptimizer<float>> FullPrecisionOptimizer<hal
         nestedOptim.step(state.nestedState, state.paramF, gradF);
         gradH = half(gradF);
         paramH = half(state.paramF);
-    }
-
-    public void batch_step<let N : int>(Batch[N] batches, int2 batch_index)
-    {
-        Batch batch = batches[batch_index.x];
-
-        int i = batch_index.y;
-
-        half param = batch.params[i];
-        half grad = batch.grads[i];
-        State state = batch.states[i];
-
-        step(state, param, grad);
-
-        batch.params[i] = param;
-        batch.grads[i] = grad;
-        batch.states[i] = state;
     }
 }
 
@@ -82,10 +59,4 @@ public struct FullPrecisionParameterHalfState<NestedOptimizer : IOptimizer<float
         paramF = float(paramH);
         nestedState = NestedOptimizer::State(paramF);
     }
-}
-public struct FullPrecisionParameterHalfBatch<NestedOptimizer : IOptimizer<float>>
-{
-    RWStructuredBuffer<half> params;
-    RWStructuredBuffer<half> grads;
-    RWStructuredBuffer<FullPrecisionParameterHalfState<NestedOptimizer>> states;
 }

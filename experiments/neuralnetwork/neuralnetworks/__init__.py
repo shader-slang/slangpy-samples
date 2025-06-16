@@ -5,4 +5,4 @@
 from .basetypes import *
 from .components import *
 from .optimizers import *
-from .utils import slang_include_paths
+from .utils import slang_include_paths, merge_tensors, coopvec_matrix_alignment, coopvec_vector_alignment

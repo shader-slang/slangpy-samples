@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * Simplified 2D Gaussian Splatting Example in Slang
  *
@@ -107,7 +108,7 @@ struct Gaussian2D : IDifferentiable
             float2(0, 0),
             float2(1, 1),
             float2(blobs[total * 0 + idx], blobs[total * 1 + idx]));
-        
+
         // Add a small padding value to avoid singularities or unstable Gaussians.
         gaussian.sigma[0][0] = smoothstep(0.f, 1.f, blobs[total * 2 + idx] * 0.8f) + 0.005f;
         gaussian.sigma[1][1] = smoothstep(0.f, 1.f, blobs[total * 3 + idx] * 0.8f) + 0.005f;
@@ -140,7 +141,7 @@ struct Gaussian2D : IDifferentiable
      * The weight of the Gaussian blob at location uv is determined from
      * the exponent of the 2-dimensional Gaussian distribution function, multiplied by the
      * blob's inherent alpha value. The RGB color is stored and returned separately.
-     * For more information about calculating Gaussian distributions, see 
+     * For more information about calculating Gaussian distributions, see
      * https://mathworld.wolfram.com/GaussianFunction.html
      */
     [Differentiable]
@@ -160,7 +161,7 @@ struct Gaussian2D : IDifferentiable
 
 /* simpleSplatBlobs() is a naive implementation of the computation of color for a pixel.
  * It will iterate over all of the Gaussians for each pixel, to determine their contributions
- * to the pixel color, so this will become prohibitively slow with a very small number of 
+ * to the pixel color, so this will become prohibitively slow with a very small number of
  * blobs, but it reduces the number of steps involved in determining the pixel color.
  */
  [Differentiable]
@@ -175,7 +176,7 @@ struct Gaussian2D : IDifferentiable
     {
         Gaussian2D gaussian = Gaussian2D.load(blobs, i);
         blobColor = gaussian.eval(pixelCoord * (1.0/texSize));
-        
+
         result = alphaBlend(result, blobColor);
         if (result.a < 1.f / 255.f)
             continue;
@@ -232,7 +233,7 @@ float loss(uint2 pixelCoord, int2 imageSize, Blobs blobs, Texture2D<float4> targ
 // blobsBuffer:     a 1-dimensional tensor of floats, containing the Gaussian blobs
 [Differentiable]
 void perPixelLoss(
-    GradInOutTensor<float4, 2> output, 
+    GradInOutTensor<float4, 2> output,
     uint2 pixelCoord,
     GradInOutTensor<float, 1> blobsBuffer,
     Texture2D<float4> targetTexture)
@@ -253,7 +254,7 @@ void clearDerivs(uint3 dispatchThreadID, RWNDBuffer<uint, 1> derivBuffer)
 }
 
 /*
- * Output a constant. Useful to quickly clear a buffer to a specific 
+ * Output a constant. Useful to quickly clear a buffer to a specific
  * value with slangpy
  */
 void ones(out float4 val)

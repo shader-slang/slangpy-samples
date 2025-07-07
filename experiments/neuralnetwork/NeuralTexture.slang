@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 // clang-format off
 
 __exported import NeuralNetworks;
@@ -43,7 +44,7 @@ float4 evalModel<Model : IModel<float2, float3>>(Model model, float2 uv)
 float evalModelLoss<Model : IModel<float2, float3>>(Model model, no_diff float2 inputUV, no_diff float3 targetRGB)
 {
     let lossFunc = Losses::L2();
-    
+
     float3 prediction = model.forward(inputUV);
 
     return lossFunc.eval(prediction, targetRGB);

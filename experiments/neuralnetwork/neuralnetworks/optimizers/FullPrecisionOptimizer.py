@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from ..basetypes import Real
 
 from .Optimizer import Optimizer
@@ -22,7 +23,4 @@ class FullPrecisionOptimizer(Optimizer):
         return f"FullPrecisionOptimizer<{dtype}, {self.nested_optim.get_type_name(Real.float)}>"
 
     def get_this(self):
-        return {
-            "gradientScale": self.gradient_scale,
-            "nestedOptim": self.nested_optim.get_this()
-        }
+        return {"gradientScale": self.gradient_scale, "nestedOptim": self.nested_optim.get_this()}

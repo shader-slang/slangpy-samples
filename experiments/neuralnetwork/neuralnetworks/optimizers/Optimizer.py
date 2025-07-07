@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 import numpy as np
 
 from slangpy.types import NDBuffer
@@ -9,34 +10,45 @@ from slangpy.core.function import FunctionNode
 
 from typing import Any, Optional
 
+
 class OptimizerPool:
     def __init__(self, module: Module, optim_type_name: str):
         optim_type = module.find_struct(optim_type_name)
         if optim_type is None:
-            raise ValueError(f"Could not find optimizer type '{optim_type_name}' in slang module '{module.name}'. "
-                                "This could be due to a missing import or a type error. Make sure "
-                                "this is a valid type in the module, e.g. by pasting in the type above "
-                                "and checking for compile errors")
+            raise ValueError(
+                f"Could not find optimizer type '{optim_type_name}' in slang module '{module.name}'. "
+                "This could be due to a missing import or a type error. Make sure "
+                "this is a valid type in the module, e.g. by pasting in the type above "
+                "and checking for compile errors"
+            )
 
         batch_type = module.find_struct(f"{optim_type_name}::Batch")
         if batch_type is None:
-            raise ValueError(f"Could not find optimizer batch type '{optim_type_name}::State' in slang module "
-                                f"'{module.name}'. Make sure the type {optim_type_name} implements IOptimizer")
+            raise ValueError(
+                f"Could not find optimizer batch type '{optim_type_name}::State' in slang module "
+                f"'{module.name}'. Make sure the type {optim_type_name} implements IOptimizer"
+            )
 
         state_type = module.find_struct(f"{optim_type_name}::State")
         if state_type is None:
-            raise ValueError(f"Could not find optimizer state type '{optim_type_name}::State' in slang module "
-                                f"'{module.name}'. Make sure the type {optim_type_name} implements IOptimizer")
+            raise ValueError(
+                f"Could not find optimizer state type '{optim_type_name}::State' in slang module "
+                f"'{module.name}'. Make sure the type {optim_type_name} implements IOptimizer"
+            )
 
         step_func = module.find_function_in_struct(optim_type, "step")
         if step_func is None:
-            raise ValueError(f"Could not find method '{optim_type_name}::step()' in slang module '{module.name}'. "
-                                f"Make sure the type {optim_type_name} implements IOptimizer")
+            raise ValueError(
+                f"Could not find method '{optim_type_name}::step()' in slang module '{module.name}'. "
+                f"Make sure the type {optim_type_name} implements IOptimizer"
+            )
 
         batch_step_func = module.find_function_in_struct(optim_type, "batch_step")
         if batch_step_func is None:
-            raise ValueError(f"Could not find method '{optim_type_name}::batch_step()' in slang module '{module.name}'. "
-                                f"Make sure the type {optim_type_name} implements IOptimizer")
+            raise ValueError(
+                f"Could not find method '{optim_type_name}::batch_step()' in slang module '{module.name}'. "
+                f"Make sure the type {optim_type_name} implements IOptimizer"
+            )
 
         self.optim_type = optim_type
         self.state_type = state_type
@@ -45,9 +57,9 @@ class OptimizerPool:
         self.batch_step_func = batch_step_func
         self.params: list[Tensor] = []
         self.states: list[NDBuffer] = []
-        self.mapping = np.ndarray((0,2), dtype=np.int32)
-        self.batched_params: list[dict[str,Any]] = []
-        self.unbatched_params: list[dict[str,Any]] = []
+        self.mapping = np.ndarray((0, 2), dtype=np.int32)
+        self.batched_params: list[dict[str, Any]] = []
+        self.unbatched_params: list[dict[str, Any]] = []
 
     def finalise(self):
         """
@@ -56,7 +68,9 @@ class OptimizerPool:
         """
         if len(self.batched_params) > 0:
             # Convert the mapping to a packed array
-            self.mapping_buffer = NDBuffer(self.optim_type.module.device, dtype="int2", element_count=self.mapping.shape[0])
+            self.mapping_buffer = NDBuffer(
+                self.optim_type.module.device, dtype="int2", element_count=self.mapping.shape[0]
+            )
             self.mapping_buffer.copy_from_numpy(self.mapping)
 
             # Create the packed batch data
@@ -64,7 +78,9 @@ class OptimizerPool:
 
             # Workaround for Slang reflection issue - explicitly specialize batch_step
             # for the number of batches we have, so that Slang can find the correct function.
-            self.batch_step_func = self.optim_type.module.find_function_in_struct(self.optim_type, f"batch_step<{len(self.batched_params)}>")
+            self.batch_step_func = self.optim_type.module.find_function_in_struct(
+                self.optim_type, f"batch_step<{len(self.batched_params)}>"
+            )
         else:
             self.mapping_buffer = None
             self.batches_packed = None
@@ -84,28 +100,37 @@ class OptimizerPool:
             state = existing_state
         self.states.append(state)
 
-        if param.element_count >= 32*1024:
+        if param.element_count >= 32 * 1024:
             # If parameter is large enough, it's suitable for a single dispatch
-            self.unbatched_params.append({
-                "params": param.detach(),
-                "grads": param.grad,
-                "states": state,
-            })
+            self.unbatched_params.append(
+                {
+                    "params": param.detach(),
+                    "grads": param.grad,
+                    "states": state,
+                }
+            )
         else:
             # Small parameters are batched together into 1 mega dispatch with an LUT
             batch_idx = len(self.batched_params)
-            self.batched_params.append(InstanceList(self.batch_type,{
-                "params": param.storage,
-                "grads": param.grad.storage,
-                "states": state.storage,
-            }))
+            self.batched_params.append(
+                InstanceList(
+                    self.batch_type,
+                    {
+                        "params": param.storage,
+                        "grads": param.grad.storage,
+                        "states": state.storage,
+                    },
+                )
+            )
 
             # Append to the mapping array 1 entry for each element of the tensor,
             # where the entry is [param_idx, element_idx]
-            new_mapping = np.column_stack((
-                np.full(param.element_count, batch_idx, dtype=np.int32),
-                np.arange(param.element_count, dtype=np.int32)
-            ))
+            new_mapping = np.column_stack(
+                (
+                    np.full(param.element_count, batch_idx, dtype=np.int32),
+                    np.arange(param.element_count, dtype=np.int32),
+                )
+            )
             self.mapping = np.vstack([self.mapping, new_mapping])
 
     def prune(self, parameters_to_keep: set[Tensor]):
@@ -118,16 +143,15 @@ class OptimizerPool:
 
         self.params = []
         self.states = []
-        self.mapping = np.ndarray((0,2), dtype=np.int32)
+        self.mapping = np.ndarray((0, 2), dtype=np.int32)
         self.batched_params = []
         self.unbatched_params = []
 
-        for (param,state) in zip(curr_params, curr_states):
+        for param, state in zip(curr_params, curr_states):
             if param in parameters_to_keep:
                 self.add_parameter(param, existing_state=state)
 
         self.finalise()
-
 
 
 class Optimizer:
@@ -170,8 +194,10 @@ class Optimizer:
         for i, param in enumerate(parameters):
             dtype = Real.from_slangtype(param.dtype)
             if dtype is None:
-                raise ValueError(f"Unsupported element type '{param.dtype.full_name}' "
-                                 f"of parameter {i}: Must be half, float or double")
+                raise ValueError(
+                    f"Unsupported element type '{param.dtype.full_name}' "
+                    f"of parameter {i}: Must be half, float or double"
+                )
 
             type_name = self.get_type_name(dtype)
 
@@ -203,13 +229,16 @@ class Optimizer:
                 if pool.batches_packed is not None:
                     pool.batch_step_func(this, pool.batches_packed, pool.mapping_buffer)
                 for param in pool.unbatched_params:
-                    pool.step_func(this, param['states'], param['params'], param['grads'])
+                    pool.step_func(this, param["states"], param["params"], param["grads"])
             else:
                 if pool.batches_packed is not None:
-                    pool.batch_step_func.append_to(cmd, this, pool.batches_packed, pool.mapping_buffer)
+                    pool.batch_step_func.append_to(
+                        cmd, this, pool.batches_packed, pool.mapping_buffer
+                    )
                 for param in pool.unbatched_params:
-                    pool.step_func.append_to(cmd, this, param['states'], param['params'], param['grads'])
-
+                    pool.step_func.append_to(
+                        cmd, this, param["states"], param["params"], param["grads"]
+                    )
 
     def get_type_name(self, dtype: Real) -> str:
         """Returns the name of a slang type implementing IOptimizer<dtype>"""
@@ -226,5 +255,7 @@ class Optimizer:
 
     def check_initialized(self):
         if not self._initialized:
-            raise RuntimeError("Optimizer is uninitialized. Make sure to "
-                               "call .initialize() before using the optimizer")
+            raise RuntimeError(
+                "Optimizer is uninitialized. Make sure to "
+                "call .initialize() before using the optimizer"
+            )

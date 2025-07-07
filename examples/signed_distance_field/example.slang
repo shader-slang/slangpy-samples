@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// example.slang
+// SPDX-License-Identifier: Apache-2.0
+
 import "slangpy";
 
 // clang-format off
@@ -204,4 +204,3 @@ float4 generate_isolines(float2 dist_value) {
 
   return color;
 }
-

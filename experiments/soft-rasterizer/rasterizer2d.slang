@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
 
 import "slangpy";
 
@@ -84,7 +84,7 @@ float distanceToTriangle(float2 xy, float2 v1, float2 v2, float2 v3)
         return distanceToVertex(xy, v1); // v1 is the closest vertex
     else if (sd2 > 0.f && sd3 > 0.f)
         return distanceToVertex(xy, v3); // v3 is the closest vertex
-    else 
+    else
         return max(max(d1, d2), d3);
 
 }

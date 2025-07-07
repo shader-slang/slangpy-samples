@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from typing import Callable, Optional
 import slangpy as spy
@@ -6,37 +6,37 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title: str = "Forward Rasterizer Example", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.d3d12):
+    def __init__(
+        self,
+        title: str = "Forward Rasterizer Example",
+        width: int = 1024,
+        height: int = 1024,
+        device_type: spy.DeviceType = spy.DeviceType.d3d12,
+    ):
         super().__init__()
 
         # Create spy window
-        self._window = spy.Window(
-            width=width, height=height, title=title, resizable=False
-        )
+        self._window = spy.Window(width=width, height=height, title=title, resizable=False)
 
         # Create spy device with local include path for shaders
-        self._device = spy.create_device(device_type,
-                                         enable_debug_layers=True,
-                                             include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(
+            device_type, enable_debug_layers=True, include_paths=[Path(__file__).parent]
+        )
 
         # Load module of helpers
-        self._module = spy.Module.load_from_file(
-            self._device,
-            "app.slang"
-        )
+        self._module = spy.Module.load_from_file(self._device, "app.slang")
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)
         self.surface.configure(width=self._window.width, height=self._window.height)
 
         # Will contain output texture
-        self._output_texture: 'spy.Texture' = self.device.create_texture(
+        self._output_texture: "spy.Texture" = self.device.create_texture(
             format=spy.Format.rgba16_float,
             width=width,
             height=height,
             mip_count=1,
-            usage=spy.TextureUsage.shader_resource
-            | spy.TextureUsage.unordered_access,
+            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
             label="output_texture",
         )
 
@@ -91,8 +91,7 @@ class App:
                 width=image.width,
                 height=image.height,
                 mip_count=1,
-                usage=spy.TextureUsage.shader_resource
-                | spy.TextureUsage.unordered_access,
+                usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
                 label="output_texture",
             )
 
@@ -104,20 +103,23 @@ class App:
         del image
         self.surface.present()
 
-    def blit(self, source: spy.Tensor, size: Optional[spy.int2] = None, offset: Optional[spy.int2] = None, tonemap: bool = True, bilinear: bool = False):
+    def blit(
+        self,
+        source: spy.Tensor,
+        size: Optional[spy.int2] = None,
+        offset: Optional[spy.int2] = None,
+        tonemap: bool = True,
+        bilinear: bool = False,
+    ):
         if len(source.shape) != 2:
             raise ValueError("Source tensor must be 2D (height, width).")
         if size is None:
             size = spy.int2(source.shape[1], source.shape[0])
         if offset is None:
             offset = spy.int2(0, 0)
-        self._module.blit(spy.grid((size.y,size.x)),
-                    size,
-                    offset,
-                    tonemap,
-                    bilinear,
-                    source,
-                    self.output)
+        self._module.blit(
+            spy.grid((size.y, size.x)), size, offset, tonemap, bilinear, source, self.output
+        )
 
     def _on_window_keyboard_event(self, event: spy.KeyboardEvent):
         if event.type == spy.KeyboardEventType.key_press:

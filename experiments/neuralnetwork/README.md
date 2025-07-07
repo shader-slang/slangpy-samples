@@ -72,7 +72,7 @@ For example, in the neural texture sample, we use this function in `NeuralTextur
 float evalModelLoss<Model : IModel<float2, float3>>(Model model, no_diff float2 inputUV, no_diff float3 targetRGB)
 {
     let lossFunc = Losses::L2();
-    
+
     float3 prediction = model.forward(inputUV);
 
     return lossFunc.eval(prediction, targetRGB);

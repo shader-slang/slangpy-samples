@@ -1,15 +1,19 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import pathlib
 import numpy as np
 
-print("SlangPy random number generator examples (https://slangpy.shader-slang.org/en/latest/generator_random.html)")
+print(
+    "SlangPy random number generator examples (https://slangpy.shader-slang.org/en/latest/generator_random.html)"
+)
 
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "random.slang")

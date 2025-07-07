@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 no_diff float targetSDF(no_diff float3 samplePoint)
 {
     return length(samplePoint) - 1.0f;

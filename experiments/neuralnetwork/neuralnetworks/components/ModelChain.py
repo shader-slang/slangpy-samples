@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from ..basetypes import IModel, SlangType
 
 from slangpy import Module
@@ -69,17 +70,19 @@ class ChainedModelPair(IModel):
 
     @property
     def type_name(self) -> str:
-        return ("ChainedModelPair<"
-                f"{self.first.input_type.full_name}, "
-                f"{self.first.output_type.full_name}, "
-                f"{self.second.output_type.full_name}, "
-                f"{self.first.type_name}, {self.second.type_name}>")
+        return (
+            "ChainedModelPair<"
+            f"{self.first.input_type.full_name}, "
+            f"{self.first.output_type.full_name}, "
+            f"{self.second.output_type.full_name}, "
+            f"{self.first.type_name}, {self.second.type_name}>"
+        )
 
     def get_this(self):
         return {
             "_type": self.type_name,
             "first": self.first.get_this(),
-            "second": self.second.get_this()
+            "second": self.second.get_this(),
         }
 
     def children(self):

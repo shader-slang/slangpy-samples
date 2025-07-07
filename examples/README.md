@@ -26,7 +26,3 @@ Welcome to SlangPy examples! Here you'll find well written and documented exampl
 | [pytorch](https://slangpy.shader-slang.org/en/latest/pytorch.html)                | Example of use of PyTorch integration to evaluate and back propagate through a polynomial.                                                                                                                                                            |
 | [textures](https://slangpy.shader-slang.org/en/latest/textures.html)              | Simple manipulation of texture data using SlangPy.                                                                                                                                                                                                    |
 | [type_methods](https://slangpy.shader-slang.org/en/latest/typemethods.html)       | Use of InstanceList, InstanceBuffer and get_this to invoke methods of a type.                                                                                                                                                                         |
-
-
-
-

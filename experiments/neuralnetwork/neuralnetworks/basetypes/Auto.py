@@ -1,16 +1,17 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from typing import Union, TypeVar
 
 
 class AutoType:
-    """Represents """
+    """Represents"""
 
     def __str__(self):
         return "Auto"
 
 
 Auto = AutoType()  # Singleton value representing automatically settable model arguments
-T = TypeVar('T')
+T = TypeVar("T")
 # AutoSettable[T] is a type hint for an argument that can take T or Auto
 AutoSettable = Union[T, AutoType]
 

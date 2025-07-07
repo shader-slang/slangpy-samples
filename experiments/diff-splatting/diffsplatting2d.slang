@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * 2D Gaussian Splatting Example in Slang
  *
@@ -290,7 +291,7 @@ struct Gaussian2D : IDifferentiable
             float2(0, 0),
             float2(1, 1),
             float2(blobs[total * 0 + idx], blobs[total * 1 + idx]));
-        
+
         // Add a small padding value to avoid singularities or unstable Gaussians.
         gaussian.sigma[0][0] = smoothstep(0.f, 1.f, blobs[total * 2 + idx] * 0.8f) + 0.005f;
         gaussian.sigma[1][1] = smoothstep(0.f, 1.f, blobs[total * 3 + idx] * 0.8f) + 0.005f;
@@ -749,7 +750,7 @@ void clearDerivs(uint3 dispatchThreadID, RWNDBuffer<uint, 1> derivBuffer)
 }
 
 /*
- * Output a constant. Useful to quickly clear a buffer to a specific 
+ * Output a constant. Useful to quickly clear a buffer to a specific
  * value with slangpy
  */
 void ones(out float4 val)

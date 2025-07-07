@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from typing import Callable, Optional
 import slangpy as spy
@@ -6,17 +6,20 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title: str = "SDF Match Example", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.d3d12):
+    def __init__(
+        self,
+        title: str = "SDF Match Example",
+        width: int = 1024,
+        height: int = 1024,
+        device_type: spy.DeviceType = spy.DeviceType.d3d12,
+    ):
         super().__init__()
 
         # Create a window
-        self._window = spy.Window(
-            width=width, height=height, title=title, resizable=True
-        )
+        self._window = spy.Window(width=width, height=height, title=title, resizable=True)
 
         # Create a device with local include path for shaders
-        self._device = spy.create_device(device_type,
-                                             include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(device_type, include_paths=[Path(__file__).parent])
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)
@@ -28,8 +31,7 @@ class App:
             width=width,
             height=height,
             mip_count=1,
-            usage=spy.TextureUsage.shader_resource
-            | spy.TextureUsage.unordered_access,
+            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
             label="output_texture",
         )
 
@@ -84,8 +86,7 @@ class App:
                 width=image.width,
                 height=image.height,
                 mip_count=1,
-                usage=spy.TextureUsage.shader_resource
-                | spy.TextureUsage.unordered_access,
+                usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
                 label="output_texture",
             )
 

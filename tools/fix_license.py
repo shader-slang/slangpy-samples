@@ -21,8 +21,7 @@ INCLUDE_PATHS = [
     "tutorials",
 ]
 
-EXCLUDE_PATHS = [
-]
+EXCLUDE_PATHS = []
 
 EXTENSIONS = ["h", "cpp", "slang", "slangh", "py"]
 

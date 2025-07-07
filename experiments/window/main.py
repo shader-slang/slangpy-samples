@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from app import App
 import slangpy as spy
 from time import time
@@ -25,5 +26,5 @@ app.on_keyboard_event = kb_event
 
 # Run app
 while app.process_events():
-    examplemodule.sinwave(t=time()-start, _result=app.output)
+    examplemodule.sinwave(t=time() - start, _result=app.output)
     app.present()

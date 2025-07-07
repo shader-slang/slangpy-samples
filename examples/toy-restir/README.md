@@ -22,23 +22,22 @@ This application outputs the ReSTIR frames to 'tev'; first 1spp frames and then 
 
 ## References
 
-[1] **Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting**  
-    _Benedikt Bitterli, Chris Wyman, Matt Pharr, Peter Shirley, Aaron Lefohn, Wojciech Jarosz_  
-    ACM Transactions on Graphics (TOG), Volume 39, Issue 4, August 2020  
+[1] **Spatiotemporal reservoir resampling for real-time ray tracing with dynamic direct lighting**
+    _Benedikt Bitterli, Chris Wyman, Matt Pharr, Peter Shirley, Aaron Lefohn, Wojciech Jarosz_
+    ACM Transactions on Graphics (TOG), Volume 39, Issue 4, August 2020
     https://doi.org/10.1145/3386569.3392481
 
-[2] "Generalized resampled importance sampling: Foundations of ReSTIR"  
-    Daqi Lin, Markus Kettunen, Benedikt Bitterli, Jacopo Pantaleoni, Cem Yuksel, Chris Wyman  
-    ACM Transactions on Graphics (TOG), Volume 41, Issue 4, July 2022  
+[2] "Generalized resampled importance sampling: Foundations of ReSTIR"
+    Daqi Lin, Markus Kettunen, Benedikt Bitterli, Jacopo Pantaleoni, Cem Yuksel, Chris Wyman
+    ACM Transactions on Graphics (TOG), Volume 41, Issue 4, July 2022
     https://doi.org/10.1145/3528223.3530158
-    
-[3] "A gentle introduction to ReSTIR: Path reuse in real-time"  
-    Chris Wyman, Markus Kettunen, Daqi Lin, Benedikt Bitterli, Cem Yuksel, Wojciech Jarosz, Pawel Kozlowski, Giovanni De Francesco  
-    SIGGRAPH '23: ACM SIGGRAPH 2023 Courses, July 2023  
+
+[3] "A gentle introduction to ReSTIR: Path reuse in real-time"
+    Chris Wyman, Markus Kettunen, Daqi Lin, Benedikt Bitterli, Cem Yuksel, Wojciech Jarosz, Pawel Kozlowski, Giovanni De Francesco
+    SIGGRAPH '23: ACM SIGGRAPH 2023 Courses, July 2023
     https://intro-to-restir.cwyman.org/
 
-[4] "Area ReSTIR: Resampling for real-time defocus and antialiasing"  
-    Song Zhang, Daqi Lin, Markus Kettunen, Cem Yuksel, Chris Wyman  
-    ACM Transactions on Graphics (TOG), Volume 43, Issue 4, July 2024  
+[4] "Area ReSTIR: Resampling for real-time defocus and antialiasing"
+    Song Zhang, Daqi Lin, Markus Kettunen, Cem Yuksel, Chris Wyman
+    ACM Transactions on Graphics (TOG), Volume 43, Issue 4, July 2024
     https://doi.org/10.1145/3658210
-

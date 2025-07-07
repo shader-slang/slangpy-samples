@@ -11,7 +11,7 @@ class App:
 
         # Create spy window
         self._window = spy.Window(
-            width=width, height=height, title=title, resizable=True
+            width=width, height=height, title=title, resizable=False
         )
 
         # Create spy device with local include path for shaders
@@ -75,8 +75,10 @@ class App:
         return True
 
     def present(self):
+        if not self.surface.config:
+            return
         image = self.surface.acquire_next_image()
-        if image is None:
+        if not image:
             return
 
         if (
@@ -101,7 +103,6 @@ class App:
 
         del image
         self.surface.present()
-        #self._device.run_garbage_collection()
 
     def blit(self, source: spy.Tensor, size: Optional[spy.int2] = None, offset: Optional[spy.int2] = None, tonemap: bool = True, bilinear: bool = False):
         if len(source.shape) != 2:
@@ -147,4 +148,7 @@ class App:
 
     def _on_window_resize(self, width: int, height: int):
         self._device.wait()
-        self.surface.configure(width=width, height=height)
+        if width > 0 and height > 0:
+            self.surface.configure(width=width, height=height)
+        else:
+            self.surface.unconfigure()

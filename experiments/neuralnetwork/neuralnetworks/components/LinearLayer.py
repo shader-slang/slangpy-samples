@@ -1,5 +1,15 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-from ..basetypes import IModel, Real, ArrayKind, RealArray, SlangType, Auto, AutoSettable, resolve_auto
+# SPDX-License-Identifier: Apache-2.0
+
+from ..basetypes import (
+    IModel,
+    Real,
+    ArrayKind,
+    RealArray,
+    SlangType,
+    Auto,
+    AutoSettable,
+    resolve_auto,
+)
 
 from slangpy import Module, Tensor, CoopVecMatrixLayout, Feature
 
@@ -25,7 +35,13 @@ class LinearLayer(IModel):
     and biases as a row-major numpy array.
     """
 
-    def __init__(self, num_inputs: AutoSettable[int], num_outputs: int, dtype: AutoSettable[Real] = Auto, use_coopvec: AutoSettable[bool] = Auto):
+    def __init__(
+        self,
+        num_inputs: AutoSettable[int],
+        num_outputs: int,
+        dtype: AutoSettable[Real] = Auto,
+        use_coopvec: AutoSettable[bool] = Auto,
+    ):
         super().__init__()
 
         self.num_outputs = num_outputs
@@ -42,7 +58,8 @@ class LinearLayer(IModel):
 
             layout = CoopVecMatrixLayout.training_optimal
             self.weights.device.coopvec_convert_matrix_host(
-                weights_np, rowmaj_weights, src_layout=layout)
+                weights_np, rowmaj_weights, src_layout=layout
+            )
 
             return rowmaj_weights
         else:
@@ -64,21 +81,29 @@ class LinearLayer(IModel):
         self.use_coopvec = resolve_auto(self._use_coopvec, input_array.kind == ArrayKind.coopvec)
 
         if input_array.kind not in (ArrayKind.array, ArrayKind.coopvec):
-            self.model_error("LinearLayer only supports arrays or CoopVec as input type. "
-                             f"Received {input_array}")
+            self.model_error(
+                "LinearLayer only supports arrays or CoopVec as input type. "
+                f"Received {input_array}"
+            )
 
         if self.use_coopvec:
             if self.dtype != Real.half:
-                self.model_error("LinearLayer currently only supports half precision as input "
-                                 f"when using CoopVec. Received {input_array}")
+                self.model_error(
+                    "LinearLayer currently only supports half precision as input "
+                    f"when using CoopVec. Received {input_array}"
+                )
 
             if Feature.cooperative_vector not in module.device.features:
-                self.model_error("LinearLayer was requested to use the CoopVec API, "
-                                 "but the device does not support it.")
+                self.model_error(
+                    "LinearLayer was requested to use the CoopVec API, "
+                    "but the device does not support it."
+                )
         else:
             if self.dtype not in (Real.float, Real.double):
-                self.model_error("LinearLayer currently only supports float or double precision "
-                                 f"as input when not using CoopVec. Received {input_array}")
+                self.model_error(
+                    "LinearLayer currently only supports float or double precision "
+                    f"as input when not using CoopVec. Received {input_array}"
+                )
 
         # Xavier uniform initialization
         fan_in = self.num_inputs
@@ -86,7 +111,7 @@ class LinearLayer(IModel):
         std = math.sqrt(2.0 / (fan_in + fan_out))
         a = math.sqrt(3.0) * std
         weights_np = np.random.uniform(-a, a, (fan_out, fan_in)).astype(self.dtype.numpy())
-        biases_np = np.zeros((fan_out, ), dtype=self.dtype.numpy())
+        biases_np = np.zeros((fan_out,), dtype=self.dtype.numpy())
 
         device = module.device
         biases = Tensor.empty(device, biases_np.shape, str(self.dtype))
@@ -97,10 +122,10 @@ class LinearLayer(IModel):
             desc = device.coopvec_create_matrix_desc(fan_out, fan_in, layout, self.dtype.sgl(), 0)
             weight_count = desc.size // self.dtype.size()
 
-            params_np = np.zeros((weight_count, ), dtype=self.dtype.numpy())
+            params_np = np.zeros((weight_count,), dtype=self.dtype.numpy())
             device.coopvec_convert_matrix_host(weights_np, params_np, dst_layout=layout)
 
-            weights = Tensor.empty(device, (weight_count, ), str(self.dtype))
+            weights = Tensor.empty(device, (weight_count,), str(self.dtype))
             weights.storage.copy_from_numpy(params_np)
         else:
             weights = Tensor.empty(device, weights_np.shape, str(self.dtype))
@@ -119,11 +144,7 @@ class LinearLayer(IModel):
         if self._num_inputs is Auto:
             return None
 
-        return RealArray(
-            ArrayKind.array,
-            resolve_auto(self._dtype, Real.float),
-            self._num_inputs
-        )
+        return RealArray(ArrayKind.array, resolve_auto(self._dtype, Real.float), self._num_inputs)
 
     def get_this(self):
         self.check_initialized()
@@ -140,5 +161,5 @@ class LinearLayer(IModel):
             "biases": self.biases.storage,
             "weightGrads": weight_grads,
             "biasGrads": bias_grads,
-            "_type": self.type_name
+            "_type": self.type_name,
         }

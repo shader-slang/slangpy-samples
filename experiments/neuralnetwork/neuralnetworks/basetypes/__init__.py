@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 # pyright: reportUnusedImport=false
 
 from .Auto import Auto, AutoSettable, resolve_auto

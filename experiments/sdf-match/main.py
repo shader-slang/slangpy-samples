@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import numpy as np
@@ -12,10 +12,11 @@ def computeRef(input, parameter):
     pred = np.linalg.norm(input - parameter[:3]) - parameter[3]
     diff = target - pred
 
-    grad = np.zeros((4, ), dtype=np.float32)
+    grad = np.zeros((4,), dtype=np.float32)
     grad[:3] = -2 * diff * (parameter[:3] - input) / (pred + parameter[3])
     grad[3] = 2 * diff
     return grad
+
 
 app = App()
 module = spy.Module.load_from_file(app.device, "example.slang")
@@ -32,8 +33,9 @@ input = spy.Tensor.numpy(app.device, samplePoint)
 paramArr = np.random.randn(4).astype(np.float32) * 3
 paramArr[3] = np.abs(paramArr[3])
 params = spy.Tensor.numpy(app.device, paramArr).with_grads(zero=True)
-forwardResult = spy.Tensor.numpy(app.device, np.zeros(
-    (samplesSize, ), dtype=np.float32)).with_grads()
+forwardResult = spy.Tensor.numpy(
+    app.device, np.zeros((samplesSize,), dtype=np.float32)
+).with_grads()
 print(params.to_numpy())
 
 
@@ -64,7 +66,7 @@ def findMachingSDF(iter):
 
 iter = 0
 while app.process_events():
-    if (iter < iteration):
+    if iter < iteration:
         forwardResult = findMachingSDF(iter)
         iter += 1
     pylist = params.to_numpy().tolist()

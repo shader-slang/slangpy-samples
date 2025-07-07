@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 /***************************************************************************
  # Copyright (c) 2015-23, NVIDIA CORPORATION. All rights reserved.
  #

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 implementing NeuralNetworks;
 
 // These have to be #includes rather than __include to avoid slang issue #6547.

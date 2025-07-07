@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from typing import Callable, Optional
 import slangpy as spy
@@ -6,17 +6,16 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title="Diffsplat Example", width=1024, height=1024, device_type=spy.DeviceType.d3d12):
+    def __init__(
+        self, title="Diffsplat Example", width=1024, height=1024, device_type=spy.DeviceType.d3d12
+    ):
         super().__init__()
 
         # Create a window
-        self._window = spy.Window(
-            width=width, height=height, title=title, resizable=False
-        )
+        self._window = spy.Window(width=width, height=height, title=title, resizable=False)
 
         # Create a device with local include path for shaders
-        self._device = spy.create_device(device_type,
-                                             include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(device_type, include_paths=[Path(__file__).parent])
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)
@@ -71,10 +70,11 @@ class App:
         if not image:
             return
 
-        if (self._output_texture == None
-                or self._output_texture.width != image.width
-                or self._output_texture.height != image.height
-            ):
+        if (
+            self._output_texture == None
+            or self._output_texture.width != image.width
+            or self._output_texture.height != image.height
+        ):
             self._output_texture = self.device.create_texture(
                 width=image.width,
                 height=image.height,

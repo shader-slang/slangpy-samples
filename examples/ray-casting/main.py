@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import numpy as np
@@ -12,33 +12,46 @@ app = App()
 module = spy.Module.load_from_file(app.device, "raycasting.slang")
 
 uniforms = {
-    "_type":  "Uniforms",
+    "_type": "Uniforms",
     "screenSize": spy.float2(app._window.width, app._window.height),
     "focalLength": 24.0,
     "frameHeight": 24.0,
 }
 
 radius = 15.0
-alpha:float = 0.0
-pi:float = 3.14159265359
-beta:float = -pi / 4.0
+alpha: float = 0.0
+pi: float = 3.14159265359
+beta: float = -pi / 4.0
+
+
 def updateCamera():
     global alpha, beta, pi
-    cameraDir = [-math.cos(alpha) * math.sin(beta), -math.cos(beta), -math.sin(alpha) * math.sin(beta)]
-    betaUp = beta + pi*0.5
-    cameraUp = [math.cos(alpha) * math.sin(betaUp), math.cos(betaUp), math.sin(alpha) * math.sin(betaUp)]
+    cameraDir = [
+        -math.cos(alpha) * math.sin(beta),
+        -math.cos(beta),
+        -math.sin(alpha) * math.sin(beta),
+    ]
+    betaUp = beta + pi * 0.5
+    cameraUp = [
+        math.cos(alpha) * math.sin(betaUp),
+        math.cos(betaUp),
+        math.sin(alpha) * math.sin(betaUp),
+    ]
     cameraRight = np.cross(cameraDir, cameraUp).tolist()
-    cameraPos = [-cameraDir[0]*radius, -cameraDir[1]*radius, -cameraDir[2]*radius]
+    cameraPos = [-cameraDir[0] * radius, -cameraDir[1] * radius, -cameraDir[2] * radius]
     uniforms["cameraDir"] = cameraDir
     uniforms["cameraUp"] = cameraUp
     uniforms["cameraRight"] = cameraRight
     uniforms["cameraPosition"] = cameraPos
     return
 
+
 lastMouseX = 0
 lastMouseY = 0
 isButtonDown = False
-def mouseEvent(e : spy.MouseEvent):
+
+
+def mouseEvent(e: spy.MouseEvent):
     global lastMouseX, lastMouseY, isButtonDown, alpha, beta
     if e.button == spy.MouseButton.left:
         isButtonDown = e.is_button_down()
@@ -46,12 +59,13 @@ def mouseEvent(e : spy.MouseEvent):
         if isButtonDown:
             dx = e.pos.x - lastMouseX
             dy = e.pos.y - lastMouseY
-            alpha += dx*0.01
-            beta += dy*0.01
+            alpha += dx * 0.01
+            beta += dy * 0.01
             updateCamera()
         lastMouseX = e.pos.x
         lastMouseY = e.pos.y
     return
+
 
 app.on_mouse_event = mouseEvent
 updateCamera()
@@ -64,9 +78,13 @@ imageData = imageio.v3.imread("imageio:bricks.jpg")
 if imageData.shape[2] == 3:
     imageData = np.concatenate([imageData, np.ones((512, 512, 1), dtype=np.uint8) * 255], axis=2)
 
-tex = device.create_texture(width=512, height=512, format=spy.Format.rgba8_unorm,
-                            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
-                            data=imageData)
+tex = device.create_texture(
+    width=512,
+    height=512,
+    format=spy.Format.rgba8_unorm,
+    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
+    data=imageData,
+)
 samplerState = device.create_sampler()
 
 while app.process_events():

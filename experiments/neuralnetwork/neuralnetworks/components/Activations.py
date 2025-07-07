@@ -1,7 +1,17 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from slangpy import Module
 
-from ..basetypes import IModel, Real, RealArray, ArrayKind, SlangType, AutoSettable, Auto, resolve_auto
+from ..basetypes import (
+    IModel,
+    Real,
+    RealArray,
+    ArrayKind,
+    SlangType,
+    AutoSettable,
+    Auto,
+    resolve_auto,
+)
 
 
 class Activation(IModel):
@@ -31,11 +41,7 @@ class Activation(IModel):
             return None
 
         # Unless specified, default to a float array for input/output.
-        return RealArray(
-            ArrayKind.array,
-            resolve_auto(self._dtype, Real.float),
-            self._width
-        )
+        return RealArray(ArrayKind.array, resolve_auto(self._dtype, Real.float), self._width)
 
     @property
     def type_name(self) -> str:
@@ -53,7 +59,12 @@ class ReLU(Activation):
 
 
 class LeakyReLU(Activation):
-    def __init__(self, negative_slope: float = 0.01, width: AutoSettable[int] = Auto, dtype: AutoSettable[Real] = Auto):
+    def __init__(
+        self,
+        negative_slope: float = 0.01,
+        width: AutoSettable[int] = Auto,
+        dtype: AutoSettable[Real] = Auto,
+    ):
         super().__init__("LeakyReLU", width, dtype)
         self.negative_slope = negative_slope
 
@@ -62,7 +73,9 @@ class LeakyReLU(Activation):
 
 
 class ELU(Activation):
-    def __init__(self, a: float = 1.0, width: AutoSettable[int] = Auto, dtype: AutoSettable[Real] = Auto):
+    def __init__(
+        self, a: float = 1.0, width: AutoSettable[int] = Auto, dtype: AutoSettable[Real] = Auto
+    ):
         super().__init__("ELU", width, dtype)
         self.a = a
 

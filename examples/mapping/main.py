@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import pathlib
@@ -7,9 +7,11 @@ import numpy as np
 print("SlangPy mapping examples (https://slangpy.shader-slang.org/en/latest/mapping.html)")
 
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "example.slang")
@@ -22,14 +24,14 @@ module = spy.Module.load_from_file(device, "example.slang")
 # Exactly the same as default behaviour
 a = np.random.rand(10, 3, 4)
 b = np.random.rand(10, 3, 4)
-result = module.add.map((0, 1, 2), (0, 1, 2))(a, b, _result='numpy')
-assert np.allclose(result, a+b)
+result = module.add.map((0, 1, 2), (0, 1, 2))(a, b, _result="numpy")
+assert np.allclose(result, a + b)
 
 # The same using named parameters
 a = np.random.rand(10, 3, 4)
 b = np.random.rand(10, 3, 4)
-result = module.add.map(a=(0, 1, 2), b=(0, 1, 2))(a=a, b=b, _result='numpy')
-assert np.allclose(result, a+b)
+result = module.add.map(a=(0, 1, 2), b=(0, 1, 2))(a=a, b=b, _result="numpy")
+assert np.allclose(result, a + b)
 
 # --------------------------------------------------------------
 # Broadcasting by mapping lower dimensional arguments
@@ -41,12 +43,12 @@ b = np.random.rand(8).astype(np.float32)
 
 # This is equivalent to padding b with empty dimensions, as numpy would
 # result[i,j] = a[i,j] + b[j]
-result = module.add.map(a=(0, 1), b=(1,))(a=a, b=b, _result='numpy')
-assert np.allclose(result, a+b)
+result = module.add.map(a=(0, 1), b=(1,))(a=a, b=b, _result="numpy")
+assert np.allclose(result, a + b)
 
 # The same thing (didn't need to specify a as 1-to-1 mapping is default)
-result = module.add.map(b=(1,))(a=a, b=b, _result='numpy')
-assert np.allclose(result, a+b)
+result = module.add.map(b=(1,))(a=a, b=b, _result="numpy")
+assert np.allclose(result, a + b)
 
 # --------------------------------------------------------------
 # Mathematical outer product by mapping to different dimensions
@@ -59,7 +61,7 @@ assert np.allclose(result, a+b)
 # result[i,j] = a[i] * b[j]
 a = np.random.rand(10).astype(np.float32)
 b = np.random.rand(20).astype(np.float32)
-result = module.multiply.map(a=(0,), b=(1,))(a=a, b=b, _result='numpy')
+result = module.multiply.map(a=(0,), b=(1,))(a=a, b=b, _result="numpy")
 assert np.allclose(result, np.outer(a, b))
 
 # --------------------------------------------------------------
@@ -70,7 +72,7 @@ assert np.allclose(result, np.outer(a, b))
 # and just returns the value you pass it.
 # result[i,j] = a[j,i]
 a = np.random.rand(10, 20).astype(np.float32)
-result = module.copy.map(val=(1, 0))(val=a, _result='numpy')
+result = module.copy.map(val=(1, 0))(val=a, _result="numpy")
 assert np.allclose(result, a.T)
 
 # --------------------------------------------------------------
@@ -80,10 +82,7 @@ assert np.allclose(result, a.T)
 # Map argument types explicitly
 src = np.random.rand(100).astype(np.float32)
 dest = np.zeros_like(src)
-module.copy_generic.map(src=(0,), dest=(0,))(
-    src=src,
-    dest=dest
-)
+module.copy_generic.map(src=(0,), dest=(0,))(src=src, dest=dest)
 assert np.allclose(src, dest)
 
 # --------------------------------------------------------------
@@ -92,8 +91,5 @@ assert np.allclose(src, dest)
 
 src = np.random.rand(100).astype(np.float32)
 dest = np.zeros_like(src)
-module.copy_generic.map(src='float', dest='float')(
-    src=src,
-    dest=dest
-)
+module.copy_generic.map(src="float", dest="float")(src=src, dest=dest)
 assert np.allclose(src, dest)

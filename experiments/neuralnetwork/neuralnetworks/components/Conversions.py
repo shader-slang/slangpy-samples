@@ -1,7 +1,17 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from slangpy import Module
 
-from ..basetypes import IModel, Real, ArrayKind, RealArray, SlangType, Auto, AutoSettable, resolve_auto
+from ..basetypes import (
+    IModel,
+    Real,
+    ArrayKind,
+    RealArray,
+    SlangType,
+    Auto,
+    AutoSettable,
+    resolve_auto,
+)
 
 from typing import Optional
 
@@ -16,7 +26,9 @@ class ConvertArrayKind(IModel):
     Element count and element type of input and output will be identical.
     """
 
-    def __init__(self, to_kind: ArrayKind, width: AutoSettable[int] = Auto, dtype: AutoSettable[Real] = Auto):
+    def __init__(
+        self, to_kind: ArrayKind, width: AutoSettable[int] = Auto, dtype: AutoSettable[Real] = Auto
+    ):
         super().__init__()
         self.to_kind = to_kind
         self._width = width
@@ -55,7 +67,13 @@ class ConvertArrayPrecision(IModel):
     Element count and array kind of input and output will be identical.
     """
 
-    def __init__(self, to_dtype: Real, width: AutoSettable[int] = Auto, from_dtype: AutoSettable[Real] = Auto, kind: AutoSettable[ArrayKind] = Auto):
+    def __init__(
+        self,
+        to_dtype: Real,
+        width: AutoSettable[int] = Auto,
+        from_dtype: AutoSettable[Real] = Auto,
+        kind: AutoSettable[ArrayKind] = Auto,
+    ):
         super().__init__()
         self.to_dtype = to_dtype
         self._width = width

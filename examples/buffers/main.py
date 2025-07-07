@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import pathlib
@@ -8,9 +8,11 @@ print("SlangPy buffers example (https://slangpy.shader-slang.org/en/latest/buffe
 print("This example requires tev (https://github.com/Tom94/tev) to display results.")
 
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "example.slang")
@@ -23,16 +25,18 @@ image_2 = spy.NDBuffer(device, dtype=module.Pixel, shape=(16, 16))
 cursor_1 = image_1.cursor()
 for x in range(16):
     for y in range(16):
-        cursor_1[x+y*16].write({
-            'r': (x+y)/32.0,
-            'g': 0,
-            'b': 0,
-        })
+        cursor_1[x + y * 16].write(
+            {
+                "r": (x + y) / 32.0,
+                "g": 0,
+                "b": 0,
+            }
+        )
 cursor_1.apply()
 
 # Use the fact that we know the buffers are just 16x16 grids of 3 floats
 # to just populate the 2nd buffer straight from random numpy array
-image_2.copy_from_numpy(0.1*np.random.rand(16*16*3).astype(np.float32))
+image_2.copy_from_numpy(0.1 * np.random.rand(16 * 16 * 3).astype(np.float32))
 
 # Call the module's add function
 result = module.add(image_1, image_2)
@@ -41,10 +45,11 @@ result = module.add(image_1, image_2)
 result_cursor = result.cursor()
 for x in range(16):
     for y in range(16):
-        pixel = result_cursor[x+y*16].read()
+        pixel = result_cursor[x + y * 16].read()
         print(f"Pixel ({x},{y}): {pixel}")
 
 # Or if installed, we can use tev to show the result (https://github.com/Tom94/tev)
-tex = device.create_texture(data=result.to_numpy(), width=16,
-                            height=16, format=spy.Format.rgba32_float)
+tex = device.create_texture(
+    data=result.to_numpy(), width=16, height=16, format=spy.Format.rgba32_float
+)
 spy.tev.show(tex)

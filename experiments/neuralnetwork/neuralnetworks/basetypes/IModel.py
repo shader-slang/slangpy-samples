@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 from slangpy import Module, Struct, Tensor
@@ -96,9 +97,11 @@ class IModel:
         if isinstance(input_type, Struct):
             input_type = input_type.struct
         if input_type is None:
-            self.model_error("initialize() cannot proceed: No input_type was provided, and "
-                             "the model can't resolve it by itself, either because the model "
-                             "does not implement it or because some parameters are set to Auto.")
+            self.model_error(
+                "initialize() cannot proceed: No input_type was provided, and "
+                "the model can't resolve it by itself, either because the model "
+                "does not implement it or because some parameters are set to Auto."
+            )
 
         try:
             self.model_init(module, input_type)
@@ -122,8 +125,10 @@ class IModel:
 
         forward = module.layout.find_function_by_name_in_type(model_type, "forward")
         if forward is None:
-            self.model_error(f"Looking up method forward() in type {short_type_name} failed. Make sure the type "
-                             f"implements the IModel interface{full_type_msg}")
+            self.model_error(
+                f"Looking up method forward() in type {short_type_name} failed. Make sure the type "
+                f"implements the IModel interface{full_type_msg}"
+            )
 
         # The correct solution to looking up the return type of forward given the input type
         # is to always lookup forward() and specialize it. However, currently this can crash
@@ -133,34 +138,45 @@ class IModel:
         # This should go away and be replaced by the curent else: branch always
         if forward.is_overloaded:
             return_types = {
-                f.return_type.full_name for f in forward.overloads if f.return_type is not None}
+                f.return_type.full_name for f in forward.overloads if f.return_type is not None
+            }
             candidates = []
             for candidate in return_types:
-                witness_name = f"impl::returnTypeWitness<{input_type.full_name}, {candidate}, {type_name}>"
+                witness_name = (
+                    f"impl::returnTypeWitness<{input_type.full_name}, {candidate}, {type_name}>"
+                )
                 witness = module.layout.find_function_by_name(witness_name)
                 if witness is not None:
                     candidates.append(candidate)
             if len(candidates) > 1:
-                self.model_error(f"Found multiple matching overloads for method forward({input_type.full_name}) in type {short_type_name}, "
-                                 f"and the return type is ambiguous (found {candidates}). Make sure there is only one forward() "
-                                 f"implementation for each input type.{full_type_msg}")
+                self.model_error(
+                    f"Found multiple matching overloads for method forward({input_type.full_name}) in type {short_type_name}, "
+                    f"and the return type is ambiguous (found {candidates}). Make sure there is only one forward() "
+                    f"implementation for each input type.{full_type_msg}"
+                )
             elif len(candidates) == 0:
-                self.model_error(f"Could not find a matching overload for method forward({input_type.full_name}) in type {short_type_name}. "
-                                 "The most common cause is that the output of the previous model is not compatible "
-                                 f"with the input expected by the next model, e.g. due to mismatched dimensions "
-                                 f"or element precision{full_type_msg}")
+                self.model_error(
+                    f"Could not find a matching overload for method forward({input_type.full_name}) in type {short_type_name}. "
+                    "The most common cause is that the output of the previous model is not compatible "
+                    f"with the input expected by the next model, e.g. due to mismatched dimensions "
+                    f"or element precision{full_type_msg}"
+                )
             else:
                 self._output_type = self._lookup_mandatory_type(module, candidates[0])
         else:
             specialized = forward.specialize_with_arg_types([input_type])
             if specialized is None:
-                self.model_error(f"Could not find a matching overload for method forward({input_type.full_name}) in type {short_type_name}. "
-                                 "The most common cause is that the output of the previous model is not compatible "
-                                 f"with the input expected by the next model, e.g. due to mismatched dimensions "
-                                 f"or element precision{full_type_msg}")
+                self.model_error(
+                    f"Could not find a matching overload for method forward({input_type.full_name}) in type {short_type_name}. "
+                    "The most common cause is that the output of the previous model is not compatible "
+                    f"with the input expected by the next model, e.g. due to mismatched dimensions "
+                    f"or element precision{full_type_msg}"
+                )
             if specialized.return_type is None:
-                self.model_error(f"The method forward({input_type.full_name}) in type {short_type_name} does not return a value. "
-                                 f"Make sure the model conforms to the IModel interface{full_type_msg}")
+                self.model_error(
+                    f"The method forward({input_type.full_name}) in type {short_type_name} does not return a value. "
+                    f"Make sure the model conforms to the IModel interface{full_type_msg}"
+                )
 
             self._output_type = specialized.return_type
 
@@ -192,7 +208,7 @@ class IModel:
 
     def get_this(self) -> dict[str, Any]:
         """Returns a SlangPy-compatible object to be passed to Slang during a function call"""
-        return {'_type': self.type_name}
+        return {"_type": self.type_name}
 
     def resolve_input_type(self, module: Module) -> Optional[TypeLike]:
         """
@@ -210,8 +226,9 @@ class IModel:
     def check_initialized(self):
         """May be called at the beginning of a method that is only valid if the model is initialized. Throws if not."""
         if not self._initialized:
-            raise self.model_error("Model is uninitialized. Make sure to "
-                                   "call .initialize() before using the model")
+            raise self.model_error(
+                "Model is uninitialized. Make sure to " "call .initialize() before using the model"
+            )
 
     def model_error(self, msg: str):
         """Throws a ModelError exception with the given message, and some extra info to help debug the issue."""
@@ -227,17 +244,21 @@ class IModel:
             child = child.parent
 
         component_name = type(self).__name__
-        component_path = ' -> '.join(segments)
-        raise ModelError("Encountered an error while handling model component "
-                         f"{component_name} (with path {component_path}): {msg}")
+        component_path = " -> ".join(segments)
+        raise ModelError(
+            "Encountered an error while handling model component "
+            f"{component_name} (with path {component_path}): {msg}"
+        )
 
     def _lookup_mandatory_type(self, module: Module, name: str) -> SlangType:
         lookup = module.layout.find_type_by_name(name)
 
         if lookup is None:
-            self.model_error("Looking up slang type failed. This might be because of a missing import, or "
-                             "because of a type error. Try pasting the type name into the slang "
-                             f"module and check for compilation errors to help diagnose: {name}")
+            self.model_error(
+                "Looking up slang type failed. This might be because of a missing import, or "
+                "because of a type error. Try pasting the type name into the slang "
+                f"module and check for compilation errors to help diagnose: {name}"
+            )
 
         return lookup
 

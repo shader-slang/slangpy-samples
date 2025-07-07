@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // clang-format off
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import slangpy;
 import brdf;
 

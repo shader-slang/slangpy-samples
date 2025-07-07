@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 from glob import glob
 from pathlib import Path
 import json
@@ -6,6 +8,7 @@ import re
 DIR = Path(__file__).parent
 
 EMBED_REGEX = r"^\[comment\]\: <> \(embed (.*?)\)\n```(\S*\n[^`]*)```"
+
 
 def process_notebook(path):
     doc = json.load(open(path))
@@ -24,7 +27,7 @@ def process_notebook(path):
                 new_snippet = f"C#\n// {m[1]}\n\n" + new_snippet
                 if not new_snippet.endswith("\n"):
                     new_snippet += "\n"
-                source = source[0:m.start(2) + offset] + new_snippet + source[m.end(2) + offset:]
+                source = source[0 : m.start(2) + offset] + new_snippet + source[m.end(2) + offset :]
                 offset = len(new_snippet) - len(old_snippet)
                 changed = True
             if changed:

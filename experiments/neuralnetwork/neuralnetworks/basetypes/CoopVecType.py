@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 from slangpy.reflection import SlangType, SlangProgramLayout, TYPE_OVERRIDES
@@ -20,7 +21,7 @@ class CoopVecType(SlangType):
         assert len(args) == 2
         assert isinstance(args[0], SlangType)
         assert isinstance(args[1], int)
-        super().__init__(program, refl, element_type=args[0], local_shape=Shape((args[1], )))
+        super().__init__(program, refl, element_type=args[0], local_shape=Shape((args[1],)))
         self.element_type: SlangType
         self._dims = args[1]
 

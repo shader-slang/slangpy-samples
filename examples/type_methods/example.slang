@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
 
 import "slangpy";
 
@@ -19,4 +19,3 @@ struct Particle
         position += velocity * dt;
     }
 };
-

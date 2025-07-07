@@ -10,7 +10,7 @@ class App:
 
         # Create a window
         self._window = spy.Window(
-            width=width, height=height, title=title, resizable=True
+            width=width, height=height, title=title, resizable=False
         )
 
         # Create a device with local include path for shaders
@@ -66,8 +66,10 @@ class App:
         return True
 
     def present(self):
+        if not self.surface.config:
+            return
         image = self.surface.acquire_next_image()
-        if image is None:
+        if not image:
             return
 
         if (
@@ -122,4 +124,7 @@ class App:
 
     def _on_window_resize(self, width: int, height: int):
         self._device.wait()
-        self.surface.configure(width=width, height=height)
+        if width > 0 and height > 0:
+            self.surface.configure(width=width, height=height)
+        else:
+            self.surface.unconfigure()

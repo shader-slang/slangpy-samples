@@ -44,7 +44,7 @@ module = spy.Module.load_from_file(device, "diffsplatting2d.slang")
 # Randomize the blobs buffer
 NUM_BLOBS = 20480 * 2
 FLOATS_PER_BLOB = 9
-blobs = spy.Tensor.numpy(
+blobs = spy.Tensor.from_numpy(
     device, np.random.rand(NUM_BLOBS * FLOATS_PER_BLOB).astype(np.float32)
 ).with_grads()
 

@@ -32,7 +32,7 @@ FLOATS_PER_BLOB = 9
 # SlangPy lets us create a Tensor and initialize it easily using numpy to generate
 # random values. This Tensor includes storage for gradients, because we call .with_grads()
 # on the created spy.Tensor.
-blobs = spy.Tensor.numpy(
+blobs = spy.Tensor.from_numpy(
     device, np.random.rand(NUM_BLOBS * FLOATS_PER_BLOB).astype(np.float32)
 ).with_grads()
 

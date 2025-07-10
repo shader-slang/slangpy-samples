@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Nested types example
+# https://slangpy.shader-slang.org/en/latest/src/basics/nested.html
+# This example requires tev (https://github.com/Tom94/tev) to display results.
+
 import slangpy as spy
 import pathlib
-
-print("SlangPy nested types example (https://slangpy.shader-slang.org/en/latest/nested.html)")
-print("This example requires tev (https://github.com/Tom94/tev) to display results.")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(
@@ -37,4 +38,4 @@ module.copy_vector(
 )
 
 # Show the result
-spy.tev.show(tex, name="tex")
+spy.tev.show(tex)

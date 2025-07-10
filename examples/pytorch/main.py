@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# PyTorch example
+# https://slangpy.shader-slang.org/en/latest/src/autodiff/pytorch.html
+
 import slangpy as spy
 import pathlib
 import torch
-
-
-print(
-    "SlangPy pytorch example (https://slangpy.shader-slang.org/en/latest/src/autodiff/pytorch.html)"
-)
 
 if not torch.cuda.is_available():
     print("CUDA is not available, skipping torch example")

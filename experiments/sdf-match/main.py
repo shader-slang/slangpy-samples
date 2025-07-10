@@ -27,13 +27,13 @@ iteration = 1500
 
 samplePoint = np.random.randn(samplesSize, 3).astype(np.float32)
 allOnes = np.ones((samplesSize, 1), dtype=np.float32)
-input = spy.Tensor.numpy(app.device, samplePoint)
+input = spy.Tensor.from_numpy(app.device, samplePoint)
 
 # Create a tensor
 paramArr = np.random.randn(4).astype(np.float32) * 3
 paramArr[3] = np.abs(paramArr[3])
-params = spy.Tensor.numpy(app.device, paramArr).with_grads(zero=True)
-forwardResult = spy.Tensor.numpy(
+params = spy.Tensor.from_numpy(app.device, paramArr).with_grads(zero=True)
+forwardResult = spy.Tensor.from_numpy(
     app.device, np.zeros((samplesSize,), dtype=np.float32)
 ).with_grads()
 print(params.to_numpy())

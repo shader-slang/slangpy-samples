@@ -1,11 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# First function example
+# https://slangpy.shader-slang.org/en/latest/src/basics/firstfunctions.html
+
 import slangpy as spy
 import pathlib
-
-print(
-    "SlangPy first-function example (https://slangpy.shader-slang.org/en/latest/firstfunctions.html)"
-)
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(

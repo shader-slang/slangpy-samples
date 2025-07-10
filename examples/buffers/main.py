@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Buffers example
+# https://slangpy.shader-slang.org/en/latest/src/basics/buffers.html
+# This example requires tev (https://github.com/Tom94/tev) to display results.
+
 import slangpy as spy
 import pathlib
 import numpy as np
-
-print("SlangPy buffers example (https://slangpy.shader-slang.org/en/latest/buffers.html)")
-print("This example requires tev (https://github.com/Tom94/tev) to display results.")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(
@@ -49,7 +50,5 @@ for x in range(16):
         print(f"Pixel ({x},{y}): {pixel}")
 
 # Or if installed, we can use tev to show the result (https://github.com/Tom94/tev)
-tex = device.create_texture(
-    data=result.to_numpy(), width=16, height=16, format=spy.Format.rgba32_float
-)
-spy.tev.show(tex)
+bitmap = spy.Bitmap(data=result.to_numpy().view(np.float32))
+spy.tev.show(bitmap)

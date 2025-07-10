@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Broadcasting example
+# https://slangpy.shader-slang.org/en/latest/src/basics/broadcasting.html
+
 import slangpy as spy
 import pathlib
 import numpy as np
-
-print("SlangPy broadcasting example (https://slangpy.shader-slang.org/en/latest/broadcasting.html)")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(

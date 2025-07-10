@@ -37,4 +37,4 @@ module.copy_vector(
 )
 
 # Show the result
-spy.tev.show(tex, name="tex")
+spy.tev.show(tex)

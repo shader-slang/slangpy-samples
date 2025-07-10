@@ -1,0 +1,3 @@
+SlangPy first-function example (https://slangpy.shader-slang.org/en/latest/firstfunctions.html)
+3.0
+3.0

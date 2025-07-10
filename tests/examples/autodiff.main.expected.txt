@@ -1,0 +1,3 @@
+SlangPy autodiff example (https://slangpy.shader-slang.org/en/latest/autodiff.html)
+[ 9. 23. 41. 63.]
+[12. 16. 20. 24.]

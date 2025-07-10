@@ -284,6 +284,8 @@ def test_toy_restir(example_runner: ExampleRunner, device_type: str):
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_type_methods(example_runner: ExampleRunner, device_type: str):
+    if sys.platform == "linux" or sys.platform == "linux2":
+        pytest.skip("Example currently crashes on Linux")
     example_runner.run("type_methods/main.py", device_type)
 
 

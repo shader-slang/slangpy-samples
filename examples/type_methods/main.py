@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Type methods example
+# https://slangpy.shader-slang.org/en/latest/src/basics/typemethods.html
+
 import slangpy as spy
 import pathlib
-
-print("SlangPy type methods example (https://slangpy.shader-slang.org/en/latest/typemethods.html)")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(

@@ -1,3 +1,2 @@
-SlangPy first-function example (https://slangpy.shader-slang.org/en/latest/firstfunctions.html)
 [0.9696957  1.3154315  0.73736954 1.1597462  1.052589   0.6877114
 0.83857125 1.0281304  0.7384127  1.6020162 ]

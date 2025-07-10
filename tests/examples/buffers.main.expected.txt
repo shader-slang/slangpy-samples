@@ -1,5 +1,3 @@
-SlangPy buffers example (https://slangpy.shader-slang.org/en/latest/buffers.html)
-This example requires tev (https://github.com/Tom94/tev) to display results.
 Pixel (0,0): {'r': 0.03745401278138161, 'g': 0.09507142752408981, 'b': 0.07319939136505127}
 Pixel (0,1): {'r': 0.0859210267663002, 'g': 0.018485447391867638, 'b': 0.0969584658741951}
 Pixel (0,2): {'r': 0.11477328836917877, 'g': 0.04275410249829292, 'b': 0.002541912719607353}

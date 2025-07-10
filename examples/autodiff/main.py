@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Autodiff example
+# https://slangpy.shader-slang.org/en/latest/src/autodiff/autodiff.html
+
 import slangpy as spy
 import pathlib
 import numpy as np
-
-print("SlangPy autodiff example (https://slangpy.shader-slang.org/en/latest/autodiff.html)")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(

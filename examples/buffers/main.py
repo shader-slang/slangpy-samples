@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Buffers example
+# https://slangpy.shader-slang.org/en/latest/src/basics/buffers.html
+# This example requires tev (https://github.com/Tom94/tev) to display results.
+
 import slangpy as spy
 import pathlib
 import numpy as np
-
-print("SlangPy buffers example (https://slangpy.shader-slang.org/en/latest/buffers.html)")
-print("This example requires tev (https://github.com/Tom94/tev) to display results.")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(

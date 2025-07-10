@@ -1,4 +1,3 @@
-SlangPy random number generator examples (https://slangpy.shader-slang.org/en/latest/generator_random.html)
 [[[ -779305445 -1287930844]
 [  745088982  1111768006]
 [-2025525364 -1250897945]

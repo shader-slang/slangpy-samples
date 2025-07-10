@@ -1,4 +1,3 @@
-SlangPy broadcasting example (https://slangpy.shader-slang.org/en/latest/broadcasting.html)
 A Shape:   (10, 5)
 B Shape:   (10, 5)
 Res Shape: (10, 5)

@@ -1,1 +1,0 @@
-SlangPy mapping examples (https://slangpy.shader-slang.org/en/latest/mapping.html)

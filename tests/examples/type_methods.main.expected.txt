@@ -1,4 +1,3 @@
-SlangPy type methods example (https://slangpy.shader-slang.org/en/latest/typemethods.html)
 {0, 0, 0} {-0.8008969, -0.06664181, 0.9763112}
 {0, 0, 0} {0.57655764, -0.013651609, -0.6055043}
 {0, 0, 0} {-0.55022526, -0.42747426, 0.89046144}

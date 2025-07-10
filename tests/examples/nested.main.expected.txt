@@ -1,2 +1,0 @@
-SlangPy nested types example (https://slangpy.shader-slang.org/en/latest/nested.html)
-This example requires tev (https://github.com/Tom94/tev) to display results.

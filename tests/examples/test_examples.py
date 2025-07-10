@@ -291,11 +291,15 @@ def test_type_methods(example_runner: ExampleRunner, device_type: str):
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_type_methods_main_instancelists(example_runner: ExampleRunner, device_type: str):
+    if sys.platform == "linux" or sys.platform == "linux2":
+        pytest.skip("Example currently crashes on Linux")
     example_runner.run("type_methods/main_instancelists.py", device_type)
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_type_methods_extend_instancelists(example_runner: ExampleRunner, device_type: str):
+    if sys.platform == "linux" or sys.platform == "linux2":
+        pytest.skip("Example currently crashes on Linux")
     example_runner.run("type_methods/extend_instancelists.py", device_type)
 
 

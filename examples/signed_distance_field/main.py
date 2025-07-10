@@ -135,22 +135,28 @@ def process_image(device, module, image, width, height, name_suffix):
     )
     spy.tev.show(input_tex, name=f"input_{name_suffix}")
 
-    dist_tex = device.create_texture(
-        width=width,
-        height=height,
-        format=spy.Format.rg32_float,
-        usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
-    )
+    # Create two textures for computing the distance field (ping-pong technique)
+    dist_tex = [
+        device.create_texture(
+            width=width,
+            height=height,
+            format=spy.Format.rg32_float,
+            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
+        )
+        for _ in range(2)
+    ]
 
-    # Initialize
-    module.init_eikonal(spy.grid((width, height)), input_tex, dist_tex)
-    spy.tev.show(dist_tex, name=f"initial_distances_{name_suffix}")
+    # Initialize the distance field
+    module.init_eikonal(spy.grid((width, height)), input_tex, dist_tex[0])
+    spy.tev.show(dist_tex[0], name=f"initial_distances_{name_suffix}")
 
-    for i in range(128):
-        module.solve_eikonal(spy.grid((width, height)), dist_tex)
+    # Solve the Eikonal equation iteratively
+    for _ in range(128):
+        module.solve_eikonal(spy.grid((width, height)), dist_tex[0], dist_tex[1])
+        dist_tex = [dist_tex[1], dist_tex[0]]  # Swap textures
 
-    distances = dist_tex.to_numpy()
-    spy.tev.show(dist_tex, name=f"final_distances_{name_suffix}")
+    distances = dist_tex[0].to_numpy()
+    spy.tev.show(dist_tex[0], name=f"final_distances_{name_suffix}")
 
     result = module.generate_isolines(distances, _result="numpy")
 

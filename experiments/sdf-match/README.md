@@ -78,9 +78,9 @@ params, params_grad, params_data, params_grad_data = generate_init_params(networ
 adam_state = spy.NDBuffer(app.device, dtype=module.AdamState, shape=(param_size,))
 ```
 
-### 2. Training Loop
+### 2. Main Loop
 
-The main loop alternates between training and rendering:
+The main loop alternates between training and rendering, and it render the results every 100 training iterations.
 
 ```python
 while app.process_events():

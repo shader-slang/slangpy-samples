@@ -55,10 +55,7 @@ public void updateParams(TinyMLP_Params* params, inout AdamState state, int batc
     AdamOptimizer::update(params->m_params[call_id], params->m_grads[call_id], state, batch_size, beta1, beta2);
 }
 
-public float targetSDF(no_diff float3 samplePoint)
-{
-    return length(samplePoint) - 2.0f;
-}
+
 
 // target function is just a simplified version of targetSDF, we don't want to use targetSDF
 // directly because it has a square root operation, which is not stable during training
@@ -121,13 +118,11 @@ public float4 RunRayMarch(float2 screenSize, int2 gridId, TinyMLP_Params* params
     float3 rayDir = normalize(float3(uv, 1.0));
     TinyMLP mlp = TinyMLP(params);
 
-    // ISDFModel sdfModel[2];
+    ISDFModel sdfModel[2] = {
+        TargetSDFModle(float3(0.5, 0.6, 1.0)),
+        LearnedSDFModle(mlp, float3(1.0, 0.6, 0.3))
+    };
 
-    // sdfModel[0] = TargetSDFModle(float3(0.5, 0.6, 1.0));
-    //
-    // sdfModel[1] = LearnedSDFModle(mlp, float3(1.0, 0.6, 0.3));
-
-    ISDFModel sdfModel[1] = {LearnedSDFModle(mlp, float3(1.0, 0.6, 0.3))};
     Ray ray = {rayOrigin, rayDir};
     RayMarcher rayMarcher = {ray};
 

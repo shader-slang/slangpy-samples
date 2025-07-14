@@ -20,6 +20,11 @@ public interface ISDFModel
     public float3 getObjColor();
 }
 
+public float targetSDF(no_diff float3 samplePoint)
+{
+    return length(samplePoint) - 2.0f;
+}
+
 public struct LearnedSDFModle : ISDFModel
 {
     public TinyMLP mlp;
@@ -56,14 +61,14 @@ public struct TargetSDFModle : ISDFModel
 {
     public float3 color = float3(0.5, 0.6, 1.0);
 
-    __init(float3 inColor)
+    public __init(float3 inColor)
     {
         color = inColor;
     }
 
     public float sdfFunc(float3 p)
     {
-        return targetSDF(p);
+        return length(p) - 2.0f;
     }
 
     public float3 estimateNormal(float3 p)

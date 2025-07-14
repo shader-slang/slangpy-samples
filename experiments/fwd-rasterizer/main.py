@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from app import App
 import slangpy as spy
@@ -23,7 +23,7 @@ class Camera:
             "o": self.o,
             "scale": self.scale,
             "frameDim": spy.float2(self.app._window.width, self.app._window.height),
-            "_type": "Camera"
+            "_type": "Camera",
         }
 
 
@@ -33,9 +33,9 @@ rasterizer2d = spy.Module.load_from_file(app.device, "rasterizer2d.slang")
 
 # Buffer of 3 vertex positions for the triangle.
 vertices = [
-    spy.float2(-0.75,  0.75),
+    spy.float2(-0.75, 0.75),
     spy.float2(-0.75, -0.75),
-    spy.float2(0.75, -0.75)
+    spy.float2(0.75, -0.75),
 ]
 
 # Setup the camera with the app's frame dimensions.

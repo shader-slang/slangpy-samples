@@ -1,15 +1,18 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
+# Id generator example
+# https://slangpy.shader-slang.org/en/latest/src/generators/generator_ids.html
 
 import slangpy as spy
 import pathlib
 import numpy as np
 
-print("SlangPy id generator examples (https://slangpy.shader-slang.org/en/latest/generator_ids.html)")
-
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "ids.slang")

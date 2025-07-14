@@ -1,13 +1,18 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
+# PyTorch example
+# https://slangpy.shader-slang.org/en/latest/src/autodiff/pytorch.html
 
 import slangpy as spy
 import pathlib
 import torch
 
-print("SlangPy pytorch example (https://slangpy.shader-slang.org/en/latest/pytorch.html)")
+if not torch.cuda.is_available():
+    print("CUDA is not available, skipping torch example")
+    exit(0)
 
 # Make sure pytorch is in cuda mode
-torch.device('cuda')
+torch.device("cuda")
 
 # Create a device with the local folder for slangpy includes
 device = spy.create_device(
@@ -21,7 +26,7 @@ device = spy.create_device(
 module = spy.TorchModule.load_from_file(device, "example.slang")
 
 # Create a tensor
-x = torch.tensor([1, 2, 3, 4], dtype=torch.float32, device='cuda', requires_grad=True)
+x = torch.tensor([1, 2, 3, 4], dtype=torch.float32, device="cuda", requires_grad=True)
 
 # Evaluate the polynomial. Result will now default to a torch tensor.
 # Expecting result = 2x^2 + 8x - 1

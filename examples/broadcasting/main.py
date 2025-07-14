@@ -1,15 +1,18 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
+# Broadcasting example
+# https://slangpy.shader-slang.org/en/latest/src/basics/broadcasting.html
 
 import slangpy as spy
 import pathlib
 import numpy as np
 
-print("SlangPy broadcasting example (https://slangpy.shader-slang.org/en/latest/broadcasting.html)")
-
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "example.slang")
@@ -17,7 +20,7 @@ module = spy.Module.load_from_file(device, "example.slang")
 # Add 2 identically shaped 2d float buffers
 a = np.random.rand(10, 5).astype(np.float32)
 b = np.random.rand(10, 5).astype(np.float32)
-res = module.add_floats(a, b, _result='numpy')
+res = module.add_floats(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"B Shape:   {b.shape}")
 print(f"Res Shape: {res.shape}")
@@ -26,7 +29,7 @@ print("")
 # Add the same value to all of the elements of a 2d float buffer
 a = np.random.rand(10, 5).astype(np.float32)
 b = 10
-res = module.add_floats(a, b, _result='numpy')
+res = module.add_floats(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"Res Shape: {res.shape}")
 print("")
@@ -35,7 +38,7 @@ print("")
 # Dimension 1 of A is broadcast
 a = np.random.rand(10, 1).astype(np.float32)
 b = np.random.rand(10, 5).astype(np.float32)
-res = module.add_floats(a, b, _result='numpy')
+res = module.add_floats(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"B Shape:   {b.shape}")
 print(f"Res Shape: {res.shape}")
@@ -44,7 +47,7 @@ print("")
 # Dimension 0 of A is broadcast
 a = np.random.rand(1, 5).astype(np.float32)
 b = np.random.rand(10, 5).astype(np.float32)
-res = module.add_floats(a, b, _result='numpy')
+res = module.add_floats(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"B Shape:   {b.shape}")
 print(f"Res Shape: {res.shape}")
@@ -53,7 +56,7 @@ print("")
 # Dimension 0 of A and 1 of B are broadcast
 a = np.random.rand(1, 5).astype(np.float32)
 b = np.random.rand(10, 1).astype(np.float32)
-res = module.add_floats(a, b, _result='numpy')
+res = module.add_floats(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"B Shape:   {b.shape}")
 print(f"Res Shape: {res.shape}")
@@ -62,7 +65,7 @@ print("")
 # Add a float3 and an array of 3 floats!
 a = spy.float3(1, 2, 3)
 b = np.random.rand(3).astype(np.float32)
-res = module.add_floats(a, b, _result='numpy')
+res = module.add_floats(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"B Shape:   {b.shape}")
 print(f"Res Shape: {res.shape}")
@@ -72,7 +75,7 @@ print("")
 try:
     a = np.random.rand(3).astype(np.float32)
     b = np.random.rand(5, 3).astype(np.float32)
-    res = module.add_floats(a, b, _result='numpy')
+    res = module.add_floats(a, b, _result="numpy")
 except ValueError as e:
     # print(e)
     pass
@@ -82,7 +85,7 @@ except ValueError as e:
 # and SlangPy will auto-pad single values.
 a = np.random.rand(3).astype(np.float32)
 b = np.random.rand(5, 3).astype(np.float32)
-res = module.add_vectors(a, b, _result='numpy')
+res = module.add_vectors(a, b, _result="numpy")
 print(f"A Shape:   {a.shape}")
 print(f"B Shape:   {b.shape}")
 print(f"Res Shape: {res.shape}")
@@ -90,14 +93,15 @@ print("")
 
 # Create a sampler and texture
 sampler = device.create_sampler()
-tex = device.create_texture(width=32, height=32, format=spy.Format.rgba32_float,
-                            usage=spy.TextureUsage.shader_resource)
+tex = device.create_texture(
+    width=32, height=32, format=spy.Format.rgba32_float, usage=spy.TextureUsage.shader_resource
+)
 tex.copy_from_numpy(np.random.rand(32, 32, 4).astype(np.float32))
 
 # Sample the texture at a single UV coordinate. Results in 1 thread,
 # as the uv coordinate input is a single float 2.
 a = spy.float2(0.5, 0.5)
-res = module.sample_texture_at_uv(a, sampler, tex, _result='numpy')
+res = module.sample_texture_at_uv(a, sampler, tex, _result="numpy")
 print(f"A Shape: {a.shape}")
 print(f"Res Shape: {res.shape}")
 
@@ -107,6 +111,6 @@ print(f"Res Shape: {res.shape}")
 # a function that takes an [n,m,3] structure (a float3 texture). As a
 # result, the texture is effectively *broadcast* to all threads.
 a = np.random.rand(20, 2).astype(np.float32)
-res = module.sample_texture_at_uv(a, sampler, tex, _result='numpy')
+res = module.sample_texture_at_uv(a, sampler, tex, _result="numpy")
 print(f"A Shape: {a.shape}")
 print(f"Res Shape: {res.shape}")

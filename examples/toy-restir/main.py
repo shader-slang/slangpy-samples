@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 # A toy renderer with ReSTIR (reservoir-based spatiotemporal sample reuse).
 #
@@ -61,7 +61,7 @@ tex = device.create_texture(
     width=imageWidth,
     height=imageHeight,
     format=spy.Format.rgba32_float,
-    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access
+    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
 )
 
 
@@ -73,10 +73,18 @@ for frameIndex in range(frameCount):
     # Populate the reservoirs with initial candidates.
     module.resetReservoirs(initialOutput)
     for i in range(initialCandidateCount):
-        module.RandomStream(spy.wang_hash(
-            seed=frameIndex * imageWidth * imageHeight), _result=pathRandom)
+        module.RandomStream(
+            spy.wang_hash(seed=frameIndex * imageWidth * imageHeight), _result=pathRandom
+        )
         module.sampleAndMergeInitialCandidate(
-            spy.call_id(), frameIndex, imageSize, initialCandidateCount, initialOutput, pathRandom, risRandom)
+            spy.call_id(),
+            frameIndex,
+            imageSize,
+            initialCandidateCount,
+            initialOutput,
+            pathRandom,
+            risRandom,
+        )
 
     # Render.
     module.evaluate(initialOutput, tex)
@@ -94,14 +102,29 @@ for frameIndex in range(frameCount):
     # Populate the reservoirs with initial candidates.
     module.resetReservoirs(initialOutput)
     for i in range(initialCandidateCount):
-        module.RandomStream(spy.wang_hash(
-            seed=frameIndex * imageWidth * imageHeight), _result=pathRandom)
+        module.RandomStream(
+            spy.wang_hash(seed=frameIndex * imageWidth * imageHeight), _result=pathRandom
+        )
         module.sampleAndMergeInitialCandidate(
-            spy.call_id(), frameIndex, imageSize, initialCandidateCount, initialOutput, pathRandom, risRandom)
+            spy.call_id(),
+            frameIndex,
+            imageSize,
+            initialCandidateCount,
+            initialOutput,
+            pathRandom,
+            risRandom,
+        )
 
     # Temporal reuse.
-    module.performTemporalReuse(spy.call_id(), frameIndex, temporalOutput,
-                                initialOutput, spatialOutput, imageSize, risRandom)
+    module.performTemporalReuse(
+        spy.call_id(),
+        frameIndex,
+        temporalOutput,
+        initialOutput,
+        spatialOutput,
+        imageSize,
+        risRandom,
+    )
 
     # Spatial reuse.
     module.performSpatialReuse(spy.call_id(), spatialOutput, temporalOutput, imageSize, risRandom)
@@ -110,8 +133,9 @@ for frameIndex in range(frameCount):
     module.evaluate(spatialOutput, tex)
 
     # Copy to app output window texture.
-    module.copyToOutput(spy.grid((imageHeight, imageWidth)),
-                        spy.int2(imageWidth, 0), tex, app.output)
+    module.copyToOutput(
+        spy.grid((imageHeight, imageWidth)), spy.int2(imageWidth, 0), tex, app.output
+    )
     app.present()
 
 # Keep window processing events until user closes it.

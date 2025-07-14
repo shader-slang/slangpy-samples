@@ -1,0 +1,31 @@
+A Shape:   (10, 5)
+B Shape:   (10, 5)
+Res Shape: (10, 5)
+
+A Shape:   (10, 5)
+Res Shape: (10, 5)
+
+A Shape:   (10, 1)
+B Shape:   (10, 5)
+Res Shape: (10, 5)
+
+A Shape:   (1, 5)
+B Shape:   (10, 5)
+Res Shape: (10, 5)
+
+A Shape:   (1, 5)
+B Shape:   (10, 1)
+Res Shape: (10, 5)
+
+A Shape:   (3,)
+B Shape:   (3,)
+Res Shape: (3,)
+
+A Shape:   (3,)
+B Shape:   (5, 3)
+Res Shape: (5, 3)
+
+A Shape: (2,)
+Res Shape: (4,)
+A Shape: (20, 2)
+Res Shape: (20, 4)

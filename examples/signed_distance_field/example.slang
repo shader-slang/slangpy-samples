@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-// example.slang
+// SPDX-License-Identifier: Apache-2.0
+
 import "slangpy";
 
 // clang-format off
@@ -103,16 +103,19 @@ float solve_eikonal_2d(float horizontal, float vertical) {
  * 4. Updates the distance while preserving the state
  *
  * @param coord The pixel coordinates being processed
- * @param dist_tex The distance field texture being updated
+ * @param src_dist_tex The source texture where distances are read from
+ * @param dst_dist_tex The output texture where updated distances are written
  */
-void solve_eikonal(uint2 coord, RWTexture2D<float2> dist_tex) {
-  float2 current = dist_tex[coord];
+void solve_eikonal(uint2 coord, Texture2D<float2> src_dist_tex, RWTexture2D<float2> dst_dist_tex) {
+  float2 current = src_dist_tex[coord];
   float width, height;
-  dist_tex.GetDimensions(width, height);
+  src_dist_tex.GetDimensions(width, height);
 
   // Skip border points
-  if (current.y == 3.0)
+  if (current.y == 3.0) {
+    dst_dist_tex[coord] = current;
     return;
+  }
 
   float sign = current.x < 0 ? -1.0 : 1.0;
   float current_dist = current.x * sign;
@@ -120,22 +123,22 @@ void solve_eikonal(uint2 coord, RWTexture2D<float2> dist_tex) {
   // Find minimum horizontal neighbors
   float horizontal_min = 1e6;
   if (coord.x > 0) {
-    float2 left = dist_tex[uint2(coord.x - 1, coord.y)];
+    float2 left = src_dist_tex[uint2(coord.x - 1, coord.y)];
     horizontal_min = min(horizontal_min, sign * left.x);
   }
   if (coord.x < width - 1) {
-    float2 right = dist_tex[uint2(coord.x + 1, coord.y)];
+    float2 right = src_dist_tex[uint2(coord.x + 1, coord.y)];
     horizontal_min = min(horizontal_min, sign * right.x);
   }
 
   // Find minimum vertical neighbors
   float vertical_min = 1e6;
   if (coord.y > 0) {
-    float2 up = dist_tex[uint2(coord.x, coord.y - 1)];
+    float2 up = src_dist_tex[uint2(coord.x, coord.y - 1)];
     vertical_min = min(vertical_min, sign * up.x);
   }
   if (coord.y < height - 1) {
-    float2 down = dist_tex[uint2(coord.x, coord.y + 1)];
+    float2 down = src_dist_tex[uint2(coord.x, coord.y + 1)];
     vertical_min = min(vertical_min, sign * down.x);
   }
 
@@ -143,7 +146,7 @@ void solve_eikonal(uint2 coord, RWTexture2D<float2> dist_tex) {
   float eikonal = solve_eikonal_2d(horizontal_min, vertical_min);
   float new_dist = sign * min(current_dist, eikonal);
 
-  dist_tex[coord] = float2(new_dist, current.y);
+  dst_dist_tex[coord] = float2(new_dist, current.y);
 }
 
 /**
@@ -204,4 +207,3 @@ float4 generate_isolines(float2 dist_value) {
 
   return color;
 }
-

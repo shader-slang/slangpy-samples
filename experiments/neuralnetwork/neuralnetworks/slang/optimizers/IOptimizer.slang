@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 implementing NeuralNetworks;
 
 __include basetypes.IReal;
@@ -20,6 +21,8 @@ public interface IOptimizerState<T : IReal>
 public interface IOptimizer<T : IReal>
 {
     public associatedtype State : IOptimizerState<T>;
+    public associatedtype Batch;
 
     public void step(inout State state, inout T param, inout T grad);
+    public void batch_step<let N : int>(Batch[N] batches, int2 batch_index);
 }

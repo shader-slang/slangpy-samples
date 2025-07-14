@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 import "slangpy";
 
 // References:
@@ -36,7 +37,7 @@ struct RandomStream {
     __init(uint32_t seed) {
         state = seed;
     }
-    
+
     [mutating]
     uint32_t next() {
         // Xorshift32 from https://en.wikipedia.org/wiki/Xorshift.
@@ -64,7 +65,7 @@ struct Path {
     float t;       // Time of sample.
     uint32_t seed; // Random seed of the path.
     float3 f;      // Amount of light carried by the path.
-    
+
     __init() {
         uv = float2(-1.0f, -1.0f);
         t = 0.0f;
@@ -138,7 +139,7 @@ float3 evaluatePath(Path path) {
 Sample samplePath(int2 pixel, int frame, int2 imageSize, inout RandomStream pathRandom)
 {
     Sample sample;
-    
+
     // Randomize subpixel location within the pixel.
     float2 uv = (float2)pixel + float2(pathRandom.uniform(), pathRandom.uniform());
     sample.path.uv = uv / (float2)imageSize;
@@ -171,7 +172,7 @@ int2 backwardMotionVector(int2 pixel, float t, int2 imageSize)
 
     float wallHeight = 0.3f + 0.15f * (float)(cos(20.0f * (x - gMotionSpeed * t - 0.5f)) > 0.0f);
     if (y < wallHeight) motion[0] = int(-gMotionSpeed * imageSize[0]);
-    
+
     return motion;
 }
 
@@ -188,9 +189,9 @@ float shiftPath(Path path, float2 shift, float timeDelta, out Path offsetPath)
     result.seed = path.seed;
     result.t = path.t + timeDelta;
     result.f = float3(0.0, 0.0, 0.0);
-    
+
     bool onScreen = (result.uv[0] >= 0.0 && result.uv[0] < 1.0 && result.uv[1] >= 0.0 && result.uv[1] < 1.0);
-    
+
     if (onScreen)
     {
         result.f = evaluatePath(result);
@@ -351,7 +352,7 @@ struct GRIS
 void sampleAndMergeInitialCandidate(int2 pixel, int frame, int2 imageSize, int sampleCount, inout Reservoir reservoir, inout RandomStream pathRandom, inout RandomStream risRandom)
 {
     Sample sample = samplePath(pixel, frame, imageSize, pathRandom);
-    
+
     float misWeight = 1.0f / (float)sampleCount;
     float resamplingWeight = misWeight * sample.pHat * sample.W;
 
@@ -419,7 +420,7 @@ void performSpatialReuse(int2 pixel, inout Reservoir outReservoir, in RWNDBuffer
                           (int)(reuseWindowY[0] + (float)(reuseWindowY[1] - reuseWindowY[0]) * risRandom.uniform()));
     var pixelDelta = reusePixel - pixel;
     var shift = float2(pixelDelta) / float2(imageSize);
-    
+
     Reservoir neighborReservoir = reservoirs[reusePixel];
 
     // Resample one from the two.
@@ -447,4 +448,3 @@ void copyToOutput(int2 pixel, int2 offset, Texture2D<float4> input, RWTexture2D<
 }
 
 // ---------------------------------------------------------------------------
-

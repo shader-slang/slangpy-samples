@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 from .Real import Real
@@ -17,6 +18,7 @@ class ArrayKind(Enum):
     ArrayKind.array maps to plain arrays, e.g. float[10], ArrayKind.vector maps
     to e.g. float2, and ArrayKind.coopvec maps to DiffCoopVec
     """
+
     array = 0
     vector = 1
     coopvec = 2
@@ -76,8 +78,10 @@ class RealArray:
 
         shape = st.shape
         if kind is None or len(shape) != 1 or st.element_type is None:
-            raise ValueError("Expected a 1D array-like input type (vector, array, coopvec, etc.), "
-                             f"received '{st.full_name}' instead")
+            raise ValueError(
+                "Expected a 1D array-like input type (vector, array, coopvec, etc.), "
+                f"received '{st.full_name}' instead"
+            )
 
         dtype: Optional[Real] = None
         if isinstance(st.element_type, ScalarType):
@@ -90,7 +94,9 @@ class RealArray:
                 dtype = Real.double
 
         if dtype is None:
-            raise ValueError("Expected an input with a Real element type (half, float or double). "
-                             f"Received '{st.element_type.full_name}' instead")
+            raise ValueError(
+                "Expected an input with a Real element type (half, float or double). "
+                f"Received '{st.element_type.full_name}' instead"
+            )
 
         return RealArray(kind, dtype, shape[0])

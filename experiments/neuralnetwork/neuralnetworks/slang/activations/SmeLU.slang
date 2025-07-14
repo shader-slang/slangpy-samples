@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 // clang-format off
 implementing NeuralNetworks;
 
@@ -34,23 +35,23 @@ public struct SmeLU<T : IReal, int Width> : IScalarActivation<T, Width>
 public extension<T : IReal, int Width> SmeLU<T, Width> : IModel<DiffCoopVec<T, Width>, DiffCoopVec<T, Width>>
 {
     typealias CV = DiffCoopVec<T, Width>;
-    
+
     [BackwardDerivative(backward)]
     public DiffCoopVec<T, Width> forward(DiffCoopVec<T, Width> x)
     {
         let left = max(Beta * x, x + Alpha * (T(1.f) - Beta));
         let middle = A * x * x + C * x + C;
         let right = max(x, CV(Alpha));
-        
+
         return min(left, min(middle, right));
     }
-    
+
     public void backward(inout DifferentialPair<DiffCoopVec<T, Width>> x, DiffCoopVec<T, Width> grad)
     {
         let left = max(x.p + Alpha + Beta, CV(Beta));
         let middle = max(Beta - Alpha - x.p, T(2.f) * A * x.p + B);
         let right = CV(1.f);
-        
+
         let dSmeLU = min(left, min(middle, right));
         x = diffPair(x.p, dSmeLU * grad);
     }

@@ -1,29 +1,27 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
+# Type methods example
+# https://slangpy.shader-slang.org/en/latest/src/basics/typemethods.html
 
 import slangpy as spy
 import pathlib
 
-print("SlangPy type methods example (https://slangpy.shader-slang.org/en/latest/typemethods.html)")
-
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "example.slang")
 
 # Create buffer of particles (.as_struct is used to make python typing happy!)
-particles = spy.InstanceBuffer(
-    struct=module.Particle.as_struct(),
-    shape=(10,))
+particles = spy.InstanceBuffer(struct=module.Particle.as_struct(), shape=(10,))
 
 # Construct every particle with position of 0, and use slangpy's rand_float
 # functionality to supply a different rand vector for each one.
-particles.construct(
-    p=spy.float3(0),
-    v=spy.rand_float(-1, 1, 3)
-)
+particles.construct(p=spy.float3(0), v=spy.rand_float(-1, 1, 3))
 
 # Print all the particles by breaking them down into groups of 6 floats
 result_cursor = particles.buffer.cursor()

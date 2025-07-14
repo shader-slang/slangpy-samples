@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import pathlib
@@ -8,12 +8,14 @@ import numpy as np
 # Create a device, which will handle setup and invocation of the Slang
 # compiler for us. We give it both the slangpy PATH and the local include
 # PATH so that it can find Slang shader files
-device = spy.Device(compiler_options={
-    "include_paths": [
-        spy.SHADER_PATH,
-        pathlib.Path(__file__).parent.absolute(),
-    ],
-})
+device = spy.Device(
+    compiler_options={
+        "include_paths": [
+            spy.SHADER_PATH,
+            pathlib.Path(__file__).parent.absolute(),
+        ],
+    }
+)
 
 # Load our Slang module -- we'll take a look at this in just a moment
 module = spy.Module.load_from_file(device, "simplediffsplatting2d.slang")
@@ -30,8 +32,9 @@ FLOATS_PER_BLOB = 9
 # SlangPy lets us create a Tensor and initialize it easily using numpy to generate
 # random values. This Tensor includes storage for gradients, because we call .with_grads()
 # on the created spy.Tensor.
-blobs = spy.Tensor.numpy(device, np.random.rand(
-    NUM_BLOBS * FLOATS_PER_BLOB).astype(np.float32)).with_grads()
+blobs = spy.Tensor.from_numpy(
+    device, np.random.rand(NUM_BLOBS * FLOATS_PER_BLOB).astype(np.float32)
+).with_grads()
 
 # Load our target image from a file, using the imageio package,
 # and store its width and height in W, H
@@ -49,7 +52,8 @@ input_image = device.create_texture(
     width=W,
     height=H,
     format=spy.Format.rgba32_float,
-    usage=spy.TextureUsage.shader_resource)
+    usage=spy.TextureUsage.shader_resource,
+)
 
 # Create a per_pixel_loss Tensor to hold the calculated loss, and create gradient storage
 per_pixel_loss = spy.Tensor.empty(device, dtype=module.float4, shape=(W, H))
@@ -71,14 +75,15 @@ current_render = device.create_texture(
     width=W,
     height=H,
     format=spy.Format.rgba32_float,
-    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access)
+    usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
+)
 
 iterations = 10000
 for iter in range(iterations):
     # Back-propagage the unit per-pixel loss with auto-diff.
-    module.perPixelLoss.bwds(per_pixel_loss,
-                             spy.grid(shape=(input_image.width, input_image.height)),
-                             blobs, input_image)
+    module.perPixelLoss.bwds(
+        per_pixel_loss, spy.grid(shape=(input_image.width, input_image.height)), blobs, input_image
+    )
 
     # Update the parameters using the Adam algorithm
     module.adamUpdate(blobs, blobs.grad_out, adam_first_moment, adam_second_moment)
@@ -86,7 +91,7 @@ for iter in range(iterations):
     # Every 50 iterations, render the blobs out to a texture, and hand it off to tev
     # so that you can visualize the iteration towards ideal
     if iter % 50 == 0:
-        module.renderBlobsToTexture(current_render,
-                                    blobs,
-                                    spy.grid(shape=(input_image.width, input_image.height)))
+        module.renderBlobsToTexture(
+            current_render, blobs, spy.grid(shape=(input_image.width, input_image.height))
+        )
         spy.tev.show_async(current_render, name=f"optimization_{(iter // 50):03d}")

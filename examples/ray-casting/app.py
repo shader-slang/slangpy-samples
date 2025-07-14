@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from typing import Callable, Optional
 import slangpy as spy
@@ -6,13 +6,17 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title: str = "ray-casting", width: int = 1024, height: int = 1024, device_type: spy.DeviceType = spy.DeviceType.automatic):
+    def __init__(
+        self,
+        title: str = "ray-casting",
+        width: int = 1024,
+        height: int = 1024,
+        device_type: spy.DeviceType = spy.DeviceType.automatic,
+    ):
         super().__init__()
 
         # Create a window
-        self._window = spy.Window(
-            width=width, height=height, title=title, resizable=True
-        )
+        self._window = spy.Window(width=width, height=height, title=title, resizable=True)
 
         # Create a device with local include path for shaders
         self._device = spy.create_device(device_type, include_paths=[Path(__file__).parent])
@@ -27,8 +31,7 @@ class App:
             width=width,
             height=height,
             mip_count=1,
-            usage=spy.TextureUsage.shader_resource
-            | spy.TextureUsage.unordered_access,
+            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
             label="output_texture",
         )
 
@@ -67,8 +70,10 @@ class App:
         return True
 
     def present(self):
+        if not self.surface.config:
+            return
         image = self.surface.acquire_next_image()
-        if image is None:
+        if not image:
             return
 
         if (
@@ -81,8 +86,7 @@ class App:
                 width=image.width,
                 height=image.height,
                 mip_count=1,
-                usage=spy.TextureUsage.shader_resource
-                | spy.TextureUsage.unordered_access,
+                usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
                 label="output_texture",
             )
 
@@ -123,4 +127,7 @@ class App:
 
     def _on_window_resize(self, width: int, height: int):
         self._device.wait()
-        self.surface.configure(width=width, height=height)
+        if width > 0 and height > 0:
+            self.surface.configure(width=width, height=height)
+        else:
+            self.surface.unconfigure()

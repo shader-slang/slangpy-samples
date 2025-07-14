@@ -1,4 +1,5 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
 import sys
 import time
 import pathlib
@@ -12,25 +13,44 @@ from slangpy.experimental.gridarg import grid
 local_dir = pathlib.Path(__file__).parent.absolute()
 
 # Create a slangpy device with the local folder for slang includes
-device = spy.create_device(include_paths=[local_dir, ])
+device = spy.create_device(
+    include_paths=[
+        local_dir,
+    ]
+)
 
 # Build and parse command line
 parser = argparse.ArgumentParser(description="Slang-based BC7 - mode 6 compressor")
-parser.add_argument("-i", "--input_path", help="Path to the input texture.",
-                    default=local_dir/"sample.jpg")
+parser.add_argument(
+    "-i", "--input_path", help="Path to the input texture.", default=local_dir / "sample.jpg"
+)
 parser.add_argument("-o", "--output_path", help="Optional path to save the decoded BC7 texture.")
-parser.add_argument("-s", "--opt_steps", type=int, default=100,
-                    help="Number of optimization (gradient descene) steps.")
-parser.add_argument("-b", "--benchmark", action="store_true",
-                    help="Run in benchmark mode to measure processing time.")
+parser.add_argument(
+    "-s",
+    "--opt_steps",
+    type=int,
+    default=100,
+    help="Number of optimization (gradient descene) steps.",
+)
+parser.add_argument(
+    "-b",
+    "--benchmark",
+    action="store_true",
+    help="Run in benchmark mode to measure processing time.",
+)
 args = parser.parse_args()
 
 # Load texture
 try:
     loader = spy.TextureLoader(device)
-    input_tex = loader.load_texture(args.input_path, options={"load_as_normalized": True,
-                                                              "load_as_srgb": False,
-                                                              "extend_alpha": True, })
+    input_tex = loader.load_texture(
+        args.input_path,
+        options={
+            "load_as_normalized": True,
+            "load_as_srgb": False,
+            "extend_alpha": True,
+        },
+    )
     w, h = input_tex.width, input_tex.height
     print(f"\nTexture dimensions: {w}x{h}")
 except Exception as e:
@@ -39,9 +59,12 @@ except Exception as e:
 
 # Create output texture
 decoded_tex = device.create_texture(
-    width=w, height=h, mip_count=1,
+    width=w,
+    height=h,
+    mip_count=1,
     format=spy.Format.rgba32_float,
-    usage=spy.TextureUsage.unordered_access)
+    usage=spy.TextureUsage.unordered_access,
+)
 
 # Load module and setup encoder kernel
 encoder_fn = spy.Module.load_from_file(device, "tinybc.slang").encoder
@@ -52,7 +75,7 @@ encoder_fn = encoder_fn.set(
     lr=0.1,
     adamBeta1=0.9,
     adamBeta2=0.999,
-    textureDim=spy.int2(w, h)
+    textureDim=spy.int2(w, h),
 )
 
 # When running in benchmark mode amortize overheads over many runs to measure more accurate GPU times
@@ -69,11 +92,12 @@ if args.benchmark:
     device.wait_for_idle()
     comp_time_in_sec = (time.time() - start_time) / num_iters
     textures_per_sec = 1 / comp_time_in_sec
-    giga_texels_per_sec = w * h * textures_per_sec / 1E9
+    giga_texels_per_sec = w * h * textures_per_sec / 1e9
     print(f"\nBenchmark mode:")
     print(f"  - Number of optimization passes: {args.opt_steps}")
     print(
-        f"  - Compression time: {1E3 * comp_time_in_sec:.4g} ms --> {giga_texels_per_sec:.4g} GTexels/s")
+        f"  - Compression time: {1E3 * comp_time_in_sec:.4g} ms --> {giga_texels_per_sec:.4g} GTexels/s"
+    )
 
 # Calculate and print PSNR
 mse = np.mean((input_tex.to_numpy() / 255.0 - decoded_tex.to_numpy()) ** 2)
@@ -82,5 +106,7 @@ print(f"\nPSNR: {psnr:.4g}")
 
 # Output decoded texture
 if args.output_path:
-    img = decoded_tex.to_bitmap().convert(component_type=spy.Bitmap.ComponentType.uint8, srgb_gamma=False)
+    img = decoded_tex.to_bitmap().convert(
+        component_type=spy.Bitmap.ComponentType.uint8, srgb_gamma=False
+    )
     img.write(args.output_path)

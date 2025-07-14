@@ -1,15 +1,18 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
+# First function example
+# https://slangpy.shader-slang.org/en/latest/src/basics/firstfunctions.html
 
 import slangpy as spy
 import pathlib
 import numpy as np
 
-print("SlangPy first-function example (https://slangpy.shader-slang.org/en/latest/firstfunctions.html)")
-
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "example.slang")
@@ -19,7 +22,7 @@ a = np.random.rand(1000000).astype(np.float32)
 b = np.random.rand(1000000).astype(np.float32)
 
 # Call our function and ask for a numpy array back (the default would be a buffer)
-result = module.add(a, b, _result='numpy')
+result = module.add(a, b, _result="numpy")
 
 # Print the first 10
 print(result[:10])

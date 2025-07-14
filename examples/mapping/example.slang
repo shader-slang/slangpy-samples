@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
 
 float add(float a, float b)
 {

@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 import slangpy as spy
 import pathlib
@@ -28,10 +28,12 @@ def create_image(width=256, height=256, antialiased=False):
         numpy.ndarray: A floating-point RGBA image array with values normalized to [0,1]
     """
     # Create a bitmap with RGBA format
-    bitmap = spy.Bitmap(pixel_format=spy.Bitmap.PixelFormat.rgba,
-                        component_type=spy.Bitmap.ComponentType.uint8,
-                        width=width,
-                        height=height)
+    bitmap = spy.Bitmap(
+        pixel_format=spy.Bitmap.PixelFormat.rgba,
+        component_type=spy.Bitmap.ComponentType.uint8,
+        width=width,
+        height=height,
+    )
 
     # Get numpy array view of bitmap data
     image = np.array(bitmap, copy=False)
@@ -42,29 +44,35 @@ def create_image(width=256, height=256, antialiased=False):
     thickness = 0.039 * min(width, height)
 
     # Draw shapes
-    shape_utils.draw_circle(image,
-                            center_x=0.31 * width,
-                            center_y=0.39 * height,
-                            radius=0.16 * min(width, height),
-                            color=white,
-                            antialiased=antialiased)
+    shape_utils.draw_circle(
+        image,
+        center_x=0.31 * width,
+        center_y=0.39 * height,
+        radius=0.16 * min(width, height),
+        color=white,
+        antialiased=antialiased,
+    )
 
-    shape_utils.draw_circle(image,
-                            center_x=0.63 * width,
-                            center_y=0.55 * height,
-                            radius=0.23 * min(width, height),
-                            color=white,
-                            antialiased=antialiased)
+    shape_utils.draw_circle(
+        image,
+        center_x=0.63 * width,
+        center_y=0.55 * height,
+        radius=0.23 * min(width, height),
+        color=white,
+        antialiased=antialiased,
+    )
 
-    shape_utils.draw_rotated_rect(image,
-                                  center_x=0.59 * width,
-                                  center_y=0.43 * height,
-                                  width=0.39 * width,
-                                  height=0.55 * height,
-                                  angle=15,
-                                  thickness=thickness,
-                                  color=white,
-                                  antialiased=antialiased)
+    shape_utils.draw_rotated_rect(
+        image,
+        center_x=0.59 * width,
+        center_y=0.43 * height,
+        width=0.39 * width,
+        height=0.55 * height,
+        angle=15,
+        thickness=thickness,
+        color=white,
+        antialiased=antialiased,
+    )
 
     return image.astype(np.float32) / 255.0
 
@@ -118,37 +126,48 @@ def process_image(device, module, image, width, height, name_suffix):
     Returns:
         numpy.ndarray: The computed distance field
     """
-    input_tex = device.create_texture(width=width,
-                                      height=height,
-                                      format=spy.Format.rgba32_float,
-                                      usage=spy.TextureUsage.shader_resource,
-                                      data=image)
-    spy.tev.show(input_tex, name=f'input_{name_suffix}')
+    input_tex = device.create_texture(
+        width=width,
+        height=height,
+        format=spy.Format.rgba32_float,
+        usage=spy.TextureUsage.shader_resource,
+        data=image,
+    )
+    spy.tev.show(input_tex, name=f"input_{name_suffix}")
 
-    dist_tex = device.create_texture(width=width,
-                                     height=height,
-                                     format=spy.Format.rg32_float,
-                                     usage=spy.TextureUsage.shader_resource
-                                     | spy.TextureUsage.unordered_access)
+    # Create two textures for computing the distance field (ping-pong technique)
+    dist_tex = [
+        device.create_texture(
+            width=width,
+            height=height,
+            format=spy.Format.rg32_float,
+            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
+        )
+        for _ in range(2)
+    ]
 
-    # Initialize
-    module.init_eikonal(spy.grid((width, height)), input_tex, dist_tex)
-    spy.tev.show(dist_tex, name=f'initial_distances_{name_suffix}')
+    # Initialize the distance field
+    module.init_eikonal(spy.grid((width, height)), input_tex, dist_tex[0])
+    spy.tev.show(dist_tex[0], name=f"initial_distances_{name_suffix}")
 
-    for i in range(128):
-        module.solve_eikonal(spy.grid((width, height)), dist_tex)
+    # Solve the Eikonal equation iteratively
+    for _ in range(128):
+        module.solve_eikonal(spy.grid((width, height)), dist_tex[0], dist_tex[1])
+        dist_tex = [dist_tex[1], dist_tex[0]]  # Swap textures
 
-    distances = dist_tex.to_numpy()
-    spy.tev.show(dist_tex, name=f'final_distances_{name_suffix}')
+    distances = dist_tex[0].to_numpy()
+    spy.tev.show(dist_tex[0], name=f"final_distances_{name_suffix}")
 
-    result = module.generate_isolines(distances, _result='numpy')
+    result = module.generate_isolines(distances, _result="numpy")
 
-    output_tex = device.create_texture(width=width,
-                                       height=height,
-                                       format=spy.Format.rgba32_float,
-                                       usage=spy.TextureUsage.shader_resource,
-                                       data=result)
-    spy.tev.show(output_tex, name=f'isolines_{name_suffix}')
+    output_tex = device.create_texture(
+        width=width,
+        height=height,
+        format=spy.Format.rgba32_float,
+        usage=spy.TextureUsage.shader_resource,
+        data=result,
+    )
+    spy.tev.show(output_tex, name=f"isolines_{name_suffix}")
 
     return distances
 
@@ -160,25 +179,22 @@ def main():
     2. Either processes a provided input image or generates and processes test images
     3. Generates and visualizes distance fields and isolines
     """
-    parser = argparse.ArgumentParser(
-        description='Generate distance fields from binary images')
-    parser.add_argument('--input',
-                        '-i',
-                        type=str,
-                        help='Path to input image (optional)')
+    parser = argparse.ArgumentParser(description="Generate distance fields from binary images")
+    parser.add_argument("--input", "-i", type=str, help="Path to input image (optional)")
     args = parser.parse_args()
 
-    device = spy.create_device(include_paths=[
-        pathlib.Path(__file__).parent.absolute(),
-    ])
+    device = spy.create_device(
+        include_paths=[
+            pathlib.Path(__file__).parent.absolute(),
+        ]
+    )
 
     module = spy.Module.load_from_file(device, "example.slang")
 
     if args.input:
         try:
             input_image, width, height = load_image(args.input)
-            distances = process_image(device, module, input_image, width,
-                                      height, "input")
+            distances = process_image(device, module, input_image, width, height, "input")
         except Exception as e:
             print(f"Error processing input image: {e}", file=sys.stderr)
             sys.exit(1)
@@ -186,13 +202,12 @@ def main():
         width, height = 256, 256  # Default size for test images
 
         aliased_image = create_image(width, height, antialiased=False)
-        aliased_distances = process_image(device, module, aliased_image, width,
-                                          height, "aliased")
+        aliased_distances = process_image(device, module, aliased_image, width, height, "aliased")
 
         antialiased_image = create_image(width, height, antialiased=True)
-        antialiased_distances = process_image(device, module,
-                                              antialiased_image, width, height,
-                                              "antialiased")
+        antialiased_distances = process_image(
+            device, module, antialiased_image, width, height, "antialiased"
+        )
 
 
 if __name__ == "__main__":

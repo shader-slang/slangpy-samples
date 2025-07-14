@@ -1,27 +1,30 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
+
+# Grid generator example
+# https://slangpy.shader-slang.org/en/latest/src/generators/generator_grid.html
 
 import slangpy as spy
 import pathlib
 import numpy as np
 
-print("SlangPy grid generator example (https://slangpy.shader-slang.org/en/latest/generator_grid.html)")
-
 # Create a device with the local folder for slangpy includes
-device = spy.create_device(include_paths=[
-    pathlib.Path(__file__).parent.absolute(),
-])
+device = spy.create_device(
+    include_paths=[
+        pathlib.Path(__file__).parent.absolute(),
+    ]
+)
 
 # Load module
 module = spy.Module.load_from_file(device, "ids.slang")
 
 # Populate a 4x4 numpy array of int2s with call ids
-res = module.myfunc(spy.grid(shape=(4, 4)), _result='numpy')
+res = module.myfunc(spy.grid(shape=(4, 4)), _result="numpy")
 
 # [ [ [0,0], [1,0], [2,0], [3,0] ], [ [0,1], [1,1], [2,1], [3,1] ], ...
 print(res)
 
 # Populate a 4x4 numpy array of int2s with call ids
-res = module.myfunc(spy.grid(shape=(4, 4), stride=(2, 2)), _result='numpy')
+res = module.myfunc(spy.grid(shape=(4, 4), stride=(2, 2)), _result="numpy")
 
 # [ [ [0,0], [2,0], [4,0], [6,0] ], [ [0,2], [2,2], [4,2], [6,2] ], ...
 print(res)

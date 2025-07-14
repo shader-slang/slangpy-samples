@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from app import App
 import slangpy as spy
@@ -23,8 +23,9 @@ class Camera:
             "o": self.o,
             "scale": self.scale,
             "frameDim": spy.float2(self.app._window.width, self.app._window.height),
-            "_type": "Camera"
+            "_type": "Camera",
         }
+
 
 # This Properties class mimics the Properties struct from brdf.slang,
 # setting the baseColor, roughness, metallic, and specular values that the
@@ -46,7 +47,7 @@ class Properties:
             "roughness": self.r,
             "metallic": self.m,
             "specular": self.s,
-            "_type": "Properties"
+            "_type": "Properties",
         }
 
 

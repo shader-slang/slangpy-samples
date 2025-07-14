@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+// SPDX-License-Identifier: Apache-2.0
+
 // clang-format off
 implementing NeuralNetworks;
 
@@ -22,7 +23,7 @@ public extension<T : IReal, int Width> ReLU<T, Width> : IModel<DiffCoopVec<T, Wi
     [BackwardDifferentiable]
     public DiffCoopVec<T, Width> forward(DiffCoopVec<T, Width> x)
     {
-        return max(x, DiffCoopVec<T, Width>(0.0f)); 
+        return max(x, DiffCoopVec<T, Width>(0.0f));
     }
 }
 

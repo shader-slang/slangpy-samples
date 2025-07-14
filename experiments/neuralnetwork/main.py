@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+# SPDX-License-Identifier: Apache-2.0
 
 from slangpy import Device, DeviceType, TextureLoader, Module
 from slangpy.types import NDBuffer
@@ -86,17 +86,22 @@ def training_main():
     uv_grid = create_uv_grid(device, resolution)
 
     timer = Timer()
-    command_encoder = device.create_command_encoder()
 
     while app.process_events():
         timer.start()
+
+        # The command encoder has to be created on each iteration since command_encoder.finish()
+        # closes it and the only way to open one is to create a new one.
+        command_encoder = device.create_command_encoder()
 
         # For a bit of extra performance, don't call module.trainTexture(....) directly,
         # but collect multiple calls into a command buffer and dispatch them as a big
         # block. This avoids some launch overhead
         for i in range(num_batches_per_epoch):
             # Backpropagate network loss
-            module.trainTexture.append_to(command_encoder, model, rng, target_tex, sampler, loss_scale)
+            module.trainTexture.append_to(
+                command_encoder, model, rng, target_tex, sampler, loss_scale
+            )
             optim.step(command_encoder)
 
         id = device.submit_command_buffer(command_encoder.finish())
@@ -107,8 +112,10 @@ def training_main():
 
         # Display some useful info as we go
         msamples = (num_batches_per_epoch * math.prod(batch_shape)) * 1e-6
-        print(f"Throughput: {timer.frequency() * msamples:.2f} MSamples/s "
-              f"Epoch time: {timer.elapsed() * 1e3:.1f}ms")
+        print(
+            f"Throughput: {timer.frequency() * msamples:.2f} MSamples/s "
+            f"Epoch time: {timer.elapsed() * 1e3:.1f}ms"
+        )
 
         # Evaluate the neural network over the uv_grid and write the results to the
         # output texture
@@ -121,7 +128,12 @@ def training_main():
 class ToGrayscale(nn.IModel):
     """Example of extending the library with a custom component. See README.md for more information."""
 
-    def __init__(self, weights: nn.AutoSettable[list[float]] = nn.Auto, dtype: nn.AutoSettable[nn.Real] = nn.Auto, width: nn.AutoSettable[int] = nn.Auto):
+    def __init__(
+        self,
+        weights: nn.AutoSettable[list[float]] = nn.Auto,
+        dtype: nn.AutoSettable[nn.Real] = nn.Auto,
+        width: nn.AutoSettable[int] = nn.Auto,
+    ):
         super().__init__()
         self._weights = weights
         self._dtype = dtype
@@ -141,7 +153,8 @@ class ToGrayscale(nn.IModel):
             # Weights supplied? Double check they agree with the resolved width
             if len(self._weights) != self.width:
                 self.model_error(
-                    f"Expected {self.width} weights; received {len(self._weights)} instead")
+                    f"Expected {self.width} weights; received {len(self._weights)} instead"
+                )
             self.weights = self._weights
 
     @property
@@ -149,16 +162,13 @@ class ToGrayscale(nn.IModel):
         return f"ToGrayscale<{self.dtype}, {self.width}>"
 
     def get_this(self):
-        return {
-            "channelWeights": self.weights,
-            "_type": self.type_name
-        }
+        return {"channelWeights": self.weights, "_type": self.type_name}
 
 
 def create_uv_grid(device: Device, resolution: int):
     span = np.linspace(0, 1, resolution, dtype=np.float32)
     uvs_np = np.stack(np.broadcast_arrays(span[None, :], span[:, None]), axis=2)
-    uvs = NDBuffer(device, 'float2', shape=(resolution, resolution))
+    uvs = NDBuffer(device, "float2", shape=(resolution, resolution))
     uvs.copy_from_numpy(uvs_np)
     return uvs
 

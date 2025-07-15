@@ -1,6 +1,6 @@
 # SDF Match Example: Neural Network Training with Real-time Ray Marching
 
-This example demonstrates a fascinating intersection of neural networks and computer graphics: training a tiny multi-layer perceptron (TinyMLP) to approximate a signed distance function (SDF) while simultaneously rendering the results using ray marching in real-time. **This example showcases SlangPy's automatic differentiation capabilities**, demonstrating how Slang can automatically generate backward propagation code or allow users to provide customized backward propagation implementations.
+This example demonstrates a fascinating intersection of neural networks and computer graphics: training a tiny multi-layer perceptron (TinyMLP) to approximate a [signed distance function (SDF)]((https://iquilezles.org/articles/distfunctions/)) while simultaneously rendering the results using ray marching in real-time. **This example showcases SlangPy's automatic differentiation capabilities**, demonstrating how Slang can automatically generate backward propagation code or allow users to provide customized backward propagation implementations.
 
 ## Overview
 
@@ -29,13 +29,13 @@ The training system trains the TinyMLP to approximate a target SDF (a sphere wit
 **Why train on x² + y² + z² instead of sqrt(x² + y² + z²) - 2.0?**
 
 The square root operation in the target SDF can cause training instability due to:
-- **Gradient explosion** near the origin where the derivative of sqrt approaches infinity
+- **[Gradient explosion](https://deepai.org/machine-learning-glossary-and-terms/exploding-gradient-problem)** near the origin where the derivative of sqrt approaches infinity
 - **Numerical instability** when the input values are very close to zero
 - **Slower convergence** due to the non-linear transformation
 
 By training on the squared distance `x² + y² + z²`, we avoid these issues while still learning the essential geometric structure. The network output is then transformed during rendering to recover the proper SDF values: `sqrt(network_output) - 2.0`.
 
-The training process uses the Adam optimizer with gradient clipping to ensure stable convergence. The loss function compares the neural network's prediction with the squared distance target, enabling the network to gradually learn the implicit surface representation through gradient-based optimization.
+The training process uses the [Adam optimizer](https://www.geeksforgeeks.org/deep-learning/adam-optimizer/) with [gradient clipping](https://www.geeksforgeeks.org/deep-learning/understanding-gradient-clipping/) to ensure stable convergence. The loss function compares the neural network's prediction with the squared distance target, enabling the network to gradually learn the implicit surface representation through gradient-based optimization.
 
 ### 3. Ray Marching Implementation (`rayMarching.slang`)
 
@@ -80,14 +80,14 @@ adam_state = spy.NDBuffer(app.device, dtype=module.AdamState, shape=(param_size,
 
 ### 2. Main Loop
 
-The main loop alternates between training and rendering, and it render the results every 100 training iterations.
+The main loop alternates between training and rendering, and it renders the results every 100 training iterations.
 
 ```python
 while app.process_events():
     # Train for 100 iterations
     iter = 0
     while iter < 100:
-        result = trainMLP(iter)
+        result = trainMLP(iter, tiny_mlp_params, adam_state, input, samplesSize)
         iter += 1
 
     # Render every 1000 iterations
@@ -97,6 +97,7 @@ while app.process_events():
         print(f"Iteration {total_iter}: Loss = {loss}")
 
     # Render the current state
+    windowSize = spy.float2(app._window.width, app._window.height)
     module.RunRayMarch(windowSize, call_id(), tiny_mlp_params.storage.device_address, _result=app.output)
     app.present()
 ```

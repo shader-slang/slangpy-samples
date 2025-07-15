@@ -66,9 +66,9 @@ def construct_network(params: spy.NDBuffer, params_grad: spy.NDBuffer):
     tiny_mlp_cursor.apply()
     return tiny_mlp;
 
-def trainMLP(iter: int, tiny_mlp_params: spy.NDBuffer, adam_state: spy.NDBuffer, input: spy.Tensor):
+def trainMLP(iter: int, tiny_mlp_params: spy.NDBuffer, adam_state: spy.NDBuffer, input: spy.Tensor, batch_size: int):
     result = module.trainMLP(tiny_mlp_params.storage.device_address, input)
-    module.updateParams(tiny_mlp_params.storage.device_address, adam_state, samplesSize, 0.9, 0.999)
+    module.updateParams(tiny_mlp_params.storage.device_address, adam_state, batch_size, 0.9, 0.999)
     return result
 
 
@@ -76,7 +76,7 @@ app = App()
 spy.set_dump_generated_shaders(True)
 module = spy.Module.load_from_file(app.device, "main.slang")
 
-samplesSize = 512
+samplesSize = 256
 
 input_size = 3;
 hidden_size = 16;
@@ -100,7 +100,7 @@ while app.process_events():
     # we will train the network for 100 iterations, and render the image every 1000 iterations
     iter = 0
     while iter < 100:
-        result = trainMLP(iter, tiny_mlp_params, adam_state, input)
+        result = trainMLP(iter, tiny_mlp_params, adam_state, input, samplesSize)
         iter += 1
 
     total_iter += iter

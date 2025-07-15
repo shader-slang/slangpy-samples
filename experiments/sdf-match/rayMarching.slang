@@ -25,6 +25,7 @@ public float targetSDF(no_diff float3 samplePoint)
     return length(samplePoint) - 2.0f;
 }
 
+// This model uses a learned MLP to approximate the SDF.
 public struct LearnedSDFModle : ISDFModel
 {
     public TinyMLP mlp;
@@ -38,7 +39,8 @@ public struct LearnedSDFModle : ISDFModel
 
     public float sdfFunc(float3 p)
     {
-        // return learnedSDF(mlp, p);
+        // Since the MLP actually learns the function x^2 + y^2 + z^2, we need to convert it to the SDF function.
+        // The SDF function is sqrt(x^2 + y^2 + z^2) - 2.0f.
         float[input_size] input = {p.x, p.y, p.z};
         float result = mlp.eval(input)[0];
         result = (result < 0.0f) ? 0.0f : sqrt(result);
@@ -57,6 +59,7 @@ public struct LearnedSDFModle : ISDFModel
     }
 }
 
+// The target SDF model is a sphere with radius 2.0f.
 public struct TargetSDFModle : ISDFModel
 {
     public float3 color = float3(0.5, 0.6, 1.0);
@@ -68,7 +71,7 @@ public struct TargetSDFModle : ISDFModel
 
     public float sdfFunc(float3 p)
     {
-        return length(p) - 2.0f;
+        return length(p) - 2.0f; // radius - 2.0f
     }
 
     public float3 estimateNormal(float3 p)

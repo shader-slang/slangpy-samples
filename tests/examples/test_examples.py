@@ -16,7 +16,7 @@ DIR = Path(__file__).parent.absolute()
 EXAMPLES_DIR = DIR.parent.parent / "examples"
 
 if sys.platform == "win32":
-    DEVICE_TYPES = ["d3d12", "vulkan", "cuda"]
+    DEVICE_TYPES = ["d3d12", "vulkan"]
 elif sys.platform == "linux" or sys.platform == "linux2":
     DEVICE_TYPES = ["vulkan", "cuda"]
 elif sys.platform == "darwin":

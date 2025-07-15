@@ -5,6 +5,7 @@ import slangpy as spy
 import numpy as np
 import imageio
 from tqdm import tqdm
+from slangpy.slangpy import Shape
 
 # Load up an input image.
 image = imageio.imread("./jeep.jpg")
@@ -85,13 +86,13 @@ for iter in tqdm(range(iterations)):
         exit(0)
 
     # Backprop the unit per-pixel loss with auto-diff.
-    module.perPixelLoss.bwds(per_pixel_loss, dispatch_ids, blobs, input_image)
+    module.perPixelLoss.call_group_shape(Shape((WORKGROUP_X,WORKGROUP_Y))).bwds(per_pixel_loss, dispatch_ids, blobs, input_image)
 
     # Update
     module.adamUpdate(blobs, blobs.grad_out, adam_first_moment, adam_second_moment)
 
     if iter % 10 == 0:
-        module.renderBlobsToTexture(app.output, blobs, dispatch_ids)
+        module.renderBlobsToTexture.call_group_shape(Shape((WORKGROUP_X,WORKGROUP_Y)))(app.output, blobs, dispatch_ids)
         app.present()
 
 # Keep window processing events until user closes it.

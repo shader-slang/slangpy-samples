@@ -20,7 +20,7 @@ class App:
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)
-        self.surface.configure(width=self._window.width, height=self._window.height)
+        self.surface.configure(width=self._window.width, height=self._window.height, format=spy.Format.rgba8_unorm)
 
         self._output_texture: spy.Texture = self.device.create_texture(
             width=self._window.width,

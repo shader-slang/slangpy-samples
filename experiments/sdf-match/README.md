@@ -1,6 +1,6 @@
 # SDF Match Example: Neural Network Training with Real-time Ray Marching
 
-This example demonstrates a fascinating intersection of neural networks and computer graphics: training a tiny multi-layer perceptron (TinyMLP) to approximate a [signed distance function (SDF)]((https://iquilezles.org/articles/distfunctions/)) while simultaneously rendering the results using ray marching in real-time. **This example showcases SlangPy's automatic differentiation capabilities**, demonstrating how Slang can automatically generate backward propagation code or allow users to provide customized backward propagation implementations.
+This example demonstrates a fascinating intersection of neural networks and computer graphics: training a tiny multi-layer perceptron (TinyMLP) to approximate a [signed distance function (SDF)](https://iquilezles.org/articles/distfunctions/) while simultaneously rendering the results using ray marching in real-time. **This example showcases SlangPy's automatic differentiation capabilities**, demonstrating how Slang can automatically generate backward propagation code or allow users to provide customized backward propagation implementations.
 
 ## Overview
 

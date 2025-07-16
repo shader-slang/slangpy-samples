@@ -250,6 +250,11 @@ def test_ray_casting(example_runner: ExampleRunner, device_type: str):
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_return_type(example_runner: ExampleRunner, device_type: str):
+    example_runner.run("return_type/main.py", device_type)
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_signed_distance_field(example_runner: ExampleRunner, device_type: str):
     example_runner.run(
         "signed_distance_field/main.py",

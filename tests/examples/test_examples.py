@@ -172,7 +172,10 @@ class ExampleRunner:
                     data_equal = False
                     break
         if not data_equal:
-            numpy.savez(actual_data_path, **data)
+            with open(actual_data_path, 'wb') as actual_data_file:
+                numpy.savez(actual_data_file, **data)
+                # ensure file is written to disk before assert
+                actual_data_file.flush()
         assert list(data.keys()) == list(expected_data.keys())
         for key in data.keys():
             assert numpy.allclose(
@@ -247,6 +250,11 @@ def test_pytorch(example_runner: ExampleRunner, device_type: str):
 def test_ray_casting(example_runner: ExampleRunner, device_type: str):
     # TODO implement
     pytest.skip("Windowed examples are not supported in tests yet")
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_return_type(example_runner: ExampleRunner, device_type: str):
+    example_runner.run("return_type/main.py", device_type)
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)

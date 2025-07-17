@@ -554,7 +554,7 @@ void renderBlobsToTexture(
     GradInOutTensor<float, 1> blobsBuffer,
     uint2 dispatchThreadID)
 {
-    CallShapeInfo call_id = CallShapeInfo::get_call_id();
+    CallShapeInfo call_id = CallShapeInfo.get_call_id();
     uint2 callID = uint2(call_id.shape[0], call_id.shape[1]);
 
     uint2 imageSize;
@@ -600,7 +600,7 @@ void perPixelLoss(
     GradInOutTensor<float, 1> blobsBuffer,
     Texture2D<float4> targetTexture)
 {
-    CallShapeInfo call_id = CallShapeInfo::get_call_id();
+    CallShapeInfo call_id = CallShapeInfo.get_call_id();
     uint2 callID = uint2(call_id.shape[0], call_id.shape[1]);
 
     uint2 imageSize;

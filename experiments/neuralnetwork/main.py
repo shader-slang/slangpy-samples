@@ -24,7 +24,7 @@ def training_main():
     device = app.device
 
     # If the device supports cooperative vector, run MLP at half precision and in coopvec mode
-    if "cooperative-vector" in device.features:
+    if spy.Feature.cooperative_vector in device.features:
         print("Cooperative vector enabled!")
         mlp_input = nn.ArrayKind.coopvec
         mlp_precision = nn.Real.half

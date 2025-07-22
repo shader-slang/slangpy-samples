@@ -7,7 +7,7 @@ from .Optimizer import Optimizer
 
 class AdamOptimizer(Optimizer):
     def __init__(
-        self, learning_rate: float, beta1: float = 0.9, beta2: float = 0.999, epsilon: float = 1e-6
+        self, learning_rate: float, beta1: float = 0.9, beta2: float = 0.999, epsilon: float = 1e-8
     ):
         super().__init__()
 

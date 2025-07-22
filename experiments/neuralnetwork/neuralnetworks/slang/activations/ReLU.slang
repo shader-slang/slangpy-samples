@@ -3,7 +3,7 @@
 // clang-format off
 implementing NeuralNetworks;
 
-__include IScalarActivation;
+#include "IScalarActivation.slang"
 __include basetypes.DiffCoopVec;
 
 namespace Activation
@@ -17,6 +17,8 @@ public struct ReLU<T : IReal, int Width> : IScalarActivation<T, Width>
         return max(x, T(0.0f));
     }
 };
+
+SCALAR_ACTIVATION_EXTENSION(ReLU)
 
 public extension<T : IReal, int Width> ReLU<T, Width> : IModel<DiffCoopVec<T, Width>, DiffCoopVec<T, Width>>
 {

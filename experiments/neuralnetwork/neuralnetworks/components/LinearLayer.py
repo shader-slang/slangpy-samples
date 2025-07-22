@@ -114,8 +114,8 @@ class LinearLayer(IModel):
         biases_np = np.zeros((fan_out,), dtype=self.dtype.numpy())
 
         device = module.device
-        biases = Tensor.empty(device, biases_np.shape, str(self.dtype))
-        biases.storage.copy_from_numpy(biases_np)
+        self.biases = Tensor.empty(device, biases_np.shape, str(self.dtype))
+        self.biases.storage.copy_from_numpy(biases_np)
 
         if self.use_coopvec:
             layout = CoopVecMatrixLayout.training_optimal
@@ -125,17 +125,14 @@ class LinearLayer(IModel):
             params_np = np.zeros((weight_count,), dtype=self.dtype.numpy())
             device.coopvec_convert_matrix_host(weights_np, params_np, dst_layout=layout)
 
-            weights = Tensor.empty(device, (weight_count,), str(self.dtype))
-            weights.storage.copy_from_numpy(params_np)
+            self.weights = Tensor.empty(device, (weight_count,), str(self.dtype))
+            self.weights.storage.copy_from_numpy(params_np)
         else:
-            weights = Tensor.empty(device, weights_np.shape, str(self.dtype))
-            weights.storage.copy_from_numpy(weights_np)
+            self.weights = Tensor.empty(device, weights_np.shape, str(self.dtype))
+            self.weights.storage.copy_from_numpy(weights_np)
 
-        weights = weights.with_grads(zero=True)
-        biases = biases.with_grads(zero=True)
-
-        self.weights = cast(Tensor, weights)
-        self.biases = cast(Tensor, biases)
+        self.weights.grad_out = Tensor.zeros_like(self.weights)
+        self.biases.grad_out = Tensor.zeros_like(self.biases)
 
     def model_params(self):
         return [self.weights, self.biases]
@@ -149,17 +146,8 @@ class LinearLayer(IModel):
     def get_this(self):
         self.check_initialized()
 
-        weight_grads = None
-        if self.weights.grad_out:
-            weight_grads = self.weights.grad_out.storage
-        bias_grads = None
-        if self.biases.grad_out:
-            bias_grads = self.biases.grad_out.storage
-
         return {
-            "weights": self.weights.storage,
-            "biases": self.biases.storage,
-            "weightGrads": weight_grads,
-            "biasGrads": bias_grads,
+            "weights": self.weights,
+            "biases": self.biases,
             "_type": self.type_name,
         }

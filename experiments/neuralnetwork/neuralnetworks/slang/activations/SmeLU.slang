@@ -3,7 +3,7 @@
 // clang-format off
 implementing NeuralNetworks;
 
-__include IScalarActivation;
+#include "IScalarActivation.slang"
 __include basetypes.DiffCoopVec;
 
 namespace Activation
@@ -30,7 +30,9 @@ public struct SmeLU<T : IReal, int Width> : IScalarActivation<T, Width>
 
         return min(left, min(middle, right));
     }
-}
+};
+
+SCALAR_ACTIVATION_EXTENSION(SmeLU)
 
 public extension<T : IReal, int Width> SmeLU<T, Width> : IModel<DiffCoopVec<T, Width>, DiffCoopVec<T, Width>>
 {

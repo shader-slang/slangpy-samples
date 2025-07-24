@@ -5,6 +5,8 @@ implementing NeuralNetworks;
 __include basetypes.IModel;
 __include basetypes.DiffCoopVec;
 
+import slangpy;
+
 /*
     Represents a linear neural network layer, i.e. a matrix-vector multiply/add A * x + b
 
@@ -17,10 +19,10 @@ public struct LinearLayer<
     T : IReal,
     int NumInputs,
     int NumOutputs
-> : IModel<T[NumInputs], T[NumOutputs]> where T.Differential : IArithmeticAtomicable
+> : IModel<T[NumInputs], T[NumOutputs]> where T.Differential : IAtomicAddable
 {
-    public StructuredBuffer<T> weights, biases;
-    public RWStructuredBuffer<Atomic<T.Differential>> weightGrads, biasGrads;
+    public GradOutTensor<T, 2> weights;
+    public GradOutTensor<T, 1> biases;
 
     [BackwardDerivative(backward)]
     public OutputType forward(InputType x)
@@ -31,7 +33,7 @@ public struct LinearLayer<
             var sum = biases[row];
             [ForceUnroll]
             for (int col = 0; col < NumInputs; ++col)
-                sum += weights[row * NumInputs + col] * x[col];
+                sum += weights[row, col] * x[col];
 
             y[row] = sum;
         }
@@ -44,13 +46,13 @@ public struct LinearLayer<
         var dx = InputType.dzero();
         for (int row = 0; row < NumOutputs; ++row)
         {
-            biasGrads[row].add(grad[row]);
+            biases.d_out.set({row}, grad[row]);
 
             [ForceUnroll]
             for (int col = 0; col < NumInputs; ++col)
             {
-                weightGrads[row * NumInputs + col].add(T.dmul(x.p[col], grad[row]));
-                dx[col] = T.dadd(dx[col], T.dmul(weights[row * NumInputs + col], grad[row]));
+                weights.d_out.set({row, col}, T.dmul(x.p[col], grad[row]));
+                dx[col] = T.dadd(dx[col], T.dmul(weights[row, col], grad[row]));
             }
         }
         x = diffPair(x.p, dx);
@@ -61,30 +63,30 @@ public struct CoopVecLinearLayer<
     T : IReal,
     int NumInputs,
     int NumOutputs
-> : IModel<DiffCoopVec<T, NumInputs>, DiffCoopVec<T, NumOutputs>>
+> : IModel<DiffCoopVec<T, NumInputs>, DiffCoopVec<T, NumOutputs>> where T.Differential : IAtomicAddable
 {
     static const CoopVecComponentType ComponentType = InputType::ComponentType;
 
-    public StructuredBuffer<T> weights, biases;
-    public RWStructuredBuffer<T> weightGrads, biasGrads;
+    public GradOutTensor<T, 1> weights;
+    public GradOutTensor<T, 1> biases;
 
     [BackwardDerivative(backward)]
     public OutputType forward(InputType x)
     {
         return OutputType(coopVecMatMulAdd<T, NumOutputs>(
             x.cv, ComponentType,
-            weights, 0, ComponentType,
-            biases, 0, ComponentType,
+            weights.primal.buffer, 0, ComponentType,
+            biases.primal.buffer, 0, ComponentType,
             CoopVecMatrixLayout.TrainingOptimal, false, 0
         ));
     }
 
     public void backward(inout DifferentialPair<InputType> x, OutputType grad)
     {
-        coopVecOuterProductAccumulate(grad.cv, x.p.cv, weightGrads, 0, 0, CoopVecMatrixLayout.TrainingOptimal, ComponentType);
-        coopVecReduceSumAccumulate(grad.cv, biasGrads, 0);
+        coopVecOuterProductAccumulate(grad.cv, x.p.cv, weights.d_out.buffer, 0, 0, CoopVecMatrixLayout.TrainingOptimal, ComponentType);
+        coopVecReduceSumAccumulate(grad.cv, biases.d_out.buffer, 0);
 
-        let dX = coopVecMatMul<T, NumInputs>(grad.cv, ComponentType, weights, 0, ComponentType, CoopVecMatrixLayout.TrainingOptimal, true, 0);
+        let dX = coopVecMatMul<T, NumInputs>(grad.cv, ComponentType, weights.primal.buffer, 0, ComponentType, CoopVecMatrixLayout.TrainingOptimal, true, 0);
 
         x = diffPair(x.p, InputType(dX));
     }

@@ -3,7 +3,7 @@
 // clang-format off
 implementing NeuralNetworks;
 
-__include IScalarActivation;
+#include "IScalarActivation.slang"
 __include basetypes.DiffCoopVec;
 
 namespace Activation
@@ -24,6 +24,8 @@ public struct Sigmoid<T : IReal, int Width> : IScalarActivation<T, Width>
         x = diffPair(x.p, T.dmul(dSigmoid, grad));
     }
 };
+
+SCALAR_ACTIVATION_EXTENSION(Sigmoid)
 
 public extension<T : IReal, int Width> Sigmoid<T, Width> : IModel<DiffCoopVec<T, Width>, DiffCoopVec<T, Width>>
 {

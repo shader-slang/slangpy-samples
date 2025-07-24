@@ -3,7 +3,7 @@
 // clang-format off
 implementing NeuralNetworks;
 
-__include IScalarActivation;
+#include "IScalarActivation.slang"
 __include basetypes.DiffCoopVec;
 
 namespace Activation
@@ -17,6 +17,8 @@ public struct Swish<T : IReal, int Width> : IScalarActivation<T, Width>
         return x / (T(1.0f) + exp(-x));
     }
 };
+
+SCALAR_ACTIVATION_EXTENSION(Swish)
 
 public extension<T : IReal, int Width> Swish<T, Width> : IModel<DiffCoopVec<T, Width>, DiffCoopVec<T, Width>>
 {

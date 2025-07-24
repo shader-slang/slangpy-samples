@@ -3,7 +3,7 @@
 // clang-format off
 implementing NeuralNetworks;
 
-__include IScalarActivation;
+#include "IScalarActivation.slang"
 __include basetypes.DiffCoopVec;
 
 namespace Activation
@@ -19,6 +19,8 @@ public struct LeakyReLU<T : IReal, int Width> : IScalarActivation<T, Width>
         return max(x, T(0.0f)) + min(x, T(0.0f)) * negativeSlope;
     }
 };
+
+SCALAR_ACTIVATION_EXTENSION(LeakyReLU)
 
 public extension<T : IReal, int Width> LeakyReLU<T, Width> : IModel<DiffCoopVec<T, Width>, DiffCoopVec<T, Width>>
 {

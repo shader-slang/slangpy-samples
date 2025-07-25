@@ -23,7 +23,7 @@ device = spy.create_device(
 )
 
 # Load torch wrapped module.
-module = spy.TorchModule.load_from_file(device, "example.slang")
+module = spy.Module.load_from_file(device, "example.slang")
 
 # Create a tensor
 x = torch.tensor([1, 2, 3, 4], dtype=torch.float32, device="cuda", requires_grad=True)

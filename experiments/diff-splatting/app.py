@@ -7,7 +7,7 @@ from pathlib import Path
 
 class App:
     def __init__(
-        self, title="Diffsplat Example", width=1024, height=1024, device_type=spy.DeviceType.d3d12
+        self, title="Diffsplat Example", width=1024, height=1024,
     ):
         super().__init__()
 
@@ -15,7 +15,7 @@ class App:
         self._window = spy.Window(width=width, height=height, title=title, resizable=False)
 
         # Create a device with local include path for shaders
-        self._device = spy.create_device(device_type, include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(include_paths=[Path(__file__).parent])
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)

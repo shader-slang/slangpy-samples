@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class App:
-    def __init__(self, title="Balloted Splat Example", width=1024, height=1024, device_type=spy.DeviceType.d3d12):
+    def __init__(self, title="Balloted Splat Example", width=1024, height=1024):
         super().__init__()
 
         # Create a window
@@ -15,12 +15,11 @@ class App:
         )
 
         # Create a device with local include path for shaders
-        self._device = spy.create_device(device_type,
-                                             include_paths=[Path(__file__).parent])
+        self._device = spy.create_device(include_paths=[Path(__file__).parent])
 
         # Setup swapchain
         self.surface = self._device.create_surface(self._window)
-        self.surface.configure(width=self._window.width, height=self._window.height, format=spy.Format.rgba8_unorm)
+        self.surface.configure(width=self._window.width, height=self._window.height)
 
         self._output_texture: spy.Texture = self.device.create_texture(
             width=self._window.width,

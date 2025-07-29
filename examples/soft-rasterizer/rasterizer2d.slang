@@ -7,7 +7,7 @@ import "slangpy";
 struct Camera
 {
     // World origin.
-    float2 o;
+    float2 origin;
 
     // World scale.
     float2 scale;
@@ -23,7 +23,7 @@ struct Camera
     {
         float2 xy = uv / frameDim;
         float2 ndc = xy * 2.0f - 1.0f;
-        return ndc * scale + o;
+        return ndc * scale + origin;
     }
 };
 

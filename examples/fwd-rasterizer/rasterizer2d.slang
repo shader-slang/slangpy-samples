@@ -2,36 +2,43 @@
 
 import "slangpy";
 
-// Simple Camera struct to convert between screen space and world space
-// coordinates, so that vertex positions can be specified in world space.
+/// Simple Camera struct to convert between screen space and world space
+/// coordinates, so that vertex positions can be specified in world space.
 struct Camera
 {
-    // World origin.
-    float2 o;
+    /// World origin.
+    float2 origin;
 
-    // World scale.
+    /// World scale.
     float2 scale;
 
-    // Frame dimensions (i.e. image resolution).
+    /// Frame dimensions (i.e. image resolution).
     float2 frameDim;
 
-    // Convert from
-    // screen coordinates [(0, 0), (W, H)] to
-    // world coordinates [(o.x - scale.x, o.y - scale.y), (o.x + scale.x, o.y + scale.y)]
+    /// Convert from screen coordinates
+    ///   [(0, 0), (W, H)]
+    /// to world coordinates:
+    ///   [(origin.x - scale.x, origin.y - scale.y), (origin.x + scale.x, origin.y + scale.y)]
+    ///
+    /// @param uv Screen coordinates
+    /// @return World coordinates
     float2 screenToWorld(float2 uv)
     {
         float2 xy = uv / frameDim;
         float2 ndc = xy * 2.0f - 1.0f;
-        return ndc * scale + o;
+        return ndc * scale + origin;
     }
 };
 
-// Simple Vertex struct, only stores position but more data can be added
-// as needed, such as color, normal, or texture coordinates.
+/// Simple Vertex struct, only stores position but more data can be added
+/// as needed, such as color, normal, or texture coordinates.
 struct Vertex
 {
     float3 position;
 
+    /// Initialize Vertex
+    ///
+    /// @param p Position
     __init(float3 p)
     {
         position = p;
@@ -39,12 +46,13 @@ struct Vertex
 }
 
 
-// Perform a simple 2D point-in-triangle test, returning true if the test
-// position is inside the triangle bounds.
-// xy: 2D test position
-// v1: vertex position 1
-// v2: vertex position 2
-// v3: vertex position 3
+/// Perform a simple 2D point-in-triangle test
+///
+/// @param xy 2D test position
+/// @param v1 vertex position 1
+/// @param v2 vertex position 2
+/// @param v3 vertex position 3
+/// @return True if the position is inside the triangle bounds
 bool triangleTest(float2 xy, float2 v1, float2 v2, float2 v3)
 {
     float2 e0 = v2 - v1;
@@ -67,9 +75,14 @@ bool triangleTest(float2 xy, float2 v1, float2 v2, float2 v3)
     }
 }
 
-// Rasterize function called from python, called for each pixel in the window.
-// This tests if the pixelCoord is inside the triangle bounds, if true then
-// set the color to green, otherwise set the color to black.
+/// Rasterize function called from python, called for each pixel in the window.
+/// This tests if the pixelCoord is inside the triangle bounds, if true then
+/// set the color to green, otherwise set the color to black.
+///
+/// @param camera Camera struct
+/// @param vertices 2D vertices for the triangle
+/// @param pixelCoord Test coordinates
+/// @return Green if inside triangle, Black otherwise
 float4 rasterize(Camera camera, float2 vertices[3], int2 pixelCoord)
 {
     // Adjust the incoming pixel coordinate to have 0,0 at the bottom left

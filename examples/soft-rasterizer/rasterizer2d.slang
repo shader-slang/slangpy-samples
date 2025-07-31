@@ -160,14 +160,14 @@ float4 loss(Camera camera, float2 vertices[3], int2 pixelCoord, no_diff float4 r
 }
 
 // Entry point
-void generate_gradients(Camera camera, in float2 primal[3], inout AtomicTensor<float2,1> grad, in int2 pixelCoord, in float4 reference)
+void generate_gradients(Camera camera, in Tensor<float2, 1> primal, AtomicTensor<float2, 1> grad, in int2 pixelCoord, in float4 reference)
 {
-    //float2 vertices[3] = {};
-    var dVertices = diffPair(primal);
+    float2 vertices[3] = { primal.get({0}), primal.get({1}), primal.get({2}) };
+    var dVertices = diffPair(vertices);
     bwd_diff(loss)(camera, dVertices, pixelCoord, reference, 1.0);
-    grad.set({0},dVertices.d[0]);
-    grad.set({1},dVertices.d[1]);
-    grad.set({2},dVertices.d[2]);
+    grad.set({0}, dVertices.d[0]);
+    grad.set({1}, dVertices.d[1]);
+    grad.set({2}, dVertices.d[2]);
 }
 
 

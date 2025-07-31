@@ -79,11 +79,8 @@ def main():
     rasterizer2d.rasterize(camera, ref_vertices, call_id(), _result=reference)
 
     # Initialize an array of vertices to optimize.
-    vertices_primal = [
-        spy.float2(0, 0),
-        spy.float2(0, 0),
-        spy.float2(0, 0),
-    ]
+    vertices_primal = spy.Tensor.zeros(app.device, dtype=spy.float2, shape=(3,))
+    vertices_primal.copy_from_numpy(np.random.uniform(0, 1, (6,)).astype("float32"))
 
     # Initialize an array of gradients for use in vertices optimization.
     # For convenience, we're using a Tensor so we can use the AtomicType
@@ -92,18 +89,29 @@ def main():
 
     currIter = 0
     maxIter = 400
-    learning_rate = 0.001;
+    learning_rate = 0.01;
     while app.process_events():
         if currIter < maxIter:
             # Generate gradients using every pixel in the reference image
+            print(f"primal: {vertices_primal.to_numpy()}")
+            print(f"grad:   {vertices_grad.to_numpy()}")
             rasterizer2d.generate_gradients(camera, vertices_primal, vertices_grad, call_id(), reference)
 
             # Update vertices based on the generated gradients
+            print(f"primal: {vertices_primal.to_numpy()}")
+            print(f"grad:   {vertices_grad.to_numpy()}")
             rasterizer2d.optimize(vertices_primal, vertices_grad, learning_rate)
 
             currIter = currIter + 1
 
-        rasterizer2d.rasterize(camera, vertices_primal, call_id(), _result=app.output)
+        v = vertices_primal.to_numpy()
+        vertices = [
+            spy.float2(v[0][0], v[0][1]),
+            spy.float2(v[1][0], v[1][1]),
+            spy.float2(v[2][0], v[2][1]),
+        ]
+        print(vertices)
+        rasterizer2d.rasterize(camera, vertices, call_id(), _result=app.output)
         app.present()
 
 

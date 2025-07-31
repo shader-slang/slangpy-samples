@@ -55,7 +55,7 @@ def main():
     rasterizer2d = spy.Module.load_from_file(app.device, "rasterizer2d.slang")
 
     # Buffer of 3 vertex positions for the triangle.
-    vertices = [
+    ref_vertices = [
         spy.float2(-0.75, 0.75),
         spy.float2(-0.75, -0.75),
         spy.float2(0.75, -0.75),
@@ -64,20 +64,64 @@ def main():
     # Setup the camera with the app's frame dimensions.
     camera = Camera(app)
 
-    # Run the app.
+    # Create a tensor to store the reference image.
+    #reference = spy.Tensor(dtype=float16)
+    reference = spy.Tensor.zeros(app.device, dtype=spy.float4, shape=(64,64))
+
+    # Call the rasterize function in Slang, passing the camera and vertices
+    # array. We also use call_id to pass the pixel coordinate within window
+    # width and height, and set result to render the output color returned by
+    # the rasterize function.
+    #
+    # Unlike the fwd-rasterize version, this function calculates a per-pixel
+    # probability values to determine if a pixel is inside the triangle, and
+    # can be more easily extended to a trained version.
+    rasterizer2d.rasterize(camera, ref_vertices, call_id(), _result=reference)
+
+    # Initialize an array of vertices to optimize.
+    vertices_primal = [
+        spy.float2(0, 0),
+        spy.float2(0, 0),
+        spy.float2(0, 0),
+    ]
+
+    # Initialize an array of gradients for use in vertices optimization.
+    # For convenience, we're using a Tensor so we can use the AtomicType
+    # on the slang side.
+    vertices_grad = spy.Tensor.zeros(app.device, dtype=spy.float2, shape=(3,))
+
     currIter = 0
     maxIter = 400
+    learning_rate = 0.001;
     while app.process_events():
-        # Call the rasterize function in Slang, passing the camera and vertices
-        # array. We also use call_id to pass the pixel coordinate within window
-        # width and height, and set result to render the output color returned by
-        # the rasterize function.
-        #
-        # Unlike the fwd-rasterize version, this function calculates a per-pixel
-        # probability values to determine if a pixel is inside the triangle, and
-        # can be more easily extended to a trained version.
-        rasterizer2d.rasterize(camera, vertices, call_id(), _result=app.output)
+        if currIter < maxIter:
+            # Generate gradients using every pixel in the reference image
+            rasterizer2d.generate_gradients(camera, vertices_primal, vertices_grad, call_id(), reference)
+
+            # Update vertices based on the generated gradients
+            rasterizer2d.optimize(vertices_primal, vertices_grad, learning_rate)
+
+            currIter = currIter + 1
+
+        rasterizer2d.rasterize(camera, vertices_primal, call_id(), _result=app.output)
         app.present()
+
+
+    if False:
+        # Run the app.
+        currIter = 0
+        maxIter = 400
+        while app.process_events():
+            # Call the rasterize function in Slang, passing the camera and vertices
+            # array. We also use call_id to pass the pixel coordinate within window
+            # width and height, and set result to render the output color returned by
+            # the rasterize function.
+            #
+            # Unlike the fwd-rasterize version, this function calculates a per-pixel
+            # probability values to determine if a pixel is inside the triangle, and
+            # can be more easily extended to a trained version.
+            rasterizer2d.rasterize(camera, vertices, call_id(), _result=app.output)
+            app.present()
 
 
 if __name__ == "__main__":

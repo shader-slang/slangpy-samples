@@ -2,22 +2,26 @@
 
 import "slangpy";
 
-// Simple Camera struct to convert between screen space and world space
-// coordinates, so that vertex positions can be specified in world space.
+/// Simple Camera struct to convert between screen space and world space
+/// coordinates, so that vertex positions can be specified in world space.
 struct Camera
 {
-    // World origin.
+    /// World origin.
     float2 origin;
 
-    // World scale.
+    /// World scale.
     float2 scale;
 
-    // Frame dimensions (i.e. image resolution).
+    /// Frame dimensions (i.e. image resolution).
     float2 frameDim;
 
-    // Convert from
-    // screen coordinates [(0, 0), (W, H)] to
-    // world coordinates [(o.x - scale.x, o.y - scale.y), (o.x + scale.x, o.y + scale.y)]
+    /// Convert from screen coordinates
+    ///   [(0, 0), (W, H)]
+    /// to world coordinates:
+    ///   [(origin.x - scale.x, origin.y - scale.y), (origin.x + scale.x, origin.y + scale.y)]
+    ///
+    /// @param uv Screen coordinates
+    /// @return World coordinates
     [Differentiable]
     float2 screenToWorld(float2 uv)
     {
@@ -27,12 +31,16 @@ struct Camera
     }
 };
 
-// Simple Vertex struct, only stores position but more data can be added
-// as needed, such as color, normal, or texture coordinates.
+/// Simple Vertex struct, only stores position but more data can be added
+/// as needed, such as color, normal, or texture coordinates.
 struct Vertex
 {
+    /// Position
     float3 position;
 
+    /// Initialize Vertex
+    ///
+    /// @param p Position
     __init(float3 p)
     {
         position = p;
@@ -102,11 +110,17 @@ float softTriangle(float2 xy, float2 v1, float2 v2, float2 v3, float sigma)
     return sigmoid(-d, sigma);
 }
 
-// Rasterize function called from python, called for each pixel in the window.
-// The soft rasterizer instead computes a probability value for a pixel being
-// within the triangle, rather than the simple boolean value of the
-// fwd-rasterizer. These functions are differentiable, allowing returning
-// gradient values for training.
+/// Rasterize function called from python, called for each pixel in the window.
+/// The soft rasterizer instead computes a probability value for a pixel being
+/// within the triangle, rather than the simple boolean value of the
+/// fwd-rasterizer. These functions are differentiable, allowing returning
+/// gradient values for training.
+///
+/// @param camera Camera struct
+/// @param vertices 2D vertices for the triangle
+/// @param pixelCoord Test coordinates
+/// @return Green if inside triangle, fading to Block based on distance
+/// outside otherwise
 [Differentiable]
 float4 rasterize(Camera camera, float2 vertices[3], int2 pixelCoord)
 {
@@ -133,4 +147,61 @@ float4 rasterize(Camera camera, float2 vertices[3], int2 pixelCoord)
     float hit = softTriangle(worldSample, v1, v2, v3, sigma);
     float4 outColor = hit * triangleColor;
     return outColor;
+}
+
+
+// Render the difference between the rendered pixel a reference pixel.
+[Differentiable]
+float4 loss(Camera camera, float2 vertices[3], int2 pixelCoord, no_diff float4 reference)
+{
+    float4 color = rasterize(camera, vertices, pixelCoord);
+    float4 error = color - reference;
+    return error * error; // Squared error
+}
+
+// Entry point
+void generate_gradients(Camera camera, in float2 primal[3], inout AtomicTensor<float2,1> grad, in int2 pixelCoord, in float4 reference)
+{
+    //float2 vertices[3] = {};
+    var dVertices = diffPair(primal);
+    bwd_diff(loss)(camera, dVertices, pixelCoord, reference, 1.0);
+    grad.set({0},dVertices.d[0]);
+    grad.set({1},dVertices.d[1]);
+    grad.set({2},dVertices.d[2]);
+}
+
+
+// Entry point
+void optimize(inout float2 primal, inout float2 grad, in float learning_rate)
+{
+    primal -= learning_rate * grad;
+    grad = float2(0);
+}
+
+
+void optimize2(inout float2 primal, inout float2 grad, inout float2 m_prev, inout float2 v_prev, float learning_rate, int iteration)
+{
+    // Standard Adam default values.
+    const float ADAM_BETA_1 = 0.9;
+    const float ADAM_BETA_2 = 0.999;
+    const float ADAM_EPSILON = 1e-8;
+
+    // Adam optimization.
+    float2 gradient2 = grad * grad;
+
+    float2 m = ADAM_BETA_1 * m_prev + (1.0 - ADAM_BETA_1) * grad;
+    float2 v = ADAM_BETA_2 * v_prev + (1.0 - ADAM_BETA_2) * gradient2;
+
+    m_prev = m;
+    v_prev = v;
+
+    float2 mHat = m / (1.0f - pow(ADAM_BETA_1, iteration));
+    float2 vHat = v / (1.0f - pow(ADAM_BETA_2, iteration));
+
+    float2 update = learning_rate * (mHat / (sqrt(vHat) + ADAM_EPSILON));
+
+    // Subtract the optimized result from the trained normal and reset the gradient.
+    primal -= update;
+
+    grad = float2(0);
 }

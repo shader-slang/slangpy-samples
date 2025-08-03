@@ -51,6 +51,8 @@ class Camera:
             "_type": "Camera",
         }
 
+def fp(v):
+    return str(v.to_numpy()).replace('\n',',')
 
 def main():
     """
@@ -111,15 +113,22 @@ def main():
     # on the slang side.
     vertices_grad = spy.Tensor.zeros(app.device, dtype=spy.float2, shape=(3,))
 
+    log_v = True
     currIter = 0
     maxIter = 400
     learning_rate = 0.01;
     while app.process_events():
         if currIter < maxIter:
+            if log_v:
+                print(f"+primal: {fp(vertices_primal)}")
+                print(f"0grad:   {fp(vertices_grad)}")
             # Generate gradients using every pixel in the reference image
             rasterizer2d.generate_gradients(
                 ref_camera, vertices_primal, vertices_grad, call_id(), reference)
 
+            if log_v:
+                print(f" primal: {fp(vertices_primal)}")
+                print(f"+grad:   {fp(vertices_grad)}")
             # Update vertices based on the generated gradients
             rasterizer2d.optimize(
                 vertices_primal, vertices_grad, learning_rate, float(reference.element_count))

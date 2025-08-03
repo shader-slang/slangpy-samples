@@ -9,35 +9,45 @@ from slangpy.types import call_id
 class Camera:
     """
     This Camera class mimics the Camera struct from rasterizer2d.slang, setting
-    the origin, scale, and window size that the Slang camera struct expects. The
-    window size is retrieved from the app window to avoid redundant state.
+    the origin, scale, and frame size that the Slang camera struct expects. The
+    frame size is retrieved from either an app window or Tensor to avoid
+    redundant state.
 
     Attributes:
         origin (slangpy.float2): origin in worldspace
         scale (slangpy.float2): scale in worldspace
-        app (App): assiciated App
+        frame_source (App|spy.Tensor): associated App or Tensor
     """
 
-    def __init__(self, app: App):
+    def __init__(self, frame_source: App | spy.Tensor):
         """
-        Initialize the Camera with origin at (0,0) and scale (1,1)
+        Initialize the Camera with origin at (0,0) and scale (1,1), and use frame
+        dimensions from either an App window or slangpy.Tensor.
 
         Args:
-            app (App): App to retrieve window size from
+            frame_source (App|spy.Tensor): Frame to retrieve dimensions from
         """
+        if not (isinstance(frame_source, App) or isinstance(frame_source, spy.Tensor)):
+            raise Exception("Camera only supports App or slangpy.Tensor as frame_source.")
+        if isinstance(frame_source, spy.Tensor) and len(frame_source.shape) != 2:
+            raise Exception("slangpy.Tensor must be 2D")
         self.origin = spy.float2(0.0, 0.0)
         self.scale = spy.float2(1.0, 1.0)
-        self.app = app
+        self.frame_source = frame_source
 
     def get_this(self):
         """
         Return a dict with the Camera attributes mapped to names that the
         Slang struct expects.
         """
+        if isinstance(self.frame_source, App):
+            dim = spy.float2(self.frame_source._window.width, self.frame_source._window.height)
+        elif isinstance(self.frame_source, spy.Tensor):
+            dim = spy.float2(self.frame_source.shape[0], self.frame_source.shape[1])
         return {
             "origin": self.origin,
             "scale": self.scale,
-            "frameDim": spy.float2(self.app._window.width, self.app._window.height),
+            "frameDim": dim,
             "_type": "Camera",
         }
 
@@ -62,11 +72,13 @@ def main():
     ]
 
     # Setup the camera with the app's frame dimensions.
-    camera = Camera(app)
+    app_camera = Camera(app)
 
     # Create a tensor to store the reference image.
-    #reference = spy.Tensor(dtype=float16)
     reference = spy.Tensor.zeros(app.device, dtype=spy.float4, shape=(64,64))
+
+    # Create a second camera for the reference image.
+    ref_camera = Camera(reference)
 
     # Call the rasterize function in Slang, passing the camera and vertices
     # array. We also use call_id to pass the pixel coordinate within window
@@ -76,11 +88,23 @@ def main():
     # Unlike the fwd-rasterize version, this function calculates a per-pixel
     # probability values to determine if a pixel is inside the triangle, and
     # can be more easily extended to a trained version.
-    rasterizer2d.rasterize(camera, ref_vertices, call_id(), _result=reference)
+    rasterizer2d.rasterize(ref_camera, ref_vertices, call_id(), _result=reference)
 
     # Initialize an array of vertices to optimize.
+    # We start with a triangle that covers the entire display.
+    # Since we need to cover (-1,-1) to (1,1), let's use the following triangle:
+    #       a*
+    #        | \
+    #        |---\1,1
+    #        |   | \
+    # -1,-1 c*-------*b
+    overfit_triangle = [
+        [-1,  3],
+        [ 3, -1],
+        [-1, -1],
+    ]
     vertices_primal = spy.Tensor.zeros(app.device, dtype=spy.float2, shape=(3,))
-    vertices_primal.copy_from_numpy(np.random.uniform(0, 1, (6,)).astype("float32"))
+    vertices_primal.copy_from_numpy(np.array(overfit_triangle).astype("float32"))
 
     # Initialize an array of gradients for use in vertices optimization.
     # For convenience, we're using a Tensor so we can use the AtomicType
@@ -93,14 +117,12 @@ def main():
     while app.process_events():
         if currIter < maxIter:
             # Generate gradients using every pixel in the reference image
-            print(f"primal: {vertices_primal.to_numpy()}")
-            print(f"grad:   {vertices_grad.to_numpy()}")
-            rasterizer2d.generate_gradients(camera, vertices_primal, vertices_grad, call_id(), reference)
+            rasterizer2d.generate_gradients(
+                ref_camera, vertices_primal, vertices_grad, call_id(), reference)
 
             # Update vertices based on the generated gradients
-            print(f"primal: {vertices_primal.to_numpy()}")
-            print(f"grad:   {vertices_grad.to_numpy()}")
-            rasterizer2d.optimize(vertices_primal, vertices_grad, learning_rate)
+            rasterizer2d.optimize(
+                vertices_primal, vertices_grad, learning_rate, float(reference.element_count))
 
             currIter = currIter + 1
 
@@ -110,8 +132,13 @@ def main():
             spy.float2(v[1][0], v[1][1]),
             spy.float2(v[2][0], v[2][1]),
         ]
-        print(vertices)
-        rasterizer2d.rasterize(camera, vertices, call_id(), _result=app.output)
+        #print(vertices)
+
+        if currIter % 2 == 0:
+            rasterizer2d.rasterize(app_camera, ref_vertices, call_id(), _result=app.output)
+        else:
+            rasterizer2d.rasterize(app_camera, vertices, call_id(), _result=app.output)
+
         app.present()
 
 

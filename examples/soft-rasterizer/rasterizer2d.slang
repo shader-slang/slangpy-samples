@@ -98,13 +98,13 @@ float distanceToTriangle(float2 xy, float2 v1, float2 v2, float2 v3)
 }
 
 [Differentiable]
-float sigmoid(float x, float sigma)
+float sigmoid(float x, no_diff float sigma)
 {
     return 1.0 / (1.0 + exp(-x / sigma));
 }
 
 [Differentiable]
-float softTriangle(float2 xy, float2 v1, float2 v2, float2 v3, float sigma)
+float softTriangle(float2 xy, float2 v1, float2 v2, float2 v3, no_diff float sigma)
 {
     float d = distanceToTriangle(xy, v1, v2, v3);
     return sigmoid(-d, sigma);
@@ -172,9 +172,9 @@ void generate_gradients(Camera camera, in Tensor<float2, 1> primal, AtomicTensor
 
 
 // Entry point
-void optimize(inout float2 primal, inout float2 grad, in float learning_rate)
+void optimize(inout float2 primal, inout float2 grad, in float learning_rate, in float gradient_count)
 {
-    primal -= learning_rate * grad;
+    primal -= learning_rate * (grad / gradient_count);
     grad = float2(0);
 }
 

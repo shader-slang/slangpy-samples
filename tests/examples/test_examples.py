@@ -16,7 +16,7 @@ DIR = Path(__file__).parent.absolute()
 EXAMPLES_DIR = DIR.parent.parent / "examples"
 
 if sys.platform == "win32":
-    DEVICE_TYPES = ["d3d12", "vulkan"]
+    DEVICE_TYPES = ["d3d12", "vulkan", "cuda"]
 elif sys.platform == "linux" or sys.platform == "linux2":
     DEVICE_TYPES = ["vulkan", "cuda"]
 elif sys.platform == "darwin":
@@ -134,6 +134,7 @@ class ExampleRunner:
         actual_path = DIR / f"{base_name}.actual.txt"
         expected_data_path = DIR / f"{base_name}.expected.npz"
         actual_data_path = DIR / f"{base_name}.actual.npz"
+        diff_data_path = DIR / f"{base_name}.diff.npz"
 
         (stdout, stderr, return_code, data) = self.run_script(script_path, device_type)
 
@@ -172,10 +173,30 @@ class ExampleRunner:
                     data_equal = False
                     break
         if not data_equal:
-            with open(actual_data_path, 'wb') as actual_data_file:
+            with open(actual_data_path, "wb") as actual_data_file:
                 numpy.savez(actual_data_file, **data)
                 # ensure file is written to disk before assert
                 actual_data_file.flush()
+            with open(diff_data_path, "wb") as diff_data_file:
+                diff_data = {key: data[key] - expected_data[key] for key in data.keys()}
+                numpy.savez(diff_data_file, **diff_data)
+                # ensure file is written to disk before assert
+                diff_data_file.flush()
+
+            # Dump 2D tensors as EXRs
+            for key in data.keys():
+                if (
+                    data[key].ndim == 2
+                    or (data[key].ndim == 3 and data[key].shape[2] <= 4)
+                    and data[key].dtype in [numpy.float32]
+                ):
+                    from slangpy import Bitmap
+
+                    exr_path = DIR / f"{base_name}.{key}.actual.exr"
+                    Bitmap(data[key]).write_async(exr_path)
+                    exr_path = DIR / f"{base_name}.{key}.expected.exr"
+                    Bitmap(expected_data[key]).write_async(exr_path)
+
         assert list(data.keys()) == list(expected_data.keys())
         for key in data.keys():
             assert numpy.allclose(
@@ -195,8 +216,6 @@ def test_autodiff(example_runner: ExampleRunner, device_type: str):
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_broadcasting(example_runner: ExampleRunner, device_type: str):
-    if device_type == "cuda":
-        pytest.skip("CUDA does not support texture samplers")
     example_runner.run("broadcasting/main.py", device_type)
 
 
@@ -259,7 +278,7 @@ def test_return_type(example_runner: ExampleRunner, device_type: str):
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_signed_distance_field(example_runner: ExampleRunner, device_type: str):
-    if device_type=='cuda':
+    if device_type == "cuda":
         pytest.skip("Exhibits race condition on cuda where 0s are output")
 
     example_runner.run(

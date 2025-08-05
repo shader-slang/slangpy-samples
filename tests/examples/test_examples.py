@@ -278,16 +278,13 @@ def test_return_type(example_runner: ExampleRunner, device_type: str):
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_signed_distance_field(example_runner: ExampleRunner, device_type: str):
-    if device_type == "cuda":
-        pytest.skip("Exhibits race condition on cuda where 0s are output")
-
     example_runner.run(
         "signed_distance_field/main.py",
         device_type,
         include_data=[
-            "input_aliased",
+            "initial_distances_aliased",
             "final_distances_aliased",
-            "input_antialiased",
+            "initial_distances_antialiased",
             "final_distances_antialiased",
         ],
         rtol=1e-3,

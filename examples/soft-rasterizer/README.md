@@ -4,23 +4,24 @@ This example takes the forward rasterizer, and turns it into a soft rasterizer
 with fuzzy edges instead of boolean inside/outside.
 
 
-In broad strokes, what we want to do:
+In broad strokes, this example will:
 
 - Generate a reference image
-- Assign initial parameters (random triangle vertices)
-- Loop epochs
-    - For each pixel:
+- Assign initial vertex parameters values (to be trained to the reference)
+- Loop epochs:
+    - For each pixel coordinate:
         - Get reference sample
-        - Calculate sample based on parameters
-        - Calculate Loss
-        - bwd_diff
+        - Calculate a sample based on this epoch's vertex parameters
+        - Calculate Loss versus the reference pixel
+        - bwd_diff(loss)
         - Accumulate gradients
-    - Update parameters
-- Display final triangle
+    - Optimize the vertex parameters using the gradients (gradient descent)
+    - Display triangle
 
 We're accumulating gradients from multiple samples into three vertices, so this
-will be happening across multiple threads. That means we'll need to use an
-AtomicTensor to collect the results.
+will be happening across multiple threads. That means we'll need to avoid
+overwriting and invalidating the gradient values; for this, we'll use atomic
+writes by using an AtomicTensor.
 
 
 

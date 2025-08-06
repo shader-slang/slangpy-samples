@@ -2,9 +2,7 @@
 
 import "slangpy";
 
-// clang-format off
-static const float inf = 1.#INF;
-// clang-format on
+static const float INF_DISTANCE = 1e6;
 
 /**
  * Initializes the distance field texture for the Eikonal equation solver.
@@ -14,9 +12,9 @@ static const float inf = 1.#INF;
  * The function classifies pixels into three states:
  * - Border pixels (state = 3.0): Points exactly on the boundary
  * - Inside pixels (state = 2.0): Points inside the shape with initial distance
- * -inf
+ * -INF_DISTANCE
  * - Outside pixels (state = 1.0): Points outside the shape with initial
- * distance +inf
+ * distance +INF_DISTANCE
  *
  * @param coord The pixel coordinates being processed
  * @param input The input texture containing the source image
@@ -26,7 +24,7 @@ void init_eikonal(uint2 coord, Texture2D<float4> input,
                   RWTexture2D<float2> dist_tex) {
   float4 color = input[coord];
   float intensity = (color.r + color.g + color.b) / 3.0;
-  float width, height;
+  uint width, height;
   dist_tex.GetDimensions(width, height);
 
   bool is_border = false;
@@ -60,10 +58,10 @@ void init_eikonal(uint2 coord, Texture2D<float4> input,
     initial_dist = 0.0;
     state = 3.0; // border
   } else if (is_inside) {
-    initial_dist = -inf;
+    initial_dist = -INF_DISTANCE;
     state = 2.0; // inside
   } else {
-    initial_dist = inf;
+    initial_dist = INF_DISTANCE;
     state = 1.0; // outside
   }
 
@@ -108,7 +106,7 @@ float solve_eikonal_2d(float horizontal, float vertical) {
  */
 void solve_eikonal(uint2 coord, Texture2D<float2> src_dist_tex, RWTexture2D<float2> dst_dist_tex) {
   float2 current = src_dist_tex[coord];
-  float width, height;
+  uint width, height;
   src_dist_tex.GetDimensions(width, height);
 
   // Skip border points
@@ -121,7 +119,7 @@ void solve_eikonal(uint2 coord, Texture2D<float2> src_dist_tex, RWTexture2D<floa
   float current_dist = current.x * sign;
 
   // Find minimum horizontal neighbors
-  float horizontal_min = 1e6;
+  float horizontal_min = INF_DISTANCE;
   if (coord.x > 0) {
     float2 left = src_dist_tex[uint2(coord.x - 1, coord.y)];
     horizontal_min = min(horizontal_min, sign * left.x);
@@ -132,7 +130,7 @@ void solve_eikonal(uint2 coord, Texture2D<float2> src_dist_tex, RWTexture2D<floa
   }
 
   // Find minimum vertical neighbors
-  float vertical_min = 1e6;
+  float vertical_min = INF_DISTANCE;
   if (coord.y > 0) {
     float2 up = src_dist_tex[uint2(coord.x, coord.y - 1)];
     vertical_min = min(vertical_min, sign * up.x);

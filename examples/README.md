@@ -11,6 +11,8 @@ Welcome to SlangPy examples! Here you'll find well written and documented exampl
 | [toy-restir](toy-restir/README.md) | <img src="toy-restir/toy-restir.png" height="100"> | Uses ReSTIR to render the view of an animated 2D toy scene. |
 | [Simplified Splatting](simplified-splatting/README.md) | <img src="simplified-splatting/simple-splat-ex.png" height="100"> | A simplified implementation of 3D Gaussian Splatting for educational purposes. |
 | [sdf-match](sdf-match/README.md) | <img src="sdf-match/screenshot.png" height="100"> | Train a tiny MLP to match a SDF of sphere |
+| [fwd-rasterizer](fwd-rasterizer/README.md) | <img src="fwd-rasterizer/output.png" height="100"> | Rasterize a single triangle (Pt 1/2) |
+| [soft-rasterizer](soft-rasterizer/README.md) | <img src="soft-rasterizer/output.png" height="100"> | Recover the vertices of a single soft-edged rasterizered triangle using gradient descent (Pt 2/2) |
 
 
 ## Documentation Samples

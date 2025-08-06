@@ -58,7 +58,7 @@ class App:
         # Will contain output texture
         self._output_format = output_format
         self._output_texture: spy.Texture = self.device.create_texture(
-            format=output_format,
+            format=self._output_format,
             width=width,
             height=height,
             mip_count=1,
@@ -130,7 +130,7 @@ class App:
             or self._output_texture.height != image.height
         ):
             self._output_texture = self.device.create_texture(
-                format=output_format,
+                format=self._output_format,
                 width=image.width,
                 height=image.height,
                 mip_count=1,

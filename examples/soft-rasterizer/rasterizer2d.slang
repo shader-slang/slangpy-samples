@@ -224,9 +224,9 @@ void generate_gradients(Camera camera, in Tensor<float2, 1> primal, AtomicTensor
 }
 
 
-/// Optimize the vertex values using gradient descent. Note that because we've
-/// added the gradients unscaled in our generate_gradient function, we will
-/// scale down grad by the overall number of samples during the optimize step.
+/// Optimize the vertex values using gradient descent. Note that because the
+/// gradients were added unscaled in the generate_gradient function, this
+/// function scales grad down by the overall number of samples.
 ///
 /// @param primal Primal vertex value
 /// @param grad Gradients for this vertex
@@ -239,5 +239,4 @@ void optimize(inout float2 primal, inout float2 grad, in float learning_rate, in
     // Clear the gradients Tensor in preparation for next frame
     grad = float2(0);
 }
-
 

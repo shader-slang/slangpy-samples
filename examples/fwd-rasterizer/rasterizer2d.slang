@@ -30,21 +30,6 @@ struct Camera
     }
 };
 
-/// Simple Vertex struct, only stores position but more data can be added
-/// as needed, such as color, normal, or texture coordinates.
-struct Vertex
-{
-    float3 position;
-
-    /// Initialize Vertex
-    ///
-    /// @param p Position
-    __init(float3 p)
-    {
-        position = p;
-    }
-}
-
 
 /// Perform a simple 2D point-in-triangle test
 ///

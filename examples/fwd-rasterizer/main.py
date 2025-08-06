@@ -71,6 +71,8 @@ def main():
         rasterizer2d.rasterize(camera, vertices, call_id(), _result=app.output)
         app.present()
 
+    spy.tev.show(app.output, name=f"output_triangle")
+
 
 if __name__ == "__main__":
     main()

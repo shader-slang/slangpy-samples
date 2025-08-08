@@ -21,6 +21,17 @@ This example:
 
 _Visualization showing the output triangle._
 
+## Prerequisites
+
+- SlangPy
+- [tev](https://github.com/Tom94/tev) (optional)
+
+## Keyboard Bindings
+
+- ``F1`` - Send the output texture in its native format to a running ``tev`` process.
+- ``F2`` - Write a screenshot from output texture to "screenshot.png" (in 8-bit format).
+- ``Esc`` - Quit
+
 ## Usage
 
 Call the main.py script to display the triangle. This example is intentionally

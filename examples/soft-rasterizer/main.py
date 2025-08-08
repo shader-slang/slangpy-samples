@@ -162,9 +162,6 @@ def main(
     print(f"Completed iterations: {min(curr_iter, max_epochs)}")
     print(f"Final parameters: {rm_lf(vertices_primal)}")
 
-    spy.tev.show(spy.Bitmap(reference.to_numpy()), name=f"reference_triangle")
-    spy.tev.show(app.output, name=f"output_triangle")
-
 
 def eval_vertices_str(name : str, triangle : str, force_ccw : bool) -> Optional[List[spy.float2]]:
     """
@@ -218,7 +215,10 @@ if __name__ == "__main__":
     line arguments for experimentation, but it's easy to provide values that do not resolve.
     (Defaults should resolve.)
     """
-    parser = argparse.ArgumentParser( description=desc, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    epilog = """
+    Keyboard bindings: F1=Send output to tev, F2=Generate "screenshot.png", Esc=Quit
+    """
+    parser = argparse.ArgumentParser( description=desc, epilog=epilog, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-l', "--log", action='store_true',
                         help="log the primal and gradient values to console")
     parser.add_argument('-r', "--random", action='store_true',

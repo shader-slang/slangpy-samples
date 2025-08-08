@@ -3,23 +3,21 @@
 This example takes the forward rasterizer example (fwd-rasterizer) with color
 dependent on boolean inside/outside value, and turns it into a soft triangle
 rasterizer with fuzzy edges. It then extends it to show how to use autodiff to
-recover the vertex parameters of a pre-rendered triangle.
+recover the vertices of a pre-rendered triangle.
 
 ## Overview
 
-This example:
+This example feeds 3 reference vertices to a forward rasterizer to generate a
+reference image. It then trains using this rasterizer so that, given 3 random
+vertices, it can learn from the reference image what the reference vertices
+are.
 
-- Generates a reference soft triangle image
-- Assigns initial vertex parameters values (to be trained to the reference)
-- Loop epochs of gradient descent:
-    - For each pixel coordinate:
-        - Get a reference image sample
-        - Calculate a sample based on this epoch's vertex parameters
-        - Calculate Loss between the epoch pixel and the reference pixel
-        - bwd_diff(loss) to generate gradients, and accumulate them into a
-            tensor
-    - Optimize the vertex parameters using the gradients (gradient descent)
-    - Display a triangle using this epoch's vertex parameters
+Optimization loop:
+
+- For each pixel coordinate in the reference image:
+    - Generate gradients from rasterizer and accumulate them into a tensor
+- Optimize the vertices using the gradients (gradient descent)
+- Display the triangle that is rasterized by the trained vertices
 
 ## Architecture Notes
 
@@ -34,22 +32,48 @@ converge.
 
 The example accumulates gradients from many samples into three vertices
 simultaneously across multiple threads. To avoid overwriting and invalidating
-the gradient values, the example uses an AtomicTensor to force the use of
-atomic writes.
+the gradient values, the example uses an AtomicTensor to avoid a race condition.
 
 ## Output Example
 
 ![Output visualization](output.png)
 
-_Visualization showing the converged output vertex parameters._
+_Visualization showing the converged output vertices._
+
+## Prerequisites
+
+- SlangPy
+- [tev](https://github.com/Tom94/tev) (optional)
+
+## Keyboard Bindings
+
+- ``F1`` - Send the output texture in its native format to a running ``tev`` process.
+- ``F2`` - Write a screenshot from output texture to "screenshot.png" (in 8-bit format).
+- ``Esc`` - Quit
 
 ## Usage
 
-Call the main.py script with ``--help`` or ``-h`` for optional arguments.
-Output is visualized in the app window, but the actual triangle vertex values
-and gradients per-vertex can be logged by using the ``--log`` or ``-l`` option.
+```
+usage: main.py [-h] [-l] [-r] [-p PARAMS] [-t TARGET] [-d DIMS] [-g LEARN] [-m MAX] [-c]
 
-Default values converge, but it's possible to specify parameters that do not,
-particularly if the vertices are close together or if the reference triangle's
-coordinates fall outside of the (-0.9, 0.9) range.
+'soft-rasterizer' is a SlangPy example. Demonstrates optimizing vertex parameters using gradient diffusion to match those of a
+previously rasterized reference soft-edged triangle. Many parameters for the vertices and gradient descent are exposed as command
+line arguments for experimentation, but it's easy to provide values that do not resolve. (Defaults should resolve.)
+
+options:
+  -h, --help            show this help message and exit
+  -l, --log             log the primal and gradient values to console (default: False)
+  -r, --random          randomize initial vertex parameters; overrides initial vertex parameters (default: False)
+  -p PARAMS, --params PARAMS
+                        initial vertex parameters, as a string (default: (-1, 1), (-1, -3), (3, 1))
+  -t TARGET, --target TARGET
+                        target/reference triangle vertices, as a string (default: (-0.75, 0.75), (-0.75, -0.75), (0.75, -0.75))
+  -d DIMS, --dims DIMS  dimensions of the reference raserized image, DxD (default: 256)
+  -g LEARN, --learn LEARN
+                        learning rate for gradient descent (default: 0.01)
+  -m MAX, --max MAX     maximum iterations (default: 4000)
+  -c, --close           close window after reaching maximum iterations (default: False)
+
+Keyboard bindings: F1=Send output to tev, F2=Generate "screenshot.png", Esc=Quit
+```
 

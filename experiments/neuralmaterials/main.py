@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from neuralnetwork import neuralnetworks as nn
 
+
 # Python implementation of the neural material
 class NeuralMaterial(nn.IModel):
     def __init__(self, num_material_params: int, num_latents: int, use_coopvec: bool):
@@ -42,8 +43,8 @@ class NeuralMaterial(nn.IModel):
             nn.LinearLayer(num_inputs=nn.Auto, num_outputs=num_latents),
             nn.LeakyReLU(),
             nn.Convert.to_float(),
-            nn.Convert.to_array()
-        );
+            nn.Convert.to_array(),
+        )
 
         # Then, we instantiate the decoder network
         # This takes the latent code and view/light directions and returns the RGB material response
@@ -57,13 +58,13 @@ class NeuralMaterial(nn.IModel):
             nn.LinearLayer(num_inputs=nn.Auto, num_outputs=3),
             nn.Convert.to_vector(),
             nn.Convert.to_float(),
-            nn.Exp()
+            nn.Exp(),
         )
 
     def model_init(self, module: spy.Module, input_type):
         # Recursively initialize the networks
-        self.encoder.initialize(module, f'float[{self.num_material_params}]')
-        self.decoder.initialize(module, f'float[{6 + self.num_latents}]')
+        self.encoder.initialize(module, f"float[{self.num_material_params}]")
+        self.decoder.initialize(module, f"float[{6 + self.num_latents}]")
 
     @property
     def type_name(self) -> str:
@@ -76,7 +77,7 @@ class NeuralMaterial(nn.IModel):
         return {
             "encoder": self.encoder.get_this(),
             "decoder": self.decoder.get_this(),
-            "_type": self.type_name
+            "_type": self.type_name,
         }
 
     # Book keeping for the neural networks library
@@ -85,6 +86,7 @@ class NeuralMaterial(nn.IModel):
 
     def resolve_input_type(self, module: spy.Module):
         return module.MaterialTrainInput
+
 
 def main():
     device = spy.create_device(spy.DeviceType.vulkan, False, include_paths=nn.slang_include_paths())
@@ -95,10 +97,12 @@ def main():
     loader = spy.TextureLoader(device)
     material_textures = {
         "albedoMap": loader.load_texture("PavingStones070_2K.diffuse.jpg", {"load_as_srgb": True}),
-        "metalRoughMap": loader.load_texture("PavingStones070_2K.roughness.jpg", {"load_as_srgb": False}),
+        "metalRoughMap": loader.load_texture(
+            "PavingStones070_2K.roughness.jpg", {"load_as_srgb": False}
+        ),
         "normalMap": loader.load_texture("PavingStones070_2K.normal.jpg", {"load_as_srgb": False}),
-        "sampler": device.create_sampler(spy.TextureFilteringMode.linear, spy.TextureFilteringMode.linear),
-        "_type": "TexturedMaterial"
+        "sampler": device.create_sampler(),
+        "_type": "TexturedMaterial",
     }
 
     # Check for coop-vec support. This will make the sample run much faster.
@@ -147,7 +151,9 @@ def main():
         cmd = device.create_command_encoder()
         for i in range(num_batches_per_epoch):
             # Train material and compute gradients
-            module.trainMaterial(material_textures, neural_material, rng, loss_scale, _append_to=cmd)
+            module.trainMaterial(
+                material_textures, neural_material, rng, loss_scale, _append_to=cmd
+            )
             # Run the optimizer to update the parameters with the gradients
             optimizer.step(cmd)
 
@@ -157,18 +163,22 @@ def main():
         device.wait_for_submit(id)
 
         # Render the current state of the neural material
-        module.renderMaterial(material_textures, neural_material, iteration, pixel=spy.call_id(), _result=app.output)
+        module.renderMaterial(
+            material_textures, neural_material, iteration, pixel=spy.call_id(), _result=app.output
+        )
         iteration += 1
 
         # Print stats about the current throughput
         elapsed = time.time() - start
         msamples = (num_batches_per_epoch * math.prod(batch_shape)) * 1e-6
-        print(f"Iteration {iteration:5d} - "
-              f"Throughput: {msamples / elapsed:.2f} MSamples/s "
-              f"Epoch time: {elapsed * 1e3:.1f}ms")
+        print(
+            f"Iteration {iteration:5d} - "
+            f"Throughput: {msamples / elapsed:.2f} MSamples/s "
+            f"Epoch time: {elapsed * 1e3:.1f}ms"
+        )
 
         app.present()
 
+
 if __name__ == "__main__":
     main()
-

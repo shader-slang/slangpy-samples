@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import main;
 import tinymlp;
 
@@ -130,4 +132,3 @@ public struct RayMarcher
         return diffuse;
     }
 }
-

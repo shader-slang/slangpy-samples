@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 import main;
 
 public static const int input_size = 3;

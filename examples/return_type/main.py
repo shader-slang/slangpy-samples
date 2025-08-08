@@ -22,10 +22,10 @@ a = np.random.rand(128, 128).astype(np.float32)
 b = np.random.rand(128, 128).astype(np.float32)
 
 # Call our function and ask for a texture back
-result = module.add(a, b, _result='texture')
+result = module.add(a, b, _result="texture")
 
 # Print the first 5x5 values
 print(result.to_numpy()[:5, :5])
 
 # Display the result using tev
-spy.tev.show(result, name='add random')
+spy.tev.show(result, name="add random")

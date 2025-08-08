@@ -7,7 +7,10 @@ from pathlib import Path
 
 class App:
     def __init__(
-        self, title="Diffsplat Example", width=1024, height=1024,
+        self,
+        title="Diffsplat Example",
+        width=1024,
+        height=1024,
     ):
         super().__init__()
 

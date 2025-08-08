@@ -268,7 +268,7 @@ struct Gaussian2D : IDifferentiable
             float2(0, 0),
             float2(1, 1),
             float2(blobs[total * 0 + idx], blobs[total * 1 + idx]));
-        
+
         // Add a small padding value to avoid singularities or unstable Gaussians.
         gaussian.sigma[0][0] = smoothstep(0.f, 1.f, blobs[total * 2 + idx] * 0.8f) + 0.005f;
         gaussian.sigma[1][1] = smoothstep(0.f, 1.f, blobs[total * 3 + idx] * 0.8f) + 0.005f;
@@ -378,7 +378,7 @@ float4 cullAndApplyBlobs(Blobs blobs, OBB tileBounds, uint localIdx, no_diff flo
 {
     PixelState pixelState = PixelState(float4(0, 0, 0, 1), 0);
     uint numIntersectingBlobs = 0;
-    
+
     // Traverse the list in workgroup-sized chunks. Each lane in the workgroup/wave will be responsible for
     // determining if one gaussian in the chunk intersects the current tile.
     for (uint wgStart = 0, numGaussians = Gaussian2D.count(blobs); wgStart < numGaussians; wgStart += WG_SIZE)
@@ -396,7 +396,7 @@ float4 cullAndApplyBlobs(Blobs blobs, OBB tileBounds, uint localIdx, no_diff flo
             // identify the next lane with intersects == true in this chunk
             uint idxInChunk = firstbitlow(intersectionMask);
             uint16_t blobIdx = wgStart + idxInChunk; // then get the index for that blob
-         
+
             intersectionMask &= intersectionMask - 1; // remove the least significant 1 bit from the mask
 
             float4 blobEval = eval(blobs, blobIdx, uv);
@@ -510,8 +510,6 @@ float2 calcUV(uint2 dispatchThreadID, int2 renderSize, int2 imageSize)
 
 /*
  * splatBlobs() is the main rendering routine that computes a final color for the pixel.
- * 
- * It will check for support of  
  * This function will use a single pass to cull the full blob list to only the ones instersecting
  * with the current workgroup tile, and evaluate them. This avoids having to re-sort the list.
  * This is accomplished by using WaveActiveBallot to allow the entire subgroup to see the result
@@ -619,8 +617,7 @@ void clearDerivs(uint3 dispatchThreadID, RWNDBuffer<uint, 1> derivBuffer)
 }
 
 /*
- * Output a constant. Useful to quickly clear a buffer to a specific 
- * value with slangpy
+ * Output a constant. Useful to quickly clear a buffer to a specific value with slangpy
  */
 void ones(out float4 val)
 {

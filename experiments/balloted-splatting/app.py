@@ -10,9 +10,7 @@ class App:
         super().__init__()
 
         # Create a window
-        self._window = spy.Window(
-            width=width, height=height, title=title, resizable=True
-        )
+        self._window = spy.Window(width=width, height=height, title=title, resizable=True)
 
         # Create a device with local include path for shaders
         self._device = spy.create_device(include_paths=[Path(__file__).parent])
@@ -68,10 +66,11 @@ class App:
         if image is None:
             return
 
-        if (self._output_texture == None
-                or self._output_texture.width != image.width
-                or self._output_texture.height != image.height
-            ):
+        if (
+            self._output_texture == None
+            or self._output_texture.width != image.width
+            or self._output_texture.height != image.height
+        ):
             self._output_texture = self.device.create_texture(
                 width=image.width,
                 height=image.height,

@@ -17,8 +17,8 @@ from typing import Callable, Optional
 import slangpy as spy
 from pathlib import Path
 
-class App:
 
+class App:
     """
     App constructor. Creates a window, device, and swapchain, and allocates an output
     texture in the requested format.
@@ -80,22 +80,22 @@ class App:
 
     @property
     def device(self) -> spy.Device:
-        """ Get the device (slangpy.Device) """
+        """Get the device (slangpy.Device)"""
         return self._device
 
     @property
     def window(self) -> spy.Window:
-        """ Get the window (slangpy.Window) """
+        """Get the window (slangpy.Window)"""
         return self._window
 
     @property
     def mouse_pos(self) -> spy.float2:
-        """ Get the mouse position (slangpy.float2) """
+        """Get the mouse position (slangpy.float2)"""
         return self._mouse_pos
 
     @property
     def output(self) -> spy.Texture:
-        """ Get the output texture (slangpy.Texture) """
+        """Get the output texture (slangpy.Texture)"""
         return self._output_texture
 
     def process_events(self):
@@ -115,8 +115,8 @@ class App:
         return True
 
     def present(self):
-        """ Blit the output texture to the native swapchain surface using the device, and
-        present it on the application window. """
+        """Blit the output texture to the native swapchain surface using the device, and
+        present it on the application window."""
 
         if not self.surface.config:
             return

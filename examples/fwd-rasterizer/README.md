@@ -36,4 +36,3 @@ _Visualization showing the output triangle._
 
 Call the main.py script to display the triangle. This example is intentionally
 kept simple and takes no parameters.
-

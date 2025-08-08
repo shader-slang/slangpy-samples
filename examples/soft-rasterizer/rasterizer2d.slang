@@ -239,4 +239,3 @@ void optimize(inout float2 primal, inout float2 grad, in float learning_rate, in
     // Clear the gradients Tensor in preparation for next frame
     grad = float2(0);
 }
-

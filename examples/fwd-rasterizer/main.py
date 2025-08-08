@@ -40,6 +40,7 @@ class Camera:
             "_type": "Camera",
         }
 
+
 def main():
     """
     Main function that

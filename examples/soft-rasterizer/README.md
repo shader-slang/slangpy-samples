@@ -76,4 +76,3 @@ options:
 
 Keyboard bindings: F1=Send output to tev, F2=Generate "screenshot.png", Esc=Quit
 ```
-

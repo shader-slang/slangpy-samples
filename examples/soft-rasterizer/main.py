@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from app import App
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+
+from common.app import App
 import slangpy as spy
 import numpy as np
 from slangpy.types import call_id
@@ -88,7 +93,13 @@ def main(
     """
 
     # Create app and load the rasterizer2d shader.
-    app = App()
+    app = App(
+        title="soft-rasterizer",
+        width=1024,
+        height=1024,
+        device_type=spy.DeviceType.automatic,
+        include_paths=[Path(__file__).parent],
+    )
     rasterizer2d = spy.Module.load_from_file(app.device, "rasterizer2d.slang")
 
     # Setup the camera with the app's frame dimensions.

@@ -20,9 +20,14 @@
 #
 # This application outputs the ReSTIR frames to 'tev'; first 1spp frames and then ReSTIR frames.
 
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+
+from common import App
 import slangpy as spy
 import numpy as np
-from app import App
 
 # Size of the image.
 imageWidth = 1024
@@ -30,7 +35,12 @@ imageHeight = 1024
 imageSize = spy.int2(imageWidth, imageHeight)
 
 # Create windows app with space for 2 images.
-app = App("Toy ReSTIR", imageWidth * 2, imageHeight)
+app = App(
+    title="toy-restir",
+    width=imageWidth * 2,
+    height=imageHeight,
+    include_paths=[Path(__file__).parent],
+)
 
 # Number of initial candidates per pixel for ReSTIR.
 initialCandidateCount = 1

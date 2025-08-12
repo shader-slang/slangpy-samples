@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent))
+
+from common.app import App
 import slangpy as spy
 import numpy as np
-from app import App
 from slangpy.types import call_id
-import time
-from pathlib import Path
 
 
 # get weight size of the network
@@ -84,7 +87,13 @@ def trainMLP(
     return result
 
 
-app = App()
+app = App(
+    title="sdf-match",
+    width=1024,
+    height=1024,
+    device_type=spy.DeviceType.vulkan,
+    include_paths=[Path(__file__).parent],
+)
 spy.set_dump_generated_shaders(True)
 module = spy.Module.load_from_file(app.device, "main.slang")
 

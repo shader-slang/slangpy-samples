@@ -40,6 +40,7 @@ app = App(
     title="toy-restir",
     width=imageWidth * 2,
     height=imageHeight,
+    device_type=spy.DeviceType.automatic,
     include_paths=[Path(__file__).parent],
 )
 

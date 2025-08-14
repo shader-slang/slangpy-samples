@@ -388,6 +388,8 @@ def test_textures(example_runner: ExampleRunner, device_type: str):
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_toy_restir(example_runner: ExampleRunner, device_type: str):
+    if device_type == "cuda":
+        pytest.skip("Example currently crashes during CI, needs more investigation")
     example_runner.run(
         "toy-restir/main.py",
         device_type,

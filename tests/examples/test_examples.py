@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import http.client
 from pathlib import Path
 from collections import defaultdict
-from typing import List, Tuple, Any, Optional
+from typing import List, Tuple, Optional
 
 DIR = Path(__file__).parent.absolute()
 EXAMPLES_DIR = DIR.parent.parent / "examples"
@@ -83,14 +83,37 @@ def normalize_string(text: str) -> str:
     return "\n".join([line.strip() for line in text.strip().splitlines()])
 
 
+def is_image_like(array: numpy.ndarray) -> bool:
+    # Check if the shape is compatible with image data
+    return array.ndim == 2 or (array.ndim == 3 and array.shape[2] <= 4)
+
+
+def downsample_image_like(array: numpy.ndarray, factor: int = 2) -> numpy.ndarray:
+    if not is_image_like(array):
+        raise ValueError("Input array is not image-like")
+
+    # Pad image to multiple of factor
+    pad_height = (factor - array.shape[0] % factor) % factor
+    pad_width = (factor - array.shape[1] % factor) % factor
+    if pad_height > 0 or pad_width > 0:
+        array = numpy.pad(array, ((0, pad_height), (0, pad_width), (0, 0)), mode="constant")
+
+    # Downsample using box-filter
+    array = array.reshape(
+        array.shape[0] // factor, factor, array.shape[1] // factor, factor, -1
+    ).mean(axis=(1, 3))
+
+    return array
+
+
 class ExampleRunner:
     def __init__(self, tmp_path_factory: pytest.TempPathFactory):
         super().__init__()
         self.tmp_path_factory = tmp_path_factory
 
     def run_script(
-        self, script_path: Path, device_type: str
-    ) -> Tuple[str, str, int, dict[str, Any]]:
+        self, script_path: Path, device_type: str, capture_frames: list[int]
+    ) -> Tuple[str, str, int, dict[str, numpy.ndarray]]:
         # Run the script using it's parent directory as the working directory
         cwd_dir = script_path.parent
 
@@ -99,7 +122,13 @@ class ExampleRunner:
             data_path.unlink()
 
         # Prepare the command to execute the script
-        command = ["python", DIR / "wrapper.py", script_path, data_path]
+        command = [
+            "python",
+            DIR / "wrapper.py",
+            script_path,
+            data_path,
+            ",".join(map(str, capture_frames)),
+        ]
 
         # Run the script
         env = dict(os.environ)
@@ -111,8 +140,8 @@ class ExampleRunner:
         stderr = result.stderr
         return_code = result.returncode
 
+        # Load data if available
         if data_path.exists():
-            # Load the tev data if it exists
             data = numpy.load(data_path)
         else:
             data = {}
@@ -123,6 +152,9 @@ class ExampleRunner:
         self,
         example: str,
         device_type: str,
+        ignore_stdout: bool = False,
+        capture_frames: list[int] = [0],
+        downsample_factor: int = 1,
         include_data: Optional[List[str]] = None,
         rtol: float = 0.0,
         atol: float = 0.0,
@@ -136,23 +168,33 @@ class ExampleRunner:
         actual_data_path = DIR / f"{base_name}.actual.npz"
         diff_data_path = DIR / f"{base_name}.diff.npz"
 
-        (stdout, stderr, return_code, data) = self.run_script(script_path, device_type)
+        (stdout, stderr, return_code, data) = self.run_script(
+            script_path, device_type, capture_frames
+        )
 
         assert return_code == 0, f"Script failed with return code {return_code}. stderr: {stderr}"
 
-        # Filter out data if include_data is specified
+        # Turn data into proper dictionary and filter out data if include_data is specified
         if include_data is not None:
             data = {key: data[key] for key in include_data if key in data}
+        else:
+            data = {key: data[key] for key in data.keys()}
+
+        # Downsample image-like tensors if requested
+        for key in data.keys():
+            if is_image_like(data[key]):
+                data[key] = downsample_image_like(data[key], downsample_factor)
 
         # Compare stdout
-        try:
-            expected = normalize_string(expected_path.read_text())
-        except FileNotFoundError:
-            expected = ""
-        result = normalize_string(stdout)
-        if result != expected:
-            actual_path.write_text(result)
-        assert result == expected
+        if not ignore_stdout:
+            try:
+                expected = normalize_string(expected_path.read_text())
+            except FileNotFoundError:
+                expected = ""
+            result = normalize_string(stdout)
+            if result != expected:
+                actual_path.write_text(result)
+            assert result == expected
 
         # Compare numpy data
         try:
@@ -174,28 +216,33 @@ class ExampleRunner:
                     break
         if not data_equal:
             with open(actual_data_path, "wb") as actual_data_file:
-                numpy.savez(actual_data_file, **data)
+                numpy.savez(actual_data_file, **data, allow_pickle=False)
                 # ensure file is written to disk before assert
                 actual_data_file.flush()
             with open(diff_data_path, "wb") as diff_data_file:
-                diff_data = {key: data[key] - expected_data[key] for key in data.keys()}
+                diff_data = {
+                    key: data[key] - expected_data[key]
+                    for key in data.keys()
+                    if key in expected_data
+                }
                 numpy.savez(diff_data_file, **diff_data)
                 # ensure file is written to disk before assert
                 diff_data_file.flush()
 
-            # Dump 2D tensors as EXRs
+            # Dump image-like tensors as EXRs
             for key in data.keys():
-                if (
-                    data[key].ndim == 2
-                    or (data[key].ndim == 3 and data[key].shape[2] <= 4)
-                    and data[key].dtype in [numpy.float32]
-                ):
+                if is_image_like(data[key]) and data[key].dtype in [numpy.float32]:
                     from slangpy import Bitmap
+
+                    # Get maximum absolute difference from all diff_data
+                    max_diff = numpy.max(numpy.abs(diff_data[key]))
+                    print(f"Max absolute difference for {key}: {max_diff}")
 
                     exr_path = DIR / f"{base_name}.{key}.actual.exr"
                     Bitmap(data[key]).write_async(exr_path)
-                    exr_path = DIR / f"{base_name}.{key}.expected.exr"
-                    Bitmap(expected_data[key]).write_async(exr_path)
+                    if key in expected_data:
+                        exr_path = DIR / f"{base_name}.{key}.expected.exr"
+                        Bitmap(expected_data[key]).write_async(exr_path)
 
         assert list(data.keys()) == list(expected_data.keys())
         for key in data.keys():
@@ -235,6 +282,17 @@ def test_first_function_scalar(example_runner: ExampleRunner, device_type: str):
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_fwd_rasterizer(example_runner: ExampleRunner, device_type: str):
+    example_runner.run(
+        "fwd-rasterizer/main.py",
+        device_type,
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_generators_grid(example_runner: ExampleRunner, device_type: str):
     example_runner.run("generators/main_grid.py", device_type)
 
@@ -262,18 +320,30 @@ def test_nested(example_runner: ExampleRunner, device_type: str):
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_pytorch(example_runner: ExampleRunner, device_type: str):
     # TODO implement
-    pytest.skip("PyTorch example is not implemented yet")
+    pytest.skip("Not implemented")
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_ray_casting(example_runner: ExampleRunner, device_type: str):
-    # TODO implement
-    pytest.skip("Windowed examples are not supported in tests yet")
+    example_runner.run(
+        "ray-casting/main.py",
+        device_type,
+        ignore_stdout=True,
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_return_type(example_runner: ExampleRunner, device_type: str):
     example_runner.run("return_type/main.py", device_type)
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_sdf_match(example_runner: ExampleRunner, device_type: str):
+    # TODO implement
+    pytest.skip("Not implemented")
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
@@ -299,14 +369,36 @@ def test_simplified_splatting(example_runner: ExampleRunner, device_type: str):
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_soft_rasterizer(example_runner: ExampleRunner, device_type: str):
+    example_runner.run(
+        "soft-rasterizer/main.py",
+        device_type,
+        ignore_stdout=True,
+        capture_frames=[0, 150, 300],
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_textures(example_runner: ExampleRunner, device_type: str):
     example_runner.run("textures/main.py", device_type)
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_toy_restir(example_runner: ExampleRunner, device_type: str):
-    # TODO implement
-    pytest.skip("Windowed examples are not supported in tests yet")
+    if device_type == "cuda":
+        pytest.skip("Example currently crashes during CI, needs more investigation")
+    example_runner.run(
+        "toy-restir/main.py",
+        device_type,
+        ignore_stdout=True,
+        capture_frames=[0, 200, 400],
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)

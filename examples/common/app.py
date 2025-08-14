@@ -46,17 +46,17 @@ class App:
     ):
         super().__init__()
 
-        # Create a window
+        # Create window
         self._window = spy.Window(width=width, height=height, title=title, resizable=True)
 
-        # Create a device with local include path for shaders
+        # Create device with local include path for shaders
         self._device = spy.create_device(device_type, include_paths=include_paths)
 
-        # Setup swapchain
+        # Create surface
         self.surface = self._device.create_surface(self._window)
         self.surface.configure(width=self._window.width, height=self._window.height)
 
-        # Will contain output texture
+        # Create output texture
         self._output_format = output_format
         self._output_texture: spy.Texture = self.device.create_texture(
             format=self._output_format,

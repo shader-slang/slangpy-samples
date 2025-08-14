@@ -1,14 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import numpy
-import slangpy
+import slangpy as spy
 import sys
 import os
 import runpy
-from typing import Union
+from typing import Union, Optional, Callable
+from pathlib import Path
+
+# Allow importing common module for examples
+sys.path.append(str(Path(__file__).parent.parent.parent / "examples"))
+
+import common
 
 # Set the slangpy logger to fatal level to avoid cluttering the output
-slangpy.Logger.get().level = slangpy.LogLevel.fatal
+spy.Logger.get().level = spy.LogLevel.fatal
 
 # Set a random seed for reproducibility
 numpy.random.seed(42)
@@ -18,6 +24,91 @@ numpy.random.seed(42)
 # and slangpy.tev.show_async.
 data = {}
 
+# List of frames to capture
+capture_frames: list[int] = [0]
+
+
+class WindowMock:
+    def __init__(self, width: int, height: int, title: str):
+        super().__init__()
+        self.width = width
+        self.height = height
+        self.title = title
+
+
+class AppMock:
+    def __init__(
+        self,
+        title: str = "Example",
+        width: int = 1024,
+        height: int = 1024,
+        device_type: spy.DeviceType = spy.DeviceType.automatic,
+        output_format: spy.Format = spy.Format.rgba32_float,
+        include_paths: list[Union[str, Path]] = [],
+    ):
+        super().__init__()
+
+        # Create mock window
+        self._window = WindowMock(width=width, height=height, title=title)
+
+        # Create device with local include path for shaders
+        self._device = spy.create_device(device_type, include_paths=include_paths)
+
+        # Create output texture
+        self._output_format = output_format
+        self._output_texture: spy.Texture = self.device.create_texture(
+            format=self._output_format,
+            width=width,
+            height=height,
+            mip_count=1,
+            usage=spy.TextureUsage.shader_resource | spy.TextureUsage.unordered_access,
+            label="output_texture",
+        )
+
+        # Hookable events
+        self.on_keyboard_event: Optional[Callable[[spy.KeyboardEvent], None]] = None
+        self.on_mouse_event: Optional[Callable[[spy.MouseEvent], None]] = None
+
+        # Internal state
+        self._mouse_pos = spy.float2()
+        self._should_close = False
+        self._frame_index = 0
+
+    @property
+    def device(self) -> spy.Device:
+        return self._device
+
+    @property
+    def window(self) -> spy.Window:
+        return self._window  # type: ignore
+
+    @property
+    def mouse_pos(self) -> spy.float2:
+        return self._mouse_pos
+
+    @property
+    def output(self) -> spy.Texture:
+        return self._output_texture
+
+    def process_events(self):
+        return not self._should_close
+
+    def present(self):
+        global data, capture_frames
+        # Capture frames
+        if self._frame_index in capture_frames:
+            name = f"frame_{self._frame_index}"
+            data[name] = self._output_texture.to_numpy()
+        self._frame_index += 1
+        # Automatically close after last requested frame is captured
+        if self._frame_index > capture_frames[-1]:
+            self._should_close = True
+
+
+# Mock the App and Window classes used by windowed examples
+common.app.App = AppMock
+common.App = AppMock
+
 
 # Counter for naming images that are shown without a name.
 tev_image_counter = 0
@@ -25,17 +116,17 @@ tev_image_counter = 0
 
 # Mock the slangpy.tev.show and slangpy.tev.show_async functions
 # to redirect the images to a numpy array instead of displaying them.
-def tev_show_override(
-    bitmap_or_texture: Union[slangpy.Bitmap, slangpy.Texture],
+def tev_show_mock(
+    bitmap_or_texture: Union[spy.Bitmap, spy.Texture],
     name: str = "",
     host: str = "127.0.0.1",
     port: int = 14158,
     max_retries: int = 3,
 ) -> bool:
-    global tev_image_counter, data
-    if isinstance(bitmap_or_texture, slangpy.Bitmap):
+    global data, tev_image_counter
+    if isinstance(bitmap_or_texture, spy.Bitmap):
         image = numpy.array(bitmap_or_texture, copy=False)
-    if isinstance(bitmap_or_texture, slangpy.Texture):
+    if isinstance(bitmap_or_texture, spy.Texture):
         image = bitmap_or_texture.to_numpy()
     if name == "":
         name = f"tev_image_{tev_image_counter}"
@@ -45,15 +136,16 @@ def tev_show_override(
 
 
 # Override the slangpy.tev.show and show_async functions
-slangpy.tev.show = tev_show_override
-slangpy.tev.show_async = tev_show_override
+spy.tev.show = tev_show_mock
+spy.tev.show_async = tev_show_mock
 
 # Get expected arguments
-if len(sys.argv) < 3:
-    raise ValueError("Usage: wrapper.py <script_path> <data_path>")
+if len(sys.argv) < 4:
+    raise ValueError("Usage: wrapper.py <script_path> <data_path> <capture_frames>")
 
 script_path = sys.argv[1]
 data_path = sys.argv[2]
+capture_frames = list(map(int, sys.argv[3].split(",")))
 
 # Run the wrapped script
 sys.path.append(os.path.dirname(script_path))

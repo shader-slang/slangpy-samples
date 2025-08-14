@@ -47,7 +47,7 @@ app = App(
 initialCandidateCount = 1
 
 # Number of frames to render.
-frameCount = 400
+frameCount = 200
 
 # Create the device.
 device = app.device

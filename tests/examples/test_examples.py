@@ -282,6 +282,17 @@ def test_first_function_scalar(example_runner: ExampleRunner, device_type: str):
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_fwd_rasterizer(example_runner: ExampleRunner, device_type: str):
+    example_runner.run(
+        "fwd-rasterizer/main.py",
+        device_type,
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_generators_grid(example_runner: ExampleRunner, device_type: str):
     example_runner.run("generators/main_grid.py", device_type)
 
@@ -309,18 +320,30 @@ def test_nested(example_runner: ExampleRunner, device_type: str):
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_pytorch(example_runner: ExampleRunner, device_type: str):
     # TODO implement
-    pytest.skip("PyTorch example is not implemented yet")
+    pytest.skip("Not implemented")
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_ray_casting(example_runner: ExampleRunner, device_type: str):
-    # TODO implement
-    pytest.skip("Windowed examples are not supported in tests yet")
+    example_runner.run(
+        "ray-casting/main.py",
+        device_type,
+        ignore_stdout=True,
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_return_type(example_runner: ExampleRunner, device_type: str):
     example_runner.run("return_type/main.py", device_type)
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_sdf_match(example_runner: ExampleRunner, device_type: str):
+    # TODO implement
+    pytest.skip("Not implemented")
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
@@ -346,14 +369,34 @@ def test_simplified_splatting(example_runner: ExampleRunner, device_type: str):
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
+def test_soft_rasterizer(example_runner: ExampleRunner, device_type: str):
+    example_runner.run(
+        "soft-rasterizer/main.py",
+        device_type,
+        ignore_stdout=True,
+        capture_frames=[0, 150, 300],
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
+
+
+@pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_textures(example_runner: ExampleRunner, device_type: str):
     example_runner.run("textures/main.py", device_type)
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)
 def test_toy_restir(example_runner: ExampleRunner, device_type: str):
-    # TODO implement
-    pytest.skip("Windowed examples are not supported in tests yet")
+    example_runner.run(
+        "toy-restir/main.py",
+        device_type,
+        ignore_stdout=True,
+        capture_frames=[0, 200, 400],
+        downsample_factor=16,
+        rtol=0.01,
+        atol=0.05,
+    )
 
 
 @pytest.mark.parametrize("device_type", DEVICE_TYPES)

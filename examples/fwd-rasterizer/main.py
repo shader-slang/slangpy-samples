@@ -1,6 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
-from app import App
+import sys
+from pathlib import Path
+
+# Allow importing common package from parent directory
+sys.path.append(str(Path(__file__).parent.parent))
+
+from common import App
 import slangpy as spy
 from slangpy.types import call_id
 
@@ -50,7 +56,13 @@ def main():
     """
 
     # Create app and load the rasterizer2d shader.
-    app = App()
+    app = App(
+        title="fwd-rasterizer",
+        width=1024,
+        height=1024,
+        device_type=spy.DeviceType.automatic,
+        include_paths=[Path(__file__).parent],
+    )
     rasterizer2d = spy.Module.load_from_file(app.device, "rasterizer2d.slang")
 
     # Buffer of 3 vertex positions for the triangle.

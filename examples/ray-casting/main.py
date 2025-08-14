@@ -1,14 +1,25 @@
 # SPDX-License-Identifier: Apache-2.0
 
+import sys
+from pathlib import Path
+
+# Allow importing common package from parent directory
+sys.path.append(str(Path(__file__).parent.parent))
+
+from common import App
 import slangpy as spy
 import numpy as np
-from app import App
 from slangpy.types import call_id
 import math
 import imageio
-import os
 
-app = App()
+app = App(
+    title="ray-casting",
+    width=1024,
+    height=1024,
+    device_type=spy.DeviceType.automatic,
+    include_paths=[Path(__file__).parent],
+)
 module = spy.Module.load_from_file(app.device, "raycasting.slang")
 
 uniforms = {
@@ -71,7 +82,6 @@ app.on_mouse_event = mouseEvent
 updateCamera()
 
 device = app.device
-pathname = os.path.realpath(__file__)
 imageData = imageio.v3.imread("imageio:bricks.jpg")
 
 # reshape imageData into 512x512x4, adding an alpha channel

@@ -23,6 +23,7 @@
 import sys
 from pathlib import Path
 
+# Allow importing common package from parent directory
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common import App

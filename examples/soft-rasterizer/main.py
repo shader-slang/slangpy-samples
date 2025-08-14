@@ -3,9 +3,10 @@
 import sys
 from pathlib import Path
 
+# Allow importing common package from parent directory
 sys.path.append(str(Path(__file__).parent.parent))
 
-from common.app import App
+from common import App
 import slangpy as spy
 import numpy as np
 from slangpy.types import call_id

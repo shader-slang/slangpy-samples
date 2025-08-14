@@ -23,14 +23,14 @@ module = spy.Module.load_from_file(device, "example.slang")
 
 # Map all dimensions of a and b to the same dimensions of the result
 # Exactly the same as default behaviour
-a = np.random.rand(10, 3, 4)
-b = np.random.rand(10, 3, 4)
+a = np.random.rand(10, 3, 4).astype(np.float32)
+b = np.random.rand(10, 3, 4).astype(np.float32)
 result = module.add.map((0, 1, 2), (0, 1, 2))(a, b, _result="numpy")
 assert np.allclose(result, a + b)
 
 # The same using named parameters
-a = np.random.rand(10, 3, 4)
-b = np.random.rand(10, 3, 4)
+a = np.random.rand(10, 3, 4).astype(np.float32)
+b = np.random.rand(10, 3, 4).astype(np.float32)
 result = module.add.map(a=(0, 1, 2), b=(0, 1, 2))(a=a, b=b, _result="numpy")
 assert np.allclose(result, a + b)
 

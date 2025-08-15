@@ -99,9 +99,14 @@ def downsample_image_like(array: numpy.ndarray, factor: int = 2) -> numpy.ndarra
         array = numpy.pad(array, ((0, pad_height), (0, pad_width), (0, 0)), mode="constant")
 
     # Downsample using box-filter
-    array = array.reshape(
-        array.shape[0] // factor, factor, array.shape[1] // factor, factor, -1
-    ).mean(axis=(1, 3))
+    if array.ndim == 2:
+        array = array.reshape(
+            array.shape[0] // factor, factor, array.shape[1] // factor, factor
+        ).mean(axis=(1, 3))
+    else:
+        array = array.reshape(
+            array.shape[0] // factor, factor, array.shape[1] // factor, factor, -1
+        ).mean(axis=(1, 3))
 
     return array
 
@@ -181,9 +186,10 @@ class ExampleRunner:
             data = {key: data[key] for key in data.keys()}
 
         # Downsample image-like tensors if requested
-        for key in data.keys():
-            if is_image_like(data[key]):
-                data[key] = downsample_image_like(data[key], downsample_factor)
+        if downsample_factor > 1:
+            for key in data.keys():
+                if is_image_like(data[key]):
+                    data[key] = downsample_image_like(data[key], downsample_factor)
 
         # Compare stdout
         if not ignore_stdout:

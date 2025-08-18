@@ -440,5 +440,5 @@ def test_type_methods_extend_instancelists(example_runner: ExampleRunner, device
 
 
 if __name__ == "__main__":
-    # pytest.main([__file__, "-vvvs"])
-    pytest.main([__file__, "-vvvs", "-k", "test_check_urls"])
+    pytest.main([__file__, "-vvvs"])
+    # pytest.main([__file__, "-vvvs", "-k", "test_check_urls"])

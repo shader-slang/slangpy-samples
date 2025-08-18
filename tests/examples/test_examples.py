@@ -72,15 +72,28 @@ def find_urls_in_file(path: Path) -> List[str]:
 def test_check_urls():
     # Some URLs are known to be unstable or temporary, so we ignore them
     ignored_urls = ["https://intro-to-restir.cwyman.org/"]
-    invalid_urls: dict[Path, List[str]] = defaultdict(list)
+
+    # Find all urls
+    unresolved_urls: set[str] = set()
     for path in EXAMPLES_DIR.glob("**/*.py"):
-        urls = find_urls_in_file(path)
-        for url in urls:
-            if url in ignored_urls:
-                continue
-            if not check_url_exists(url):
-                invalid_urls[path].append(url)
-    assert invalid_urls == {}
+        for url in find_urls_in_file(path):
+            if not url in ignored_urls:
+                unresolved_urls.add(url)
+
+    # Try resolving urls
+    retries = 5
+    while retries > 0 and len(unresolved_urls) > 0:
+        unresolved_urls = {url for url in unresolved_urls if not check_url_exists(url)}
+        retries -= 1
+
+    # Report unresolved URLs
+    if len(unresolved_urls) > 0:
+        report = "Unresolved URLs found:\n"
+        for path in EXAMPLES_DIR.glob("**/*.py"):
+            for url in find_urls_in_file(path):
+                if url in unresolved_urls:
+                    report += f"{path} -> {url}\n"
+        assert False, report
 
 
 def normalize_string(text: str) -> str:
@@ -427,5 +440,5 @@ def test_type_methods_extend_instancelists(example_runner: ExampleRunner, device
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-vvvs"])
-    # pytest.main([__file__, "-vvvs", "-k", "test_autodiff"])
+    # pytest.main([__file__, "-vvvs"])
+    pytest.main([__file__, "-vvvs", "-k", "test_check_urls"])

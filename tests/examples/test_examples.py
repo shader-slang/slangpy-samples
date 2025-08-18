@@ -11,6 +11,7 @@ import http.client
 from pathlib import Path
 from collections import defaultdict
 from typing import List, Tuple, Optional
+import slangpy as spy
 
 DIR = Path(__file__).parent.absolute()
 EXAMPLES_DIR = DIR.parent.parent / "examples"
@@ -20,7 +21,10 @@ if sys.platform == "win32":
 elif sys.platform == "linux" or sys.platform == "linux2":
     DEVICE_TYPES = ["vulkan", "cuda"]
 elif sys.platform == "darwin":
-    DEVICE_TYPES = ["metal"]
+    # Check if metal device has support for parameter blocks (required for slangpy)
+    device = spy.create_device()
+    DEVICE_TYPES = ["metal"] if device.has_feature(spy.Feature.parameter_block) else []
+    device.close()
 else:
     raise RuntimeError("Unsupported platform")
 

@@ -70,6 +70,9 @@ def find_urls_in_file(path: Path) -> List[str]:
 
 
 def test_check_urls():
+    if sys.platform != "win32":
+        pytest.skip("This test is only run on windows")
+
     # Some URLs are known to be unstable or temporary, so we ignore them
     ignored_urls = ["https://intro-to-restir.cwyman.org/"]
 

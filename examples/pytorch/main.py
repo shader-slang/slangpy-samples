@@ -17,7 +17,7 @@ device = spy.create_torch_device(
     type=spy.DeviceType.cuda,
     include_paths=[
         pathlib.Path(__file__).parent.absolute(),
-    ]
+    ],
 )
 
 # Load module using the standard Module type

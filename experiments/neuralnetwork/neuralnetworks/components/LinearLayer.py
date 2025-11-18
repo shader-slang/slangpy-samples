@@ -57,8 +57,8 @@ class LinearLayer(IModel):
             rowmaj_weights = np.empty((self.num_outputs, self.num_inputs), dtype=self.dtype.numpy())
 
             layout = CoopVecMatrixLayout.training_optimal
-            self.weights.device.coopvec_convert_matrix_host(
-                weights_np, rowmaj_weights, src_layout=layout
+            self.weights.device.convert_coop_vec_matrix(
+                dst=rowmaj_weights, src=weights_np, src_layout=layout
             )
 
             return rowmaj_weights
@@ -119,11 +119,13 @@ class LinearLayer(IModel):
 
         if self.use_coopvec:
             layout = CoopVecMatrixLayout.training_optimal
-            desc = device.coopvec_create_matrix_desc(fan_out, fan_in, layout, self.dtype.sgl(), 0)
+            desc = device.create_coop_vec_matrix_desc(
+                rows=fan_out, cols=fan_in, layout=layout, element_type=self.dtype.sgl()
+            )
             weight_count = desc.size // self.dtype.size()
 
             params_np = np.zeros((weight_count,), dtype=self.dtype.numpy())
-            device.coopvec_convert_matrix_host(weights_np, params_np, dst_layout=layout)
+            device.convert_coop_vec_matrix(dst=params_np, src=weights_np, dst_layout=layout)
 
             self.weights = Tensor.empty(device, (weight_count,), str(self.dtype))
             self.weights.storage.copy_from_numpy(params_np)

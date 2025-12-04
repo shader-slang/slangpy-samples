@@ -17,14 +17,14 @@ device = spy.create_device(
 module = spy.Module.load_from_file(device, "example.slang")
 
 # Create buffer of particles (.as_struct is used to make python typing happy!)
-particles = spy.InstanceBuffer(struct=module.Particle.as_struct(), shape=(10,))
+particles = spy.InstanceTensor(struct=module.Particle.as_struct(), shape=(10,))
 
 # Construct every particle with position of 0, and use slangpy's rand_float
 # functionality to supply a different rand vector for each one.
 particles.construct(p=spy.float3(0), v=spy.rand_float(-1, 1, 3))
 
 # Print all the particles by breaking them down into groups of 6 floats
-result_cursor = particles.buffer.cursor()
+result_cursor = particles.tensor.cursor()
 
 for i in range(particles.shape[0]):
     instance = result_cursor[i].read()
@@ -33,7 +33,7 @@ for i in range(particles.shape[0]):
 # Update the particles
 particles.update(0.1)
 
-result_cursor = particles.buffer.cursor()
+result_cursor = particles.tensor.cursor()
 # Print all the particles by breaking them down into groups of 6 floats
 for i in range(particles.shape[0]):
     instance = result_cursor[i].read()

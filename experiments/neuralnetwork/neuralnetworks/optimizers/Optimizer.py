@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from slangpy.types import NDBuffer
+from slangpy.types import Tensor
 from ..basetypes import Real
 
 from slangpy import Buffer, InstanceList, Module, Tensor, CommandEncoder, pack
@@ -56,7 +56,7 @@ class OptimizerPool:
         self.step_func = step_func
         self.batch_step_func = batch_step_func
         self.params: list[Tensor] = []
-        self.states: list[NDBuffer] = []
+        self.states: list[Tensor] = []
         self.mapping = np.ndarray((0, 2), dtype=np.int32)
         self.batched_params: list[dict[str, Any]] = []
         self.unbatched_params: list[dict[str, Any]] = []
@@ -68,7 +68,7 @@ class OptimizerPool:
         """
         if len(self.batched_params) > 0:
             # Convert the mapping to a packed array
-            self.mapping_buffer = NDBuffer(
+            self.mapping_buffer = Tensor.empty(
                 self.optim_type.module.device, dtype="int2", element_count=self.mapping.shape[0]
             )
             self.mapping_buffer.copy_from_numpy(self.mapping)
@@ -85,7 +85,7 @@ class OptimizerPool:
             self.mapping_buffer = None
             self.batches_packed = None
 
-    def add_parameter(self, param: Tensor, existing_state: Optional[NDBuffer] = None):
+    def add_parameter(self, param: Tensor, existing_state: Optional[Tensor] = None):
         """
         Adds a parameter to the optimizer pool.
         """

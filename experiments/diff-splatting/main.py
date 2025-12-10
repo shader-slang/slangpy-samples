@@ -64,7 +64,7 @@ input_image = device.create_texture(
     usage=spy.TextureUsage.shader_resource,
 )
 
-dispatch_ids = spy.NDBuffer(device, dtype=module.uint2, shape=(W, H))
+dispatch_ids = spy.Tensor.empty(device,shape=(W, H), dtype=module.uint2)
 dispatch_ids.copy_from_numpy(calcCompressedDispatchIDs(W, H, WORKGROUP_X, WORKGROUP_Y))
 
 per_pixel_loss = spy.Tensor.empty(device, dtype=module.float4, shape=(W, H))

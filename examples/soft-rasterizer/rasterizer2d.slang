@@ -212,15 +212,15 @@ void generate_gradients(Camera camera, in Tensor<float2, 1> primal, AtomicTensor
 {
     // Wrap the vertices in a diffPair so we can use autodiff to get the
     // partial derivatives and calculate gradients
-    float2 vertices[3] = { primal.load(0), primal.load(1), primal.load(2) };
+    float2 vertices[3] = { primal.get({0}), primal.get({1}), primal.get({2}) };
     var dVertices = diffPair(vertices);
 
     bwd_diff(loss)(camera, dVertices, pixelCoord, reference, 1.0);
 
     // Accumulate (add) gradients for this point into the gradients tensor.
-    grad.add(0, dVertices.d[0]);
-    grad.add(1, dVertices.d[1]);
-    grad.add(2, dVertices.d[2]);
+    grad.set({0}, dVertices.d[0]);
+    grad.set({1}, dVertices.d[1]);
+    grad.set({2}, dVertices.d[2]);
 }
 
 

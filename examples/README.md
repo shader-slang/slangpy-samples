@@ -21,7 +21,7 @@ Welcome to SlangPy examples! Here you'll find well written and documented exampl
 |-------------|-------------|
 | [first_function](https://slangpy.shader-slang.org/en/latest/src/basics/firstfunctions.html) | Most basic use of SlangPy to call a single function. |
 | [return_type](https://slangpy.shader-slang.org/en/latest/src/basics/returntype.html) | Use a different return type for a function. |
-| [buffers](https://slangpy.shader-slang.org/en/latest/src/basics/buffers.html) | Tensor creation/use. |
+| [buffers](https://slangpy.shader-slang.org/en/latest/src/basics/buffers.html) | NDBuffer creation/use. |
 | [textures](https://slangpy.shader-slang.org/en/latest/src/basics/textures.html) | Simple manipulation of texture data using SlangPy. |
 | [nested](https://slangpy.shader-slang.org/en/latest/src/basics/nested.html) | Shows how to use Python dictionaries to pass nested data in SOA form. |
 | [type_methods](https://slangpy.shader-slang.org/en/latest/src/basics/typemethods.html) | Use of InstanceList, InstanceBuffer and get_this to invoke methods of a type. |

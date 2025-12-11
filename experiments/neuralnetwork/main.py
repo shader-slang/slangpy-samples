@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from slangpy import Device, DeviceType, TextureLoader, Module
-from slangpy.types import Tensor
+from slangpy.types import NDBuffer
 import numpy as np
 import math
 import time
@@ -168,7 +168,7 @@ class ToGrayscale(nn.IModel):
 def create_uv_grid(device: Device, resolution: int):
     span = np.linspace(0, 1, resolution, dtype=np.float32)
     uvs_np = np.stack(np.broadcast_arrays(span[None, :], span[:, None]), axis=2)
-    uvs = Tensor.empty(device, "float2", shape=(resolution, resolution))
+    uvs = NDBuffer(device, "float2", shape=(resolution, resolution))
     uvs.copy_from_numpy(uvs_np)
     return uvs
 

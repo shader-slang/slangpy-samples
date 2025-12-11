@@ -49,8 +49,8 @@ def generate_init_params(network_shape: list[int]):
 
     params_grad_data = np.zeros((params_size,), dtype=np.float32)
 
-    params = spy.Tensor.from_numpy(app.device, params_data)
-    params_grad = spy.Tensor.from_numpy(app.device, params_grad_data)
+    params = spy.NDBuffer.from_numpy(app.device, params_data)
+    params_grad = spy.NDBuffer.from_numpy(app.device, params_grad_data)
     return params, params_grad, params_data, params_grad_data
 
 
@@ -63,8 +63,8 @@ def generate_input(samplesSize: int, input_size: int):
 
 
 # construct the network, the network is a tiny MLP with 1 hidden layer
-def construct_network(params: spy.Tensor, params_grad: spy.Tensor):
-    tiny_mlp = spy.Tensor.empty(app.device, dtype=module.TinyMLP_Params, shape=(1,))
+def construct_network(params: spy.NDBuffer, params_grad: spy.NDBuffer):
+    tiny_mlp = spy.NDBuffer(app.device, dtype=module.TinyMLP_Params, shape=(1,))
     tiny_mlp_cursor = tiny_mlp.cursor()
     tiny_mlp_cursor[0].write(
         {
@@ -78,8 +78,8 @@ def construct_network(params: spy.Tensor, params_grad: spy.Tensor):
 
 def trainMLP(
     iter: int,
-    tiny_mlp_params: spy.Tensor,
-    adam_state: spy.Tensor,
+    tiny_mlp_params: spy.NDBuffer,
+    adam_state: spy.NDBuffer,
     input: spy.Tensor,
     batch_size: int,
 ):
@@ -113,7 +113,7 @@ tiny_mlp_params = construct_network(params=params, params_grad=params_grad)
 # Initialize Adam state, the adam state is per-parameter state, so the size is the same as the params.
 # Call slang function `clearAdamState` to clear the adam state.
 param_size = get_weight_size(network_shape) + get_bias_size(network_shape)
-adam_state = spy.Tensor.empty(app.device, dtype=module.AdamState, shape=(param_size,))
+adam_state = spy.NDBuffer(app.device, dtype=module.AdamState, shape=(param_size,))
 module.clearAdamState(adam_state)
 
 # Main loop

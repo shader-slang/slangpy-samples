@@ -360,7 +360,7 @@ void sampleAndMergeInitialCandidate(int2 pixel, int frame, int2 imageSize, int s
     reservoir.c = 1.0f;
 }
 
-void performTemporalReuse(int2 pixel, int frame, inout Reservoir outReservoir, in RWTensor<Reservoir, 2> initialSampleReservoirs, in RWTensor<Reservoir, 2> temporalReservoirs, int2 imageSize,
+void performTemporalReuse(int2 pixel, int frame, inout Reservoir outReservoir, in RWNDBuffer<Reservoir, 2> initialSampleReservoirs, in RWNDBuffer<Reservoir, 2> temporalReservoirs, int2 imageSize,
                          inout RandomStream risRandom)
 {
     float t = (float)frame;
@@ -405,7 +405,7 @@ void performTemporalReuse(int2 pixel, int frame, inout Reservoir outReservoir, i
     outReservoir = result;
 }
 
-void performSpatialReuse(int2 pixel, inout Reservoir outReservoir, in RWTensor<Reservoir, 2> reservoirs, int2 imageSize, inout RandomStream risRandom)
+void performSpatialReuse(int2 pixel, inout Reservoir outReservoir, in RWNDBuffer<Reservoir, 2> reservoirs, int2 imageSize, inout RandomStream risRandom)
 {
     // Get current pixel's reservoir.
     let currentReservoir = reservoirs[pixel];

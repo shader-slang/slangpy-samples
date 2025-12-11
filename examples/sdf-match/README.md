@@ -75,7 +75,7 @@ input, input_data = generate_input(samplesSize)
 params, params_grad, params_data, params_grad_data = generate_init_params(network_shape)
 
 # Initialize Adam optimizer state
-adam_state = spy.Tensor.empty(app.device, dtype=module.AdamState, shape=(param_size,))
+adam_state = spy.NDBuffer(app.device, dtype=module.AdamState, shape=(param_size,))
 ```
 
 ### 2. Main Loop

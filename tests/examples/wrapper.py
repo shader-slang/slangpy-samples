@@ -16,6 +16,15 @@ import common
 # Set the slangpy logger to fatal level to avoid cluttering the output
 spy.Logger.get().level = spy.LogLevel.fatal
 
+# Wrap create_device to automatically set CUDA context current after creation.
+# This is needed because slang-rhi removed per-call CUDA context push/pop for performance.
+_original_create_device = spy.create_device
+def _create_device_with_cuda_context(*args, **kwargs):
+    device = _original_create_device(*args, **kwargs)
+    device.set_cuda_context_current()
+    return device
+spy.create_device = _create_device_with_cuda_context
+
 # Set a random seed for reproducibility
 numpy.random.seed(42)
 

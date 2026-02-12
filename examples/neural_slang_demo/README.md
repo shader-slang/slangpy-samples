@@ -1,5 +1,7 @@
 # Neural Demo - Using neural.slang
 
+![Screenshot](screenshot.png)
+
 This demo showcases how to use Slang's `neural.slang` standard module to build a neural network for image reconstruction. The network learns to map UV coordinates to RGB colors, reconstructing a reference image through gradient-based optimization.
 This is a re-creation of the texture example in the https://github.com/shader-slang/neural-shading-s25 course.
 

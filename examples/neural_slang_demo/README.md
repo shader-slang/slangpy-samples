@@ -9,9 +9,10 @@ This is a re-creation of the texture example in the https://github.com/shader-sl
 |------|-------------|
 | `InlineVector<T, N>` | Fixed-size vector type with compile-time `.Size` constant |
 | `StructuredBufferStorage<T>` | GPU buffer storage implementing `IStorage<T>` interface |
-| `FFLayer<T, InVec, OutVec, Storage, Activation, HasBias>` | Feed-forward neural network layer |
-| `IdentityActivation<T>` | Pass-through activation (no transformation) |
-| `NoParam()` | Empty parameter for activations that don't need configuration |
+| `FFLayer<T, InVec, OutVec, Storage, Layout, Activation, HasBias>` | Feed-forward neural network layer |
+| `LinearLayout` | Storage layout for standard linear (row-major) weight packing |
+| `LeakyReLU<T>` | Leaky ReLU activation with configurable alpha (default 0.01) |
+| `ExpActivation<T>` | Exponential activation: `exp(x)` |
 
 ## Before/After Comparison
 
@@ -33,7 +34,7 @@ Approximate lines of code comparison apart from comments.
 | `float[4]` / `float4` | `InlineVector<float, 4>` |
 | `float[32]` | `InlineVector<float, 32>` |
 | `float[3]` / `float3` | `InlineVector<float, 3>` |
-| Manual size tracking | `Vec4.Size` compile-time constant |
+| Manual size tracking | `InlineVector.Size` compile-time constant |
 
 ### Parameter Storage
 
@@ -94,6 +95,12 @@ float3 eval(no_diff float2 uv)
 
 **After:**
 ```slang
+// Type aliases using FFLayer with Layout and Activation parameters
+typealias Storage = StructuredBufferStorage<float>;
+typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
+typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
+typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, LinearLayout, ExpActivation<float>>;
+
 // Network evaluation with FFLayer and built-in activations
 [Differentiable]
 OutputVec mlp_forward(Storage storage, InputVec input)
@@ -118,7 +125,7 @@ OutputVec mlp_forward(Storage storage, InputVec input)
 ## Running the Demo
 
 ```bash
-cd slangpy-samples/examples/neural-demo
+cd slangpy-samples/examples/neural_slang_demo
 python neural-demo.py
 ```
 

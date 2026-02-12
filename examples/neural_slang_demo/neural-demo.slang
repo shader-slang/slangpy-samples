@@ -12,9 +12,9 @@ typealias HiddenVec = InlineVector<float, HIDDEN_DIM>;
 typealias OutputVec = InlineVector<float, OUTPUT_DIM>;
 
 typealias Storage = StructuredBufferStorage<float>;
-typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LeakyReLU<float>, true>;
-typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LeakyReLU<float>, true>;
-typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, ExpActivation<float>, true>;
+typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
+typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
+typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, LinearLayout, ExpActivation<float>>;
 
 static const uint TOTAL_PARAMS = Layer0.ParameterCount + Layer1.ParameterCount + Layer2.ParameterCount;
 
@@ -52,8 +52,8 @@ struct LatentTexture<let N : int>
         InlineVector<float, N> result;
         [ForceUnroll]
         for (int i = 0; i < N; ++i)
-            result.set(i, lerp(lerp(getLatent(c0.x, c0.y, i), getLatent(c1.x, c0.y, i), f.x),
-                               lerp(getLatent(c0.x, c1.y, i), getLatent(c1.x, c1.y, i), f.x), f.y));
+            result[i] = lerp(lerp(getLatent(c0.x, c0.y, i), getLatent(c1.x, c0.y, i), f.x),
+                             lerp(getLatent(c0.x, c1.y, i), getLatent(c1.x, c1.y, i), f.x), f.y);
         return result;
     }
 }
@@ -69,7 +69,7 @@ struct Network
 float3 eval(Storage storage, LatentTexture<INPUT_DIM> tex, no_diff float2 uv)
 {
     let out = mlp_forward(storage, tex.sample(uv));
-    return float3(out.get(0), out.get(1), out.get(2));
+    return float3(out[0], out[1], out[2]);
 }
 
 [Differentiable]

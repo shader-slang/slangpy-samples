@@ -8,13 +8,13 @@ static const int OUTPUT_DIM = 3;
 static const float LEAKY_RELU_SLOPE = 0.01f;
 
 typealias InputVec = InlineVector<float, INPUT_DIM>;
-typealias HiddenVec = InlineVector<float, HIDDEN_DIM>;
+extern struct HiddenVec : IVector<float>;
 typealias OutputVec = InlineVector<float, OUTPUT_DIM>;
 
 typealias Storage = StructuredBufferStorage<float>;
-typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
-typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
-typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, LinearLayout, ExpActivation<float>>;
+typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>, true>;
+typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>, true>;
+typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, LinearLayout, ExpActivation<float>, true>;
 
 static const uint TOTAL_PARAMS = Layer0.ParameterCount + Layer1.ParameterCount + Layer2.ParameterCount;
 

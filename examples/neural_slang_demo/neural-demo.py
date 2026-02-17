@@ -3,14 +3,25 @@ from app import App
 import slangpy as spy
 import numpy as np
 from pathlib import Path
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--vector-type", choices=["inline", "wave"], default="inline")
+args = parser.parse_args()
+
+# WaveTangledVector requires cooperative matrix support (Vulkan/SPIR-V)
+device_type = spy.DeviceType.vulkan if args.vector_type == "wave" else spy.DeviceType.vulkan
 
 app = App(
     width=512 * 3 + 10 * 2,
     height=512,
     title="neural.slang demo",
-    device_type=spy.DeviceType.vulkan,
+    device_type=device_type,
 )
-module = spy.Module.load_from_file(app.device, "neural-demo.slang")
+link_module = app.device.load_module(
+    "neural-demo-wave.slang" if args.vector_type == "wave" else "neural-demo-inline.slang"
+)
+module = spy.Module.load_from_file(app.device, "neural-demo.slang", link=[link_module])
 image = spy.Tensor.load_from_image(
     app.device, Path(__file__).parent.joinpath("slangstars.png"), linearize=True
 )

@@ -10,6 +10,7 @@ This is a re-creation of the texture example in the https://github.com/shader-sl
 | Type | Description |
 |------|-------------|
 | `InlineVector<T, N>` | Fixed-size vector type with compile-time `.Size` constant |
+| `WaveTangledVector<T, Pool, N, WaveSize>` | Cooperative-matrix-accelerated vector (requires GPU support) |
 | `StructuredBufferStorage<T>` | GPU buffer storage implementing `IStorage<T>` interface |
 | `FFLayer<T, InVec, OutVec, Storage, Layout, Activation, HasBias>` | Feed-forward neural network layer |
 | `LinearLayout` | Storage layout for standard linear (row-major) weight packing |
@@ -124,11 +125,25 @@ OutputVec mlp_forward(Storage storage, InputVec input)
 | Hardcoded dimensions | Dimensions from vector types |
 | Manual weight indexing | Automatic address calculation |
 
+## Link-Time Type Selection
+
+The hidden vector type (`HiddenVec`) is declared as an `extern struct` in `neural-demo.slang`, making it a link-time type. Separate `.slang` files provide the concrete implementation, and the Python script links the appropriate one based on a command-line flag:
+
+- **`neural-demo-inline.slang`:** `HiddenVec = InlineVector<float, 32>` — standard fixed-size vector (default)
+- **`neural-demo-wave.slang`:** `HiddenVec = WaveTangledVector<float, ShMemPool, 32, 32>` — cooperative-matrix-accelerated vector
+
+Only `HiddenVec` (32-dim) is a link-time type because `FFLayer.eval()` is generic over vector types, so an `InlineVector` input naturally produces a `WaveTangledVector` hidden output. Input (4-dim) and output (3-dim) vectors are too small to benefit from cooperative matrix acceleration.
+
 ## Running the Demo
 
 ```bash
 cd slangpy-samples/examples/neural_slang_demo
+
+# Default mode (InlineVector)
 python neural-demo.py
+
+# Accelerated mode (WaveTangledVector, requires cooperative matrix GPU support)
+python neural-demo.py --vector-type wave
 ```
 
 The demo displays three panels:

@@ -7,9 +7,9 @@ static const int HIDDEN_DIM = 32;
 static const int OUTPUT_DIM = 3;
 static const float LEAKY_RELU_SLOPE = 0.01f;
 
-typealias InputVec = InlineVector<float, INPUT_DIM>;
+extern struct InputVec : IVector<float>;
 extern struct HiddenVec : IVector<float>;
-typealias OutputVec = InlineVector<float, OUTPUT_DIM>;
+extern struct OutputVec : IVector<float>;
 
 typealias Storage = StructuredBufferStorage<float>;
 typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>, true>;
@@ -41,7 +41,7 @@ struct LatentTexture<let N : int>
     void getLatentBwd(int x, int y, int idx, float grad) { texture_grads.set({y, x, idx}, grad); }
 
     [Differentiable]
-    InlineVector<float, N> sample(no_diff inout float2 uv)
+    InputVec sample(no_diff inout float2 uv)
     {
         int2 size = int2(texture.shape[1], texture.shape[0]);
         uv *= float2(size - 1);
@@ -49,7 +49,7 @@ struct LatentTexture<let N : int>
         int2 c1 = min(c0 + 1, size - 1);
         float2 f = saturate(uv - float2(c0));
 
-        InlineVector<float, N> result;
+        InputVec result;
         [ForceUnroll]
         for (int i = 0; i < N; ++i)
             result[i] = lerp(lerp(getLatent(c0.x, c0.y, i), getLatent(c1.x, c0.y, i), f.x),

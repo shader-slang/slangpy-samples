@@ -9,6 +9,7 @@ This is a re-creation of the texture example in the https://github.com/shader-sl
 
 | Type | Description |
 |------|-------------|
+| `IVector<T>` | Interface for all vector types, enabling link-time type selection |
 | `InlineVector<T, N>` | Fixed-size vector type with compile-time `.Size` constant |
 | `WaveTangledVector<T, Pool, N, WaveSize>` | Cooperative-matrix-accelerated vector (requires GPU support) |
 | `StructuredBufferStorage<T>` | GPU buffer storage implementing `IStorage<T>` interface |
@@ -16,6 +17,7 @@ This is a re-creation of the texture example in the https://github.com/shader-sl
 | `LinearLayout` | Storage layout for standard linear (row-major) weight packing |
 | `LeakyReLU<T>` | Leaky ReLU activation with configurable alpha (default 0.01) |
 | `ExpActivation<T>` | Exponential activation: `exp(x)` |
+| `SharedMemorySize` / `SharedMemoryPool` | Shared memory allocation for `WaveTangledVector` cooperative operations |
 
 ## Before/After Comparison
 
@@ -34,10 +36,10 @@ Approximate lines of code comparison apart from comments.
 
 | Before (Manual) | After (neural.slang) |
 |-----------------|---------------------|
-| `float[4]` / `float4` | `InlineVector<float, 4>` |
-| `float[32]` | `InlineVector<float, 32>` |
-| `float[3]` / `float3` | `InlineVector<float, 3>` |
-| Manual size tracking | `InlineVector.Size` compile-time constant |
+| `float[4]` / `float4` | `InputVec` (link-time: `InlineVector<float, 4>` or `WaveTangledVector`) |
+| `float[32]` | `HiddenVec` (link-time: `InlineVector<float, 32>` or `WaveTangledVector`) |
+| `float[3]` / `float3` | `OutputVec` (link-time: `InlineVector<float, 3>` or `WaveTangledVector`) |
+| Manual size tracking | `IVector.Size` compile-time constant |
 
 ### Parameter Storage
 
@@ -98,11 +100,16 @@ float3 eval(no_diff float2 uv)
 
 **After:**
 ```slang
+// All vector types are extern structs resolved at link time
+extern struct InputVec : IVector<float>;
+extern struct HiddenVec : IVector<float>;
+extern struct OutputVec : IVector<float>;
+
 // Type aliases using FFLayer with Layout and Activation parameters
 typealias Storage = StructuredBufferStorage<float>;
-typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
-typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>>;
-typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, LinearLayout, ExpActivation<float>>;
+typealias Layer0 = FFLayer<float, InputVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>, true>;
+typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, Storage, LinearLayout, LeakyReLU<float>, true>;
+typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, Storage, LinearLayout, ExpActivation<float>, true>;
 
 // Network evaluation with FFLayer and built-in activations
 [Differentiable]
@@ -127,12 +134,39 @@ OutputVec mlp_forward(Storage storage, InputVec input)
 
 ## Link-Time Type Selection
 
-The hidden vector type (`HiddenVec`) is declared as an `extern struct` in `neural-demo.slang`, making it a link-time type. Separate `.slang` files provide the concrete implementation, and the Python script links the appropriate one based on a command-line flag:
+All three vector types (`InputVec`, `HiddenVec`, `OutputVec`) are declared as `extern struct` in `neural-demo.slang`, making them link-time types. Separate `.slang` files provide the concrete implementations, and the Python script links the appropriate one based on a command-line flag:
 
-- **`neural-demo-inline.slang`:** `HiddenVec = InlineVector<float, 32>` — standard fixed-size vector (default)
-- **`neural-demo-wave.slang`:** `HiddenVec = WaveTangledVector<float, ShMemPool, 32, 32>` — cooperative-matrix-accelerated vector
+**`neural-demo-inline.slang`** (default):
+```slang
+export struct InputVec : IVector<float> = InlineVector<float, 4>;
+export struct HiddenVec : IVector<float> = InlineVector<float, 32>;
+export struct OutputVec : IVector<float> = InlineVector<float, 3>;
+```
 
-Only `HiddenVec` (32-dim) is a link-time type because `FFLayer.eval()` is generic over vector types, so an `InlineVector` input naturally produces a `WaveTangledVector` hidden output. Input (4-dim) and output (3-dim) vectors are too small to benefit from cooperative matrix acceleration.
+**`neural-demo-wave.slang`** (accelerated):
+```slang
+typealias ShMemSizeForNetwork = ShMemSize.OfLayer3<4, 32, 32, 3>;
+typealias ShMemPool = SharedMemoryPool<ShMemSizeForNetwork>;
+
+export struct InputVec : IVector<float> = WaveTangledVector<float, ShMemPool, 4, SubgroupSize>;
+export struct HiddenVec : IVector<float> = WaveTangledVector<float, ShMemPool, 32, SubgroupSize>;
+export struct OutputVec : IVector<float> = WaveTangledVector<float, ShMemPool, 3, SubgroupSize>;
+```
+
+Because `FFLayer.eval()` is generic over `IVector<T>` types, the main network code (`neural-demo.slang`) is completely agnostic to the underlying vector implementation. Swapping between `InlineVector` and `WaveTangledVector` requires no changes to the network logic.
+
+The wave variant uses `SharedMemorySize.OfLayer3<4, 32, 32, 3>` to compute the shared memory pool size across all three layers of the network (4->32, 32->32, 32->3).
+
+## File Structure
+
+| File | Description |
+|------|-------------|
+| `neural-demo.slang` | Main network: extern vector declarations, MLP forward pass, loss, training |
+| `neural-demo-inline.slang` | Link module: all vectors as `InlineVector` |
+| `neural-demo-wave.slang` | Link module: all vectors as `WaveTangledVector` with shared memory pool |
+| `neural-demo.py` | Python driver: device setup, link module selection, training loop |
+| `app.py` | Windowing and display utilities |
+| `app.slang` | Blit/tonemap helper shaders |
 
 ## Running the Demo
 

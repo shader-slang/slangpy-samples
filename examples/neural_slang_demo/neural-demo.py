@@ -55,7 +55,8 @@ class Network(spy.InstanceList):
         self._params = spy.Tensor.from_numpy(app.device, params_np)
         self._params_grad = spy.Tensor.zeros_like(self._params)
         self._m, self._v = spy.Tensor.zeros_like(self._params), spy.Tensor.zeros_like(self._params)
-        self.params, self.params_grad = self._params.storage, self._params_grad.storage
+        self.params = self._params.storage.descriptor_handle_rw
+        self.params_grad = self._params_grad.storage.descriptor_handle_rw
         self.latent_texture = LatentTexture(32, 32, 4)
 
     def optimize(self, lr: float, it: int):

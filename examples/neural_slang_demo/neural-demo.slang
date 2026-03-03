@@ -18,23 +18,17 @@ typealias Layer0 = FFLayer<float, InputVec, HiddenVec, LinearLayout, LeakyReLU<f
 typealias Layer1 = FFLayer<float, HiddenVec, HiddenVec, LinearLayout, LeakyReLU<float>, true>;
 typealias Layer2 = FFLayer<float, HiddenVec, OutputVec, LinearLayout, ExpActivation<float>, true>;
 
-static const uint TOTAL_PARAMS = Layer0.ParameterCount + Layer1.ParameterCount + Layer2.ParameterCount;
-
-// Workaround: getOffset is not yet differentiable, so we pass per-layer addresses
-// instead of computing offsets inside the differentiable function.
+// WAR(https://github.com/shader-slang/slang/issues/10195): getOffset is not yet differentiable, so we pass per-layer addresses.
 [Differentiable]
-OutputVec mlp_forward(Address w0, Address b0, Address w1, Address b1, Address w2, Address b2, InputVec input)
+float3 mlp_forward(Address w0, Address b0, Address w1, Address b1, Address w2, Address b2, InputVec input)
 {
     let h0 = Layer0(LeakyReLU<float>(LEAKY_RELU_SLOPE)).eval<Address>(input, w0, b0);
     let h1 = Layer1(LeakyReLU<float>(LEAKY_RELU_SLOPE)).eval<Address>(h0, w1, b1);
-    return Layer2(ExpActivation<float>()).eval<Address>(h1, w2, b2);
+    return outputToFloat3(Layer2(ExpActivation<float>()).eval<Address>(h1, w2, b2));
 }
 
-// Compute per-layer weight/bias addresses from a base address (non-differentiable).
-void getLayerAddresses(Address base,
-    out Address w0, out Address b0,
-    out Address w1, out Address b1,
-    out Address w2, out Address b2)
+void getLayerAddresses(Address base, out Address w0, out Address b0,
+    out Address w1, out Address b1, out Address w2, out Address b2)
 {
     int offset = 0;
     w0 = base.getOffset(offset); b0 = base.getOffset(offset + INPUT_DIM * HIDDEN_DIM);
@@ -81,14 +75,6 @@ struct Network
 }
 
 [Differentiable]
-float3 eval(Address w0, Address b0, Address w1, Address b1, Address w2, Address b2,
-            LatentTexture<INPUT_DIM> tex, no_diff float2 uv)
-{
-    let out = mlp_forward(w0, b0, w1, b1, w2, b2, tex.sample(uv));
-    return outputToFloat3(out);
-}
-
-[Differentiable]
 float3 gamma_correct(float3 color) { return pow(color, 1.0f / 2.2f); }
 
 [Differentiable]
@@ -96,7 +82,7 @@ float3 loss(Address w0, Address b0, Address w1, Address b1, Address w2, Address 
             LatentTexture<INPUT_DIM> tex, no_diff int2 pixel, no_diff int2 resolution, no_diff float3 reference)
 {
     float2 uv = (float2(pixel) + 0.5f) / float2(resolution);
-    float3 error = gamma_correct(eval(w0, b0, w1, b1, w2, b2, tex, uv)) - gamma_correct(reference);
+    float3 error = gamma_correct(mlp_forward(w0, b0, w1, b1, w2, b2, tex.sample(uv))) - gamma_correct(reference);
     return error * error;
 }
 
@@ -113,7 +99,7 @@ float3 render(int2 pixel, int2 resolution, Network network)
     Address w0, b0, w1, b1, w2, b2;
     getLayerAddresses(Address(network.params), w0, b0, w1, b1, w2, b2);
     float2 uv = (float2(pixel) + 0.5f) / float2(resolution);
-    return eval(w0, b0, w1, b1, w2, b2, network.latent_texture, uv);
+    return mlp_forward(w0, b0, w1, b1, w2, b2, network.latent_texture.sample(uv));
 }
 
 // Wrapper for visualization - calls loss() without gradients

@@ -15,17 +15,11 @@ export struct OutputVec : IVector<float> = WaveTangledVector<float, ShMemSizeFor
 typealias ConcreteInput = WaveTangledVector<float, ShMemSizeForNetwork, 4, SubgroupSize>;
 typealias ConcreteOutput = WaveTangledVector<float, ShMemSizeForNetwork, 3, SubgroupSize>;
 
-// WAR: WaveTangledVector.__init and operator[] are not yet differentiable,
-// so we provide manual backward derivatives using bit_cast to concrete types.
-
-// Non-differentiable helpers that use WaveTangledVector operations directly
+// WAR: WaveTangledVector.__init/operator[] not yet differentiable — manual backward via bit_cast.
 InputVec _makeInputVec(float data[4]) { return bit_cast<InputVec>(ConcreteInput(data)); }
 float3 _extractFloat3(OutputVec v) { ConcreteOutput cv = bit_cast<ConcreteOutput>(v); return float3(cv[0], cv[1], cv[2]); }
 
-[Differentiable] export InputVec arrayToInputVec(float data[4])
-{
-    return no_diff _makeInputVec(data);
-}
+[Differentiable] export InputVec arrayToInputVec(float data[4]) { return no_diff _makeInputVec(data); }
 
 [BackwardDerivativeOf(arrayToInputVec)]
 void arrayToInputVec_bwd(inout DifferentialPair<float[4]> dpData, InputVec.Differential dResult)
@@ -36,15 +30,11 @@ void arrayToInputVec_bwd(inout DifferentialPair<float[4]> dpData, InputVec.Diffe
     dpData = diffPair(dpData.p, dd);
 }
 
-[Differentiable] export float3 outputToFloat3(OutputVec v)
-{
-    return no_diff _extractFloat3(v);
-}
+[Differentiable] export float3 outputToFloat3(OutputVec v) { return no_diff _extractFloat3(v); }
 
 [BackwardDerivativeOf(outputToFloat3)]
 void outputToFloat3_bwd(inout DifferentialPair<OutputVec> dpV, float3 dResult)
 {
-    // Work entirely in ConcreteOutput space to avoid type identity issues
     var concreteDp = bit_cast<DifferentialPair<ConcreteOutput>>(dpV);
     ConcreteOutput.Differential dv = concreteDp.d;
     dv[0] = dv[0] + dResult.x;

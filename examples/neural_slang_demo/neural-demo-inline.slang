@@ -8,7 +8,7 @@ export struct OutputVec : IVector<float> = InlineVector<float, 3>;
 typealias ConcreteInput = InlineVector<float, 4>;
 typealias ConcreteOutput = InlineVector<float, 3>;
 
-// WAR: InlineVector.__init is not yet differentiable, operator[] is internal
+// WAR: InlineVector.__init/operator[] not yet differentiable — manual backward via bit_cast.
 InputVec _makeInputVec(float data[4]) { return bit_cast<InputVec>(ConcreteInput(data)); }
 float3 _extractFloat3(OutputVec v) { ConcreteOutput cv = bit_cast<ConcreteOutput>(v); return float3(cv[0], cv[1], cv[2]); }
 

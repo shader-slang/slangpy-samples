@@ -102,18 +102,20 @@ struct Gaussian2D : IDifferentiable
     [Differentiable]
     static Gaussian2D load(Blobs blobs, uint idx)
     {
-        uint total = Gaussian2D.count(blobs);
+        // Array-of-Structures layout: all attributes of each blob are consecutive
+        // Each blob uses 9 floats
+        uint base = idx * 9;
         Gaussian2D gaussian;
         gaussian.center = smoothstep(
             float2(0, 0),
             float2(1, 1),
-            float2(blobs[total * 0 + idx], blobs[total * 1 + idx]));
+            float2(blobs[base + 0], blobs[base + 1]));
 
         // Add a small padding value to avoid singularities or unstable Gaussians.
-        gaussian.sigma[0][0] = smoothstep(0.f, 1.f, blobs[total * 2 + idx] * 0.8f) + 0.005f;
-        gaussian.sigma[1][1] = smoothstep(0.f, 1.f, blobs[total * 3 + idx] * 0.8f) + 0.005f;
+        gaussian.sigma[0][0] = smoothstep(0.f, 1.f, blobs[base + 2] * 0.8f) + 0.005f;
+        gaussian.sigma[1][1] = smoothstep(0.f, 1.f, blobs[base + 3] * 0.8f) + 0.005f;
 
-        float aniso = (smoothstep(0.f, 1.f, blobs[total * 4 + idx] * 0.6f) - 0.5f) * 1.65f;
+        float aniso = (smoothstep(0.f, 1.f, blobs[base + 4] * 0.6f) - 0.5f) * 1.65f;
         gaussian.sigma[0][1] = sqrt(gaussian.sigma[0][0] * gaussian.sigma[1][1]) * aniso;
         gaussian.sigma[1][0] = sqrt(gaussian.sigma[0][0] * gaussian.sigma[1][1]) * aniso;
 
@@ -121,11 +123,11 @@ struct Gaussian2D : IDifferentiable
         gaussian.sigma *= 0.005;
 
         gaussian.color = smoothstep(0, 1, float3(
-            blobs[total * 5 + idx],
-            blobs[total * 6 + idx],
-            blobs[total * 7 + idx]) * 0.8f);
+            blobs[base + 5],
+            blobs[base + 6],
+            blobs[base + 7]) * 0.8f);
 
-        gaussian.opacity = smoothstep(0, 1, blobs[total * 8 + idx] * 0.9f + 0.1f);
+        gaussian.opacity = smoothstep(0, 1, blobs[base + 8] * 0.9f + 0.1f);
         return gaussian;
     }
 
@@ -179,7 +181,7 @@ struct Gaussian2D : IDifferentiable
 
         result = alphaBlend(result, blobColor);
         if (result.a < 1.f / 255.f)
-            continue;
+            break;
     }
 
     // Blend with background

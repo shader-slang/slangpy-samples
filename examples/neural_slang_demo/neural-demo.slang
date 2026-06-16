@@ -47,7 +47,7 @@ struct LatentTexture<let N : int>
     float getLatent(int x, int y, int idx) { return texture[y, x, idx]; }
 
     [BackwardDerivativeOf(getLatent)]
-    void getLatentBwd(int x, int y, int idx, float grad) { texture_grads.set({y, x, idx}, grad); }
+    void getLatentBwd(int x, int y, int idx, float grad) { texture_grads.add(int3(y, x, idx), grad); }
 
     [Differentiable]
     InputVec sample(no_diff inout float2 uv)
@@ -116,7 +116,7 @@ void calculate_grads(uint seed, int2 batch_index, int2 batch_size, Tensor<float3
     float2 uv = (batch_index + float2(lcg.next_float(), lcg.next_float())) / float2(batch_size);
     int2 resolution = int2(reference.shape[1], reference.shape[0]);
     int2 pixel = int2(uv * float2(resolution));
-    float3 ref_color = reference.getv(pixel);
+    float3 ref_color = reference.load(pixel);
 
     // Build per-layer DifferentialPtrPairs (primal=params, differential=grads).
     Address pw0, pb0, pw1, pb1, pw2, pb2;

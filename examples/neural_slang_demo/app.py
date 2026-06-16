@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from typing import Callable, Optional
+from os import environ
 import slangpy as spy
 from pathlib import Path
 
@@ -18,9 +19,24 @@ class App:
         # Create spy window
         self._window = spy.Window(width=width, height=height, title=title, resizable=False)
 
-        # Create spy device with local include path for shaders
-        self._device = spy.create_device(
-            device_type, enable_debug_layers=True, include_paths=[Path(__file__).parent]
+        # Construct the device directly rather than via spy.create_device so we can set
+        # enable_experimental_features, which the `neural` Slang module imported by this
+        # demo requires and which create_device does not expose.
+        if "SLANGPY_DEVICE_TYPE_OVERRIDE" in environ:
+            device_type = {
+                "d3d12": spy.DeviceType.d3d12,
+                "vulkan": spy.DeviceType.vulkan,
+                "cuda": spy.DeviceType.cuda,
+                "metal": spy.DeviceType.metal,
+            }.get(environ["SLANGPY_DEVICE_TYPE_OVERRIDE"].lower(), device_type)
+        self._device = spy.Device(
+            type=device_type,
+            enable_debug_layers=True,
+            enable_hot_reload=True,
+            compiler_options={
+                "enable_experimental_features": True,
+                "include_paths": [spy.SHADER_PATH, Path(__file__).parent],
+            },
         )
 
         # Load module of helpers

@@ -148,7 +148,7 @@ class ExampleRunner:
 
         # Prepare the command to execute the script
         command = [
-            "python",
+            sys.executable,
             DIR / "wrapper.py",
             script_path,
             data_path,

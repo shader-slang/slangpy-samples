@@ -14,15 +14,15 @@ struct MaterialParameters
 
     float3 get_albedo(int2 pixel)
     {
-        return albedo.getv(pixel);
+        return albedo.load(pixel);
     }
     float3 get_normal(int2 pixel)
     {
-        return normalize(normal.getv(pixel));
+        return normalize(normal.load(pixel));
     }
     float get_roughness(int2 pixel)
     {
-        return roughness.getv(pixel);
+        return roughness.load(pixel);
     }
 };
 
@@ -37,24 +37,24 @@ struct NetworkParameters<int Inputs, int Outputs>
     [Differentiable]
     float get_bias(int neuron)
     {
-        return biases.get({neuron});
+        return biases.load({neuron});
     }
     [Differentiable]
     float get_weight(int neuron, int input)
     {
-        return weights.get({neuron, input});
+        return weights.load(int2(neuron, input));
     }
 
     [BackwardDerivativeOf(get_bias)]
     void get_bias_bwd(int neuron, float grad)
     {
-        biases_grad.set({neuron}, grad);
+        biases_grad.add({neuron}, grad);
     }
 
     [BackwardDerivativeOf(get_weight)]
     void get_weight_bwd(int neuron, int input, float grad)
     {
-        weights_grad.set({neuron, input}, grad);
+        weights_grad.add(int2(neuron, input), grad);
     }
 
     [Differentiable]
@@ -414,19 +414,19 @@ float3 loss(int2 pixel, float3 reference, MaterialParameters material, float3 li
 float3 downsample3(int2 pixel, Tensor<float3, 2> source)
 {
     float3 res = 0;
-    res += source.getv(pixel * 2 + int2(0, 0));
-    res += source.getv(pixel * 2 + int2(1, 0));
-    res += source.getv(pixel * 2 + int2(0, 1));
-    res += source.getv(pixel * 2 + int2(1, 1));
+    res += source.load(pixel * 2 + int2(0, 0));
+    res += source.load(pixel * 2 + int2(1, 0));
+    res += source.load(pixel * 2 + int2(0, 1));
+    res += source.load(pixel * 2 + int2(1, 1));
     return res * 0.25;
 }
 float downsample1(int2 pixel, Tensor<float, 2> source)
 {
     float res = 0;
-    res += source.getv(pixel * 2 + int2(0, 0));
-    res += source.getv(pixel * 2 + int2(1, 0));
-    res += source.getv(pixel * 2 + int2(0, 1));
-    res += source.getv(pixel * 2 + int2(1, 1));
+    res += source.load(pixel * 2 + int2(0, 0));
+    res += source.load(pixel * 2 + int2(1, 0));
+    res += source.load(pixel * 2 + int2(0, 1));
+    res += source.load(pixel * 2 + int2(1, 1));
     return res * 0.25;
 }
 

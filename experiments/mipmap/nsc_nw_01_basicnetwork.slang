@@ -13,24 +13,24 @@ struct NetworkParameters<int Inputs, int Outputs>
     [Differentiable]
     float get_bias(int neuron)
     {
-        return biases.get({neuron});
+        return biases.load({neuron});
     }
     [Differentiable]
     float get_weight(int neuron, int input)
     {
-        return weights.get({neuron, input});
+        return weights.load(int2(neuron, input));
     }
 
     [BackwardDerivativeOf(get_bias)]
     void get_bias_bwd(int neuron, float grad)
     {
-        biases_grad.set({neuron}, grad);
+        biases_grad.add({neuron}, grad);
     }
 
     [BackwardDerivativeOf(get_weight)]
     void get_weight_bwd(int neuron, int input, float grad)
     {
-        weights_grad.set({neuron, input}, grad);
+        weights_grad.add(int2(neuron, input), grad);
     }
 
     // ... Fields and accessors here ...

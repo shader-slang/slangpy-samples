@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Buffers example
-# https://slangpy.shader-slang.org/en/latest/src/basics/buffers.html
+# https://slangpy.shader-slang.org/en/latest/src/basics/tensors.html
 # This example requires tev (https://github.com/Tom94/tev) to display results.
 
 import slangpy as spy

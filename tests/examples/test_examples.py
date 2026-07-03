@@ -6,8 +6,8 @@ import sys
 import os
 import subprocess
 import re
-from urllib.parse import urlparse
-import http.client
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 from pathlib import Path
 from collections import defaultdict
 from typing import List, Tuple, Optional
@@ -30,26 +30,25 @@ else:
 
 
 def check_url_exists(url: str) -> bool:
-    parsed_url = urlparse(url)
-    connection = None
     try:
-        if parsed_url.scheme == "http":
-            connection = http.client.HTTPConnection(parsed_url.netloc)
-        elif parsed_url.scheme == "https":
-            connection = http.client.HTTPSConnection(parsed_url.netloc)
-        else:
-            return False
-
-        connection.request("HEAD", parsed_url.path or "/")
-        response = connection.getresponse()
-        return response.status == 200
-    except (http.client.HTTPException, OSError):
+        request = Request(
+            url,
+            method="HEAD",
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/126.0 Safari/537.36"
+                ),
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            },
+        )
+        with urlopen(request, timeout=15) as response:
+            return response.status == 200
+    except (HTTPError, URLError):
         return False
     except Exception as e:
         raise ConnectionError(f"Error checking URL: {e}")
-    finally:
-        if connection:
-            connection.close()
 
 
 def find_urls_in_file(path: Path) -> List[str]:

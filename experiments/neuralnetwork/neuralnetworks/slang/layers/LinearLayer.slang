@@ -21,8 +21,8 @@ public struct LinearLayer<
     int NumOutputs
 > : IModel<T[NumInputs], T[NumOutputs]> where T.Differential : IAtomicAddable
 {
-    public GradOutTensor<T, 2> weights;
-    public GradOutTensor<T, 1> biases;
+    public DiffTensor<T, 2> weights;
+    public DiffTensor<T, 1> biases;
 
     [BackwardDerivative(backward)]
     public OutputType forward(InputType x)
@@ -46,12 +46,12 @@ public struct LinearLayer<
         var dx = InputType.dzero();
         for (int row = 0; row < NumOutputs; ++row)
         {
-            biases.d_out.set({row}, grad[row]);
+            biases._grad_out.add({row}, grad[row]);
 
             [ForceUnroll]
             for (int col = 0; col < NumInputs; ++col)
             {
-                weights.d_out.set({row, col}, T.dmul(x.p[col], grad[row]));
+                weights._grad_out.add(int2(row, col), T.dmul(x.p[col], grad[row]));
                 dx[col] = T.dadd(dx[col], T.dmul(weights[row, col], grad[row]));
             }
         }
@@ -67,26 +67,26 @@ public struct CoopVecLinearLayer<
 {
     static const CoopVecComponentType ComponentType = InputType::ComponentType;
 
-    public GradOutTensor<T, 1> weights;
-    public GradOutTensor<T, 1> biases;
+    public DiffTensor<T, 1> weights;
+    public DiffTensor<T, 1> biases;
 
     [BackwardDerivative(backward)]
     public OutputType forward(InputType x)
     {
         return OutputType(coopVecMatMulAdd<T, NumOutputs>(
             x.cv, ComponentType,
-            weights.primal.buffer, 0, ComponentType,
-            biases.primal.buffer, 0, ComponentType,
+            weights._primal._data, 0, ComponentType,
+            biases._primal._data, 0, ComponentType,
             CoopVecMatrixLayout.TrainingOptimal, false, 0
         ));
     }
 
     public void backward(inout DifferentialPair<InputType> x, OutputType grad)
     {
-        coopVecOuterProductAccumulate(grad.cv, x.p.cv, weights.d_out.buffer, 0, 0, CoopVecMatrixLayout.TrainingOptimal, ComponentType);
-        coopVecReduceSumAccumulate(grad.cv, biases.d_out.buffer, 0);
+        coopVecOuterProductAccumulate(grad.cv, x.p.cv, weights._grad_out._data, 0, 0, CoopVecMatrixLayout.TrainingOptimal, ComponentType);
+        coopVecReduceSumAccumulate(grad.cv, biases._grad_out._data, 0);
 
-        let dX = coopVecMatMul<T, NumInputs>(grad.cv, ComponentType, weights.primal.buffer, 0, ComponentType, CoopVecMatrixLayout.TrainingOptimal, true, 0);
+        let dX = coopVecMatMul<T, NumInputs>(grad.cv, ComponentType, weights._primal._data, 0, ComponentType, CoopVecMatrixLayout.TrainingOptimal, true, 0);
 
         x = diffPair(x.p, InputType(dX));
     }

@@ -21,8 +21,8 @@ module = spy.Module.load_from_file(device, "example.slang")
 particles = spy.InstanceList(
     struct=module.Particle.as_struct(),
     data={
-        "position": spy.Tensor.empty(device,shape=(10,), dtype=module.float3),
-        "velocity": spy.Tensor.empty(device,shape=(10,), dtype=module.float3),
+        "position": spy.Tensor.empty(device, shape=(10,), dtype=module.float3),
+        "velocity": spy.Tensor.empty(device, shape=(10,), dtype=module.float3),
     },
 )
 

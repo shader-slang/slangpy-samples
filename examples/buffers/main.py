@@ -19,8 +19,8 @@ device = spy.create_device(
 module = spy.Module.load_from_file(device, "example.slang")
 
 # Create a couple of 2D 16x16 buffers
-image_1 = spy.Tensor.empty(device,shape=(16, 16), dtype=module.Pixel)
-image_2 = spy.Tensor.empty(device,shape=(16, 16), dtype=module.Pixel)
+image_1 = spy.Tensor.empty(device, shape=(16, 16), dtype=module.Pixel)
+image_2 = spy.Tensor.empty(device, shape=(16, 16), dtype=module.Pixel)
 
 # Use a cursor to fill the first buffer with readable structured data.
 cursor_1 = image_1.cursor()

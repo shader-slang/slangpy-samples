@@ -12,15 +12,22 @@ class App:
         width: int = 1024,
         height: int = 1024,
         device_type: spy.DeviceType = spy.DeviceType.automatic,
+        defines: Optional[dict[str, str]] = None,
     ):
         super().__init__()
 
         # Create spy window
         self._window = spy.Window(width=width, height=height, title=title, resizable=False)
 
-        # Create spy device with local include path for shaders
-        self._device = spy.create_device(
-            device_type, enable_debug_layers=True, include_paths=[Path(__file__).parent]
+        # Create spy device with local include path for shaders. Experimental features
+        # are required for the slang.neural standard module.
+        self._device = spy.Device(
+            type=device_type,
+            compiler_options={
+                "include_paths": [spy.SHADER_PATH, Path(__file__).parent],
+                "defines": defines or {},
+                "enable_experimental_features": True,
+            },
         )
 
         # Load module of helpers

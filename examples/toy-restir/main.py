@@ -59,14 +59,14 @@ module = spy.Module.load_from_file(device, "toy-restir.slang")
 
 # Initialize the random generators.
 np.random.seed(0)
-pathRandom = spy.Tensor.empty(device,shape=(imageHeight, imageWidth), dtype=module.RandomStream)
-risRandom = spy.Tensor.empty(device,shape=(imageHeight, imageWidth), dtype=module.RandomStream)
+pathRandom = spy.Tensor.empty(device, shape=(imageHeight, imageWidth), dtype=module.RandomStream)
+risRandom = spy.Tensor.empty(device, shape=(imageHeight, imageWidth), dtype=module.RandomStream)
 risRandom.copy_from_numpy(np.random.randint(2**32, dtype=np.uint32, size=(imageHeight, imageWidth)))
 
 # Create reservoirs.
-initialOutput = spy.Tensor.empty(device,shape=(imageHeight, imageWidth), dtype=module.Reservoir)
-temporalOutput = spy.Tensor.empty(device,shape=(imageHeight, imageWidth), dtype=module.Reservoir)
-spatialOutput = spy.Tensor.empty(device,shape=(imageHeight, imageWidth), dtype=module.Reservoir)
+initialOutput = spy.Tensor.empty(device, shape=(imageHeight, imageWidth), dtype=module.Reservoir)
+temporalOutput = spy.Tensor.empty(device, shape=(imageHeight, imageWidth), dtype=module.Reservoir)
+spatialOutput = spy.Tensor.empty(device, shape=(imageHeight, imageWidth), dtype=module.Reservoir)
 
 # Prepare the image.
 tex = device.create_texture(

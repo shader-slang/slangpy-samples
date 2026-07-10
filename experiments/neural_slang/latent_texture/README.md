@@ -180,7 +180,7 @@ which work on all three backends (Vulkan uses buffer device addresses).
 ## Running the Demo
 
 ```bash
-cd samples/examples/neural_slang_demo
+cd samples/experiments/neural_slang/latent_texture
 
 # Default mode (InlineVector); device defaults to Vulkan (Metal on macOS)
 python neural-demo.py

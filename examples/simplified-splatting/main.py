@@ -27,6 +27,8 @@ module = spy.Module.load_from_file(device, "simplediffsplatting2d.slang")
 #   blob center x and y (2 floats)
 #   sigma (a 2x2 covariance matrix - 4 floats)
 #   color (3 floats)
+# (Array-of-Structures layout for better cache locality):
+# This layout keeps all attributes of a single blob together in memory.
 NUM_BLOBS = 200
 FLOATS_PER_BLOB = 9
 # SlangPy lets us create a Tensor and initialize it easily using numpy to generate

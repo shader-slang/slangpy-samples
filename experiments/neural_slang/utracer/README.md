@@ -13,23 +13,7 @@ values.
 
 ## Architecture
 
-```text
-training
-  ceramic MDL teacher --> prepared GPU tensors
-       |-- 29 material features -----------+
-       |-- (wi, wo) -----------------------+--> Network --> loss --> bwd_diff
-       `-- reference BSDF -----------------+                   |
-                                                               v
-                                                   flat float parameters
-                                                               |
-                                encoder bake: UV --> latent HxWx8
-
-inference
-  ray hit --> UV --> bilinear latent lookup --> Decoder(latent, wi, wo)
-                                               |
-                                               v
-                                      path throughput / next ray
-```
+![Training and inference architecture for the neural.slang UTracer](architecture.svg)
 
 `model.slang` keeps the `Network`, `Encoder`, and `Decoder` structures. Their
 layer implementations are `FFLayer` instances from `slang.neural`:

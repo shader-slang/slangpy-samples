@@ -154,7 +154,7 @@ class MicroScene:
         self.vector_backend = vector_backend
         self.samples_per_pixel = samples_per_pixel
         self.module = Module(device.load_module("utracer"))
-        self.checkpoint: BakedCheckpoint = load_baked_checkpoint(device, checkpoint)
+        self.checkpoint: BakedCheckpoint = load_baked_checkpoint(device, checkpoint, vector_backend)
         self.sample = 0
 
         self._vertices_np: Optional[np.ndarray] = None

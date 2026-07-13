@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800" role="img" aria-labelledby="title description">
   <title id="title">neural.slang UTracer architecture</title>
-  <desc id="description">Training uses a ceramic MDL teacher, compact GPU tensors, an encoder-decoder network, reverse-mode differentiation, and a baked latent texture. Inference uses ray-hit UVs, bilinear latent lookup, and the decoder inside a path tracer. Both stages share FFLayer, IVector, LinearLayout, and PointerAddress storage.</desc>
+  <desc id="description">Training uses a ceramic MDL teacher, compact GPU tensors, an encoder-decoder network, reverse-mode differentiation, and a baked latent texture. Inference uses ray-hit UVs, bilinear latent lookup, and the decoder inside a path tracer. Both stages share FFLayer, IVector, PointerAddress storage, and conversion between portable linear and wave-optimal parameter layouts.</desc>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -68,16 +68,25 @@
   <text class="box-text" x="1205" y="238" text-anchor="middle">compare reference BSDF</text>
   <text class="box-text" x="1205" y="263" text-anchor="middle">update neural parameters</text>
 
-  <rect x="610" y="350" width="350" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
-  <text class="box-title" x="785" y="379" text-anchor="middle">Baked latent texture</text>
-  <text class="code" x="785" y="404" text-anchor="middle">Encoder(UV grid) → H × W × 8</text>
-  <path class="connector" d="M 740 285 V 337 H 785 V 348"/>
+  <rect x="600" y="350" width="330" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+  <text class="box-title" x="765" y="379" text-anchor="middle">Baked latent texture</text>
+  <text class="code" x="765" y="404" text-anchor="middle">Encoder(UV grid) → H × W × 8</text>
+  <path class="connector" d="M 740 285 V 337 H 765 V 348"/>
 
-  <rect x="1040" y="350" width="290" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
-  <text class="box-title code" x="1185" y="379" text-anchor="middle">PointerAddress&lt;float&gt;</text>
-  <text class="box-text" x="1185" y="404" text-anchor="middle">flat row-major parameters</text>
+  <rect x="950" y="350" width="170" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+  <text class="box-text" x="1035" y="374" text-anchor="middle" font-weight="700">Portable checkpoint</text>
+  <text class="code" x="1035" y="398" text-anchor="middle">LinearLayout</text>
+  <text class="small" x="1035" y="414" text-anchor="middle">always loaded/saved</text>
+
+  <path class="connector" d="M 1120 385 H 1160" marker-start="url(#arrow)"/>
+  <text class="small" x="1140" y="343" text-anchor="middle">converter</text>
+
+  <rect x="1170" y="350" width="170" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+  <text class="box-text" x="1255" y="374" text-anchor="middle" font-weight="700">Runtime buffer</text>
+  <text class="code" x="1255" y="398" text-anchor="middle">PointerAddress&lt;float&gt;</text>
+  <text class="small" x="1255" y="414" text-anchor="middle">OptimalLayout for wave</text>
   <path class="connector" d="M 1205 290 V 348"/>
-  <path class="connector dashed" d="M 1040 385 H 1018 V 305"/>
+  <path class="connector dashed" d="M 1170 350 V 330 H 1018 V 305"/>
 
   <!-- Inference lane -->
   <rect x="30" y="465" width="1340" height="305" rx="18" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="2"/>
@@ -95,7 +104,7 @@
   <text class="box-title" x="425" y="590" text-anchor="middle">Latent lookup</text>
   <text class="box-text" x="425" y="620" text-anchor="middle">bilinear H × W × 8</text>
   <text class="small" x="425" y="643" text-anchor="middle">baked encoder output</text>
-  <path class="connector dashed" d="M 785 420 V 525 H 425 V 553"/>
+  <path class="connector dashed" d="M 765 420 V 525 H 425 V 553"/>
 
   <path class="connector" d="M 535 608 H 590"/>
 
@@ -104,7 +113,7 @@
   <text class="code" x="725" y="601" text-anchor="middle">latent + (wi, wo)</text>
   <text class="box-text" x="725" y="630" text-anchor="middle">FFLayer forward pass</text>
   <text class="small" x="725" y="655" text-anchor="middle">ExpActivation output</text>
-  <path class="connector dashed" d="M 1185 420 V 500 H 725 V 533"/>
+  <path class="connector dashed" d="M 1255 420 V 500 H 725 V 533"/>
 
   <path class="connector" d="M 850 608 H 905"/>
 
@@ -123,6 +132,6 @@
 
   <rect x="250" y="710" width="900" height="40" rx="20" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
   <text class="box-text" x="700" y="736" text-anchor="middle">
-    Shared neural implementation: FFLayer + LinearLayout · IVector&lt;float&gt; → InlineVector or WaveTangledVector
+    FFLayer · IVector&lt;float&gt; → InlineVector + LinearLayout | WaveTangledVector + OptimalLayout
   </text>
 </svg>

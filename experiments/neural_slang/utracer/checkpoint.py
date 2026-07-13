@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
-from typing import Mapping
+from typing import Literal, Mapping
 
 import numpy as np
 import slangpy as spy
@@ -26,6 +26,7 @@ LAYER_SPECS = (
 PARAMETER_COUNT = sum(inputs * outputs + outputs for _, inputs, outputs in LAYER_SPECS)
 ENCODER_PARAMETER_COUNT = sum(inputs * outputs + outputs for _, inputs, outputs in LAYER_SPECS[:4])
 DECODER_PARAMETER_OFFSET = ENCODER_PARAMETER_COUNT
+CONVERSION_THREAD_COUNT = 256
 
 
 def resolve_checkpoint_npz(checkpoint: str | PathLike[str]) -> Path:
@@ -110,6 +111,73 @@ def tensor_from_numpy(device: spy.Device, values: np.ndarray) -> spy.Tensor:
     return tensor
 
 
+class ParameterLayoutConverter:
+    """Dispatch layout conversion at portable/runtime buffer boundaries."""
+
+    def __init__(self, device: spy.Device, backend: Literal["inline", "wave"]):
+        self.device = device
+        self.backend = backend
+        self._module = (
+            spy.Module(device.load_module("parameter_layout")) if backend == "wave" else None
+        )
+        if self._module is None:
+            self.storage_parameter_count = PARAMETER_COUNT
+        else:
+            program_layout = self._module.layout.program_layout
+            portable_count = program_layout.find_type_by_name(
+                "float[kPortableNetworkParameterCount]"
+            ).element_count
+            if portable_count != PARAMETER_COUNT:
+                raise RuntimeError(
+                    f"Slang expects {portable_count} portable parameters; "
+                    f"Python expects {PARAMETER_COUNT}."
+                )
+            self.storage_parameter_count = program_layout.find_type_by_name(
+                "float[kOptimalNetworkParameterCount]"
+            ).element_count
+
+    def from_portable(self, values: np.ndarray) -> spy.Tensor:
+        portable_values = np.ascontiguousarray(values, dtype=np.float32).reshape(-1)
+        if portable_values.size != PARAMETER_COUNT:
+            raise ValueError(
+                f"Expected {PARAMETER_COUNT} portable parameters, got {portable_values.size}."
+            )
+
+        portable = tensor_from_numpy(self.device, portable_values)
+        if self._module is None:
+            return portable
+
+        optimal = tensor_from_numpy(
+            self.device,
+            np.zeros((self.storage_parameter_count,), dtype=np.float32),
+        )
+        self._module.parametersToOptimalLayout(
+            index=spy.grid((CONVERSION_THREAD_COUNT,)),
+            threadCount=CONVERSION_THREAD_COUNT,
+            portableParameters=portable.storage.device_address,
+            optimalParameters=optimal.storage.device_address,
+        )
+        self.device.wait()
+        return optimal
+
+    def to_portable(self, parameters: spy.Tensor) -> np.ndarray:
+        if self._module is None:
+            return np.ascontiguousarray(parameters.to_numpy(), dtype=np.float32)
+
+        portable = tensor_from_numpy(
+            self.device,
+            np.zeros((PARAMETER_COUNT,), dtype=np.float32),
+        )
+        self._module.parametersToPortableLayout(
+            index=spy.grid((CONVERSION_THREAD_COUNT,)),
+            threadCount=CONVERSION_THREAD_COUNT,
+            optimalParameters=parameters.storage.device_address,
+            portableParameters=portable.storage.device_address,
+        )
+        self.device.wait()
+        return np.ascontiguousarray(portable.to_numpy(), dtype=np.float32)
+
+
 @dataclass
 class BakedCheckpoint:
     path: Path
@@ -124,6 +192,7 @@ class BakedCheckpoint:
 def load_baked_checkpoint(
     device: spy.Device,
     checkpoint: str | PathLike[str],
+    backend: Literal["inline", "wave"],
 ) -> BakedCheckpoint:
     path = resolve_checkpoint_npz(checkpoint)
     with np.load(path) as data:
@@ -137,8 +206,9 @@ def load_baked_checkpoint(
             raise ValueError(f"Expected latent texture HxWx{NUM_LATENTS}, got {latents_np.shape}.")
         latents_np = np.ascontiguousarray(latents_np)
 
+    layout_converter = ParameterLayoutConverter(device, backend)
     return BakedCheckpoint(
         path=path,
-        parameters=tensor_from_numpy(device, parameters_np),
+        parameters=layout_converter.from_portable(parameters_np),
         latent_texture=tensor_from_numpy(device, latents_np),
     )

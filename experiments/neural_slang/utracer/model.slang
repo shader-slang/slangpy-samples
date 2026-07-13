@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Shared neural material model used by both training and UTracer.
-// Parameters use one linear, row-major block:
-//   [layer weights][layer bias][next layer weights][next layer bias]...
+// Inline vectors use portable row-major parameters. Wave-tangled vectors use
+// the cooperative-matrix-friendly tiled layout.
 
 import slang.neural;
 
@@ -14,7 +14,31 @@ public static const int kEncoderHidden = 64;
 public static const int kDecoderInputs = kNumLatents + 6;
 public static const int kDecoderHidden = 32;
 
+public typealias NeuralEncoderParameterConverter =
+    NetworkParameterLayoutConverter<
+        float,
+        0b1111,
+        kEncoderInputs,
+        kEncoderHidden,
+        kEncoderHidden,
+        kEncoderHidden,
+        kNumLatents>;
+
+public typealias NeuralDecoderParameterConverter =
+    NetworkParameterLayoutConverter<
+        float,
+        0b111,
+        kDecoderInputs,
+        kDecoderHidden,
+        kDecoderHidden,
+        3>;
+
+#if NEURAL_VECTOR_WAVE
+public typealias NeuralLayout = OptimalLayout;
+#else
 public typealias NeuralLayout = LinearLayout;
+#endif
+
 public typealias NeuralAddress = PointerAddress<float>;
 
 // SlangPy generates 32-thread compute groups for ordinary vectorized calls.
@@ -304,3 +328,9 @@ public typealias NeuralNetwork = Network<
 public static const int kEncoderParameterCount = NeuralNetwork.EncoderParameterCount;
 public static const int kDecoderParameterOffset = NeuralNetwork.DecoderParameterOffset;
 public static const int kNetworkParameterCount = NeuralNetwork.ParameterCount;
+public static const int kPortableNetworkParameterCount =
+    NeuralEncoderParameterConverter.ElementCountLogical +
+    NeuralDecoderParameterConverter.ElementCountLogical;
+public static const int kOptimalNetworkParameterCount =
+    NeuralEncoderParameterConverter.ElementCountPhysical +
+    NeuralDecoderParameterConverter.ElementCountPhysical;

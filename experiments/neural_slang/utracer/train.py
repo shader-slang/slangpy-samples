@@ -22,6 +22,7 @@ from materials.ceramic.mdl_ceramic_material import CeramicMaterial
 if __package__:
     from .checkpoint import (
         PARAMETER_COUNT,
+        ParameterLayoutConverter,
         initialize_parameters,
         load_parameters,
         tensor_from_numpy,
@@ -30,6 +31,7 @@ if __package__:
 else:
     from checkpoint import (
         PARAMETER_COUNT,
+        ParameterLayoutConverter,
         initialize_parameters,
         load_parameters,
         tensor_from_numpy,
@@ -65,16 +67,18 @@ class Trainer:
         self.module = spy.Module(self.device.load_module("training"))
         self.material = CeramicMaterial(self.device)
 
+        self.parameter_layout = ParameterLayoutConverter(self.device, vector_backend)
+        self.parameter_count = self.parameter_layout.storage_parameter_count
         values = load_parameters(resume) if resume else initialize_parameters(seed)
-        self.parameters = tensor_from_numpy(self.device, values)
+        self.parameters = self.parameter_layout.from_portable(values)
         self.gradients = tensor_from_numpy(
-            self.device, np.zeros((PARAMETER_COUNT,), dtype=np.float32)
+            self.device, np.zeros((self.parameter_count,), dtype=np.float32)
         )
         self.first_moment = tensor_from_numpy(
-            self.device, np.zeros((PARAMETER_COUNT,), dtype=np.float32)
+            self.device, np.zeros((self.parameter_count,), dtype=np.float32)
         )
         self.second_moment = tensor_from_numpy(
-            self.device, np.zeros((PARAMETER_COUNT,), dtype=np.float32)
+            self.device, np.zeros((self.parameter_count,), dtype=np.float32)
         )
         self._batch_size = 0
         self._batch_encoder_input: spy.Tensor | None = None
@@ -131,7 +135,7 @@ class Trainer:
         )
         self.iteration += 1
         self.module.optimizerStep(
-            index=spy.grid((PARAMETER_COUNT,)),
+            index=spy.grid((self.parameter_count,)),
             parameters=self.parameter_address,
             parameterGradients=self.gradient_address,
             firstMoment=self.first_moment.storage.device_address,
@@ -192,7 +196,7 @@ class Trainer:
         checkpoint_dir = run_dir / f"{self.iteration:07d}"
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
         latent_texture = self.bake_latents(latent_resolution)
-        parameters = self.parameters.to_numpy()
+        parameters = self.parameter_layout.to_portable(self.parameters)
         np.savez(
             checkpoint_dir / "network.npz",
             parameters=parameters,
@@ -261,6 +265,7 @@ def main() -> None:
     print(f"Run directory: {run_dir}")
     print(f"Vector backend: {backend}")
 
+    trainer = Trainer(backend, args.seed, args.resume)
     config = {
         "vector_backend": backend,
         "batch_size": args.batch_size,
@@ -269,10 +274,11 @@ def main() -> None:
         "schedule_iterations": args.schedule_iterations,
         "latent_resolution": args.latent_resolution,
         "parameter_count": PARAMETER_COUNT,
+        "parameter_storage_count": trainer.parameter_count,
+        "parameter_layout": "optimal" if backend == "wave" else "linear",
         "color_augmentation": not args.no_color_augmentation,
     }
 
-    trainer = Trainer(backend, args.seed, args.resume)
     final_iteration = trainer.iteration + args.iterations
     last_saved = -1
     start = time.perf_counter()

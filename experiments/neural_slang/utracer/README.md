@@ -33,14 +33,25 @@ teacher and writes compact feature/direction/reference tensors.
 tape and makes the neural implementation much easier to inspect.
 
 The model structures are generic over types constrained by `IVector<float>`.
-The `NEURAL_VECTOR_WAVE` specialization selects either:
+The `NEURAL_VECTOR_WAVE` specialization selects the matching vector and
+parameter layout:
 
-- `InlineVector<float, N>`
-- `WaveTangledVector<float, ..., N, 32, 1>`
+- `InlineVector<float, N>` with `LinearLayout`
+- `WaveTangledVector<float, ..., N, 32, 1>` with `OptimalLayout`
 
-Both use `LinearLayout`, so they consume the same row-major checkpoint. All
-parameters live in one float buffer and are accessed through
-`PointerAddress<float>`.
+Checkpoints remain portable row-major arrays. On the wave backend,
+`NetworkParameterLayoutConverter` converts the encoder and decoder separately
+to the tiled optimal layout when loading, then converts back to the portable
+layout when saving. Runtime parameters remain in one float buffer addressed
+through `PointerAddress<float>`.
+
+The layout lifecycle is:
+
+1. Load or initialize portable `LinearLayout` parameters.
+2. For wave execution, launch the converter once into a separate
+   `OptimalLayout` buffer and use that buffer for training or inference.
+3. Before saving wave-trained parameters, launch the reverse conversion and
+   write only the portable buffer to the checkpoint.
 
 ## Install
 
@@ -123,9 +134,10 @@ python train.py \
 Optimizer moments are reset on resume to keep the checkpoint intentionally
 small and simple.
 
-## PointerAddress parameter layout
+## PointerAddress parameter layouts
 
-Every layer stores row-major weights followed immediately by its bias:
+The checkpoint uses the portable linear layout. Every layer stores row-major
+weights followed immediately by its bias:
 
 | Layer | Shape | Float offset | Float count |
 |---|---:|---:|---:|
@@ -138,7 +150,15 @@ Every layer stores row-major weights followed immediately by its bias:
 | Decoder 2 | 32 -> 3 | 12,296 | 99 |
 | Total | | | 12,395 |
 
-New checkpoints contain only:
+The wave backend converts that array to the 16-padded tiled optimal layout:
+
+| Block | Portable floats | Optimal floats | Optimal offset |
+|---|---:|---:|---:|
+| Encoder | 10,760 | 11,472 | 0 |
+| Decoder | 1,635 | 2,128 | 11,472 |
+| Total | 12,395 | 13,600 | |
+
+The larger optimal buffer exists only at runtime. New checkpoints contain only:
 
 - `parameters`: `(12395,)`, `float32`
 - `latent_texture`: `(H, W, 8)`, `float32`

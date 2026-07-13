@@ -31,9 +31,7 @@ def create_device(
             "defines": {
                 "NEURAL_VECTOR_WAVE": "1" if vector_backend == "wave" else "0",
                 "NEURAL_TARGET_CUDA": "0",
-                "NEURAL_EXECUTION_INFERENCE": (
-                    "1" if execution_mode == "inference" else "0"
-                ),
+                "NEURAL_EXECUTION_INFERENCE": ("1" if execution_mode == "inference" else "0"),
             },
             "enable_experimental_features": True,
         },

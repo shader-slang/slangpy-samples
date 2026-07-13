@@ -67,8 +67,8 @@ The two entry points also compile different neural execution modes. `train.py`
 uses `ExecutionMode.Training` and sizes shared memory for the complete
 encoder/decoder network. Because `main.py` consumes baked latents, it uses
 `ExecutionMode.Inference` and sizes shared memory for only the decoder layers.
-On the Vulkan wave path this reduces the declared workgroup memory from 16 KiB
-to 3 KiB.
+On the wave path this reduces the declared workgroup memory from 16 KiB to
+3 KiB.
 
 Checkpoints remain portable row-major arrays. On the wave backend,
 `NetworkParameterLayoutConverter` converts the encoder and decoder separately
@@ -92,18 +92,31 @@ From the active SlangPy virtual environment:
 python -m pip install -r utracer/requirements.txt
 ```
 
-`slang.neural` is experimental in the current Slang release. `common.py`
-enables the required compiler feature automatically. The sample uses Vulkan
-because the same device must support pointers, cooperative matrices, and ray
-queries.
+`slang.neural` is experimental. `common.py` enables the required compiler
+feature automatically. Metal currently requires a Slang ToT build containing
+[`b64d495d9`](https://github.com/shader-slang/slang/commit/b64d495d93aa9484aeec0e5724e895d12e269c4e)
+or later; that change makes vector subscript accessors differentiable. Build
+SlangPy against that local Slang tree with `SGL_LOCAL_SLANG=ON` so that both
+the compiler library and `neural.slang-module` come from ToT.
 
 ### Backend support
 
-The two entry points currently require Vulkan. CUDA is not supported
-end-to-end: UTracer's compute path uses `TraceRayInline`, and the ceramic MDL
-teacher uses `Texture.SampleLevel`; neither feature is available to these
-generated kernels on the CUDA compute target. The neural model itself is not
-the blocker, but both `main.py` and `train.py` depend on one of those stages.
+| Workflow | Vulkan | Metal | CUDA |
+|---|---|---|---|
+| Inline inference | Yes | Yes | No |
+| Wave inference | Cooperative-matrix device required | Yes, using `simdgroup_matrix` | No |
+| Inline training | Yes | Yes | No |
+| Wave training | Cooperative-matrix device required | Yes, using `simdgroup_matrix` | No |
+
+The default device is Metal on macOS and Vulkan elsewhere. Both Metal vector
+paths and a one-iteration wave training run were verified on an Apple M4 with
+Slang ToT `340a191c5d4686b10b54434a329760abf97a3ed5`.
+
+CUDA is not supported end-to-end: UTracer's compute path uses
+`TraceRayInline`, and the ceramic MDL teacher uses `Texture.SampleLevel`;
+neither feature is available to these generated kernels on the CUDA compute
+target. The neural model itself is not the blocker, but both `main.py` and
+`train.py` depend on one of those stages.
 
 ## Run a trained material
 
@@ -122,6 +135,15 @@ Use the cooperative-matrix-backed vector implementation with:
 ```bash
 python main.py \
   --vector-backend wave \
+  --checkpoint runs/20260710_103810/0016384
+```
+
+On macOS, Metal is selected automatically. It can also be requested
+explicitly for either vector backend:
+
+```bash
+python main.py \
+  --device-type metal --vector-backend wave \
   --checkpoint runs/20260710_103810/0016384
 ```
 
@@ -149,6 +171,12 @@ To exercise `WaveTangledVector` during both forward and backward passes:
 
 ```bash
 python train.py --vector-backend wave
+```
+
+The corresponding explicit Metal command is:
+
+```bash
+python train.py --device-type metal --vector-backend wave
 ```
 
 A small smoke run is useful before a full bake:
@@ -189,7 +217,9 @@ weights followed immediately by its bias:
 | Decoder 2 | 32 -> 3 | 12,296 | 99 |
 | Total | | | 12,395 |
 
-The wave backend converts that array to the 16-padded tiled optimal layout:
+The wave backend converts that array to its 16-padded target-optimal layout.
+Vulkan uses tiled cooperative-matrix weights; Metal uses the row-major layout
+expected by `simdgroup_matrix`:
 
 | Block | Portable floats | Optimal floats | Optimal offset |
 |---|---:|---:|---:|

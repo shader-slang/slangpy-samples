@@ -71,6 +71,24 @@ typealias NeuralSharedMemory = SharedMemorySize<
     kDecoderHidden,
     kDecoderHidden,
     3>;
+#elif NEURAL_TARGET_METAL
+typealias NeuralSharedMemory = SharedMemorySize<
+    float,
+    TargetEnum.Metal,
+    NEURAL_EXECUTION_MODE,
+    kSubgroupSize,
+    kSubgroupCount,
+#if !NEURAL_EXECUTION_INFERENCE
+    kEncoderInputs,
+    kEncoderHidden,
+    kEncoderHidden,
+    kEncoderHidden,
+    kNumLatents,
+#endif
+    kDecoderInputs,
+    kDecoderHidden,
+    kDecoderHidden,
+    3>;
 #else
 typealias NeuralSharedMemory = SharedMemorySize<
     float,

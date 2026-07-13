@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Literal
 
@@ -9,28 +10,42 @@ import slangpy as spy
 
 
 VectorBackend = Literal["inline", "wave"]
+DeviceBackend = Literal["vulkan", "metal"]
 NeuralExecutionMode = Literal["training", "inference"]
 HERE = Path(__file__).resolve().parent
+
+
+def default_device_backend() -> DeviceBackend:
+    return "metal" if sys.platform == "darwin" else "vulkan"
 
 
 def create_device(
     vector_backend: VectorBackend = "inline",
     *,
+    device_backend: DeviceBackend | None = None,
     execution_mode: NeuralExecutionMode = "inference",
 ) -> spy.Device:
-    """Create a Vulkan device specialized for neural training or inference."""
+    """Create a GPU device specialized for neural training or inference."""
     if vector_backend not in ("inline", "wave"):
         raise ValueError(f"Unknown vector backend: {vector_backend}")
+    if device_backend is None:
+        device_backend = default_device_backend()
+    if device_backend not in ("vulkan", "metal"):
+        raise ValueError(f"Unknown device backend: {device_backend}")
     if execution_mode not in ("training", "inference"):
         raise ValueError(f"Unknown neural execution mode: {execution_mode}")
 
     device = spy.Device(
-        type=spy.DeviceType.vulkan,
+        type={
+            "vulkan": spy.DeviceType.vulkan,
+            "metal": spy.DeviceType.metal,
+        }[device_backend],
         compiler_options={
             "include_paths": [spy.SHADER_PATH, HERE],
             "defines": {
                 "NEURAL_VECTOR_WAVE": "1" if vector_backend == "wave" else "0",
                 "NEURAL_TARGET_CUDA": "0",
+                "NEURAL_TARGET_METAL": "1" if device_backend == "metal" else "0",
                 "NEURAL_EXECUTION_INFERENCE": ("1" if execution_mode == "inference" else "0"),
             },
             "enable_experimental_features": True,
@@ -38,10 +53,16 @@ def create_device(
         enable_hot_reload=False,
     )
 
-    if vector_backend == "wave" and spy.Feature.cooperative_matrix not in device.features:
+    # Slang RHI currently exposes this feature bit for Vulkan cooperative-matrix
+    # extensions, while Metal lowers the same Slang capability to simdgroup_matrix.
+    if (
+        vector_backend == "wave"
+        and device_backend == "vulkan"
+        and spy.Feature.cooperative_matrix not in device.features
+    ):
         device.close()
         raise RuntimeError(
-            "The wave backend requires Vulkan cooperative-matrix support. "
+            f"The wave backend requires cooperative-matrix support on {device_backend}. "
             "Use --vector-backend inline on this device."
         )
     return device

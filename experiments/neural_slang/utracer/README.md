@@ -11,6 +11,8 @@ and denoiser are intentionally absent. The trainer still uses the ceramic MDL
 material as the teacher that supplies encoder features and reference BSDF
 values.
 
+![Neural UTracer rendering the ceramic shader ball](screenshot.png)
+
 ## Architecture
 
 ![Training and inference architecture for the neural.slang UTracer](architecture.svg)
@@ -65,6 +67,14 @@ python -m pip install -r utracer/requirements.txt
 enables the required compiler feature automatically. The sample uses Vulkan
 because the same device must support pointers, cooperative matrices, and ray
 queries.
+
+### Backend support
+
+The two entry points currently require Vulkan. CUDA is not supported
+end-to-end: UTracer's compute path uses `TraceRayInline`, and the ceramic MDL
+teacher uses `Texture.SampleLevel`; neither feature is available to these
+generated kernels on the CUDA compute target. The neural model itself is not
+the blocker, but both `main.py` and `train.py` depend on one of those stages.
 
 ## Run a trained material
 

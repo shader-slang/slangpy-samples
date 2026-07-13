@@ -9,13 +9,20 @@ import slangpy as spy
 
 
 VectorBackend = Literal["inline", "wave"]
+NeuralExecutionMode = Literal["training", "inference"]
 HERE = Path(__file__).resolve().parent
 
 
-def create_device(vector_backend: VectorBackend = "inline") -> spy.Device:
-    """Create the Vulkan device shared by training and ray-traced inference."""
+def create_device(
+    vector_backend: VectorBackend = "inline",
+    *,
+    execution_mode: NeuralExecutionMode = "inference",
+) -> spy.Device:
+    """Create a Vulkan device specialized for neural training or inference."""
     if vector_backend not in ("inline", "wave"):
         raise ValueError(f"Unknown vector backend: {vector_backend}")
+    if execution_mode not in ("training", "inference"):
+        raise ValueError(f"Unknown neural execution mode: {execution_mode}")
 
     device = spy.Device(
         type=spy.DeviceType.vulkan,
@@ -24,6 +31,9 @@ def create_device(vector_backend: VectorBackend = "inline") -> spy.Device:
             "defines": {
                 "NEURAL_VECTOR_WAVE": "1" if vector_backend == "wave" else "0",
                 "NEURAL_TARGET_CUDA": "0",
+                "NEURAL_EXECUTION_INFERENCE": (
+                    "1" if execution_mode == "inference" else "0"
+                ),
             },
             "enable_experimental_features": True,
         },

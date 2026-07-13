@@ -47,18 +47,26 @@ public typealias NeuralAddress = PointerAddress<float>;
 static const int kSubgroupSize = 32;
 static const int kSubgroupCount = 1;
 
+#if NEURAL_EXECUTION_INFERENCE
+#define NEURAL_EXECUTION_MODE ExecutionMode.Inference
+#else
+#define NEURAL_EXECUTION_MODE ExecutionMode.Training
+#endif
+
 #if NEURAL_TARGET_CUDA
 typealias NeuralSharedMemory = SharedMemorySize<
     float,
     TargetEnum.CUDA,
-    ExecutionMode.Training,
+    NEURAL_EXECUTION_MODE,
     kSubgroupSize,
     kSubgroupCount,
+#if !NEURAL_EXECUTION_INFERENCE
     kEncoderInputs,
     kEncoderHidden,
     kEncoderHidden,
     kEncoderHidden,
     kNumLatents,
+#endif
     kDecoderInputs,
     kDecoderHidden,
     kDecoderHidden,
@@ -67,14 +75,16 @@ typealias NeuralSharedMemory = SharedMemorySize<
 typealias NeuralSharedMemory = SharedMemorySize<
     float,
     TargetEnum.SPIR_V,
-    ExecutionMode.Training,
+    NEURAL_EXECUTION_MODE,
     kSubgroupSize,
     kSubgroupCount,
+#if !NEURAL_EXECUTION_INFERENCE
     kEncoderInputs,
     kEncoderHidden,
     kEncoderHidden,
     kEncoderHidden,
     kNumLatents,
+#endif
     kDecoderInputs,
     kDecoderHidden,
     kDecoderHidden,

@@ -63,7 +63,7 @@ class Trainer:
         resume: Path | None,
     ) -> None:
         self.vector_backend = vector_backend
-        self.device = create_device(vector_backend)
+        self.device = create_device(vector_backend, execution_mode="training")
         self.module = spy.Module(self.device.load_module("training"))
         self.material = CeramicMaterial(self.device)
 

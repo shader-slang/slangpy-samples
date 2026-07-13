@@ -41,6 +41,13 @@ parameter layout:
 - `InlineVector<float, N>` with `LinearLayout`
 - `WaveTangledVector<float, ..., N, 32, 1>` with `OptimalLayout`
 
+The two entry points also compile different neural execution modes. `train.py`
+uses `ExecutionMode.Training` and sizes shared memory for the complete
+encoder/decoder network. Because `main.py` consumes baked latents, it uses
+`ExecutionMode.Inference` and sizes shared memory for only the decoder layers.
+On the Vulkan wave path this reduces the declared workgroup memory from 16 KiB
+to 3 KiB.
+
 Checkpoints remain portable row-major arrays. On the wave backend,
 `NetworkParameterLayoutConverter` converts the encoder and decoder separately
 to the tiled optimal layout when loading, then converts back to the portable

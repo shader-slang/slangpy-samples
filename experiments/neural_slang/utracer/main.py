@@ -51,7 +51,7 @@ def main() -> None:
     backend: VectorBackend = args.vector_backend
     require_wave_safe_work_size(backend, args.width * args.height, "render target")
 
-    device = create_device(backend)
+    device = create_device(backend, execution_mode="inference")
     viewer: Viewer | None = None
     try:
         scene = MicroScene(device, args.checkpoint, backend, args.spp)

@@ -27,7 +27,13 @@ if __package__:
         load_parameters,
         tensor_from_numpy,
     )
-    from .common import VectorBackend, create_device, require_wave_safe_work_size
+    from .common import (
+        DeviceBackend,
+        VectorBackend,
+        create_device,
+        default_device_backend,
+        require_wave_safe_work_size,
+    )
 else:
     from checkpoint import (
         PARAMETER_COUNT,
@@ -36,7 +42,13 @@ else:
         load_parameters,
         tensor_from_numpy,
     )
-    from common import VectorBackend, create_device, require_wave_safe_work_size
+    from common import (
+        DeviceBackend,
+        VectorBackend,
+        create_device,
+        default_device_backend,
+        require_wave_safe_work_size,
+    )
 
 
 def cosine_schedule(
@@ -61,9 +73,14 @@ class Trainer:
         vector_backend: VectorBackend,
         seed: int,
         resume: Path | None,
+        device_backend: DeviceBackend | None = None,
     ) -> None:
         self.vector_backend = vector_backend
-        self.device = create_device(vector_backend, execution_mode="training")
+        self.device = create_device(
+            vector_backend,
+            device_backend=device_backend,
+            execution_mode="training",
+        )
         self.module = spy.Module(self.device.load_module("training"))
         self.material = CeramicMaterial(self.device)
 
@@ -230,6 +247,11 @@ class Trainer:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train the neural.slang ceramic encoder/decoder.")
     parser.add_argument("--vector-backend", choices=("inline", "wave"), default="inline")
+    parser.add_argument(
+        "--device-type",
+        choices=("vulkan", "metal"),
+        default=default_device_backend(),
+    )
     parser.add_argument("--iterations", type=int, default=16_384)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--learning-rate", type=float, default=1e-3)
@@ -254,6 +276,7 @@ def main() -> None:
         raise ValueError("Batch and latent dimensions must be positive")
 
     backend: VectorBackend = args.vector_backend
+    device_backend: DeviceBackend = args.device_type
     require_wave_safe_work_size(backend, args.batch_size * args.batch_size, "training batch")
 
     run_dir = args.run_dir
@@ -263,11 +286,13 @@ def main() -> None:
     run_dir = run_dir.expanduser().resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
     print(f"Run directory: {run_dir}")
+    print(f"Device backend: {device_backend}")
     print(f"Vector backend: {backend}")
 
-    trainer = Trainer(backend, args.seed, args.resume)
+    trainer = Trainer(backend, args.seed, args.resume, device_backend)
     config = {
         "vector_backend": backend,
+        "device_backend": device_backend,
         "batch_size": args.batch_size,
         "learning_rate": args.learning_rate,
         "min_learning_rate": args.min_learning_rate,

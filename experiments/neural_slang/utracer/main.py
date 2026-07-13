@@ -6,10 +6,22 @@ import argparse
 from pathlib import Path
 
 if __package__:
-    from .common import VectorBackend, create_device, require_wave_safe_work_size
+    from .common import (
+        DeviceBackend,
+        VectorBackend,
+        create_device,
+        default_device_backend,
+        require_wave_safe_work_size,
+    )
     from .renderer import Camera, MicroScene, Viewer, save_tonemapped
 else:
-    from common import VectorBackend, create_device, require_wave_safe_work_size
+    from common import (
+        DeviceBackend,
+        VectorBackend,
+        create_device,
+        default_device_backend,
+        require_wave_safe_work_size,
+    )
     from renderer import Camera, MicroScene, Viewer, save_tonemapped
 
 
@@ -20,6 +32,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run the neural-only UTracer.")
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--vector-backend", choices=("inline", "wave"), default="inline")
+    parser.add_argument(
+        "--device-type",
+        choices=("vulkan", "metal"),
+        default=default_device_backend(),
+    )
     parser.add_argument("--mesh", type=Path, default=HERE / "data/shaderball.glb")
     parser.add_argument(
         "--environment",
@@ -49,13 +66,19 @@ def main() -> None:
     if args.width < 1 or args.height < 1 or args.spp < 1 or args.frames < 0:
         raise ValueError("Image dimensions and spp must be positive; frames cannot be negative")
     backend: VectorBackend = args.vector_backend
+    device_backend: DeviceBackend = args.device_type
     require_wave_safe_work_size(backend, args.width * args.height, "render target")
 
-    device = create_device(backend, execution_mode="inference")
+    device = create_device(
+        backend,
+        device_backend=device_backend,
+        execution_mode="inference",
+    )
     viewer: Viewer | None = None
     try:
         scene = MicroScene(device, args.checkpoint, backend, args.spp)
         print(f"Loaded checkpoint: {scene.checkpoint.path}")
+        print(f"Device backend: {device_backend}")
         print(f"Vector backend: {backend}")
         if args.validate_only:
             return

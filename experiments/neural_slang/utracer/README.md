@@ -7,9 +7,12 @@ This directory is a neural-only reduction of the original `train/` and
 - `main.py` path traces a mesh using only the baked latents and neural decoder.
 
 The analytic/PBR render branch, MDL render branch, material texture plumbing,
-and denoiser are intentionally absent. The trainer still uses the ceramic MDL
-material as the teacher that supplies encoder features and reference BSDF
-values.
+and denoiser are intentionally absent from the path tracer. During training
+only, the sample uses the existing generated MDL (Material Definition
+Language) shader for the glazed ceramic tile as its reference implementation.
+This fixed conventional shader is sometimes called the *teacher*: it is not a
+second neural network and it is not trained. The neural network learns to
+reproduce the RGB material response returned by this shader.
 
 ![Neural UTracer rendering the ceramic shader ball](screenshot.png)
 
@@ -28,11 +31,30 @@ Decoder: 14 -> 32 -> 32 -> 3
 The hidden layers use `LeakyReLU<float>(0.01)`, the encoder output is linear,
 and the decoder output uses `ExpActivation<float>`.
 
-Training uses two GPU stages. `prepareTrainingSample` runs the generated MDL
-teacher and writes compact feature/direction/reference tensors.
-`calculateGradients` reads those tensors and runs only the neural model plus
-`bwd_diff`. This keeps the large MDL evaluation out of Slang's reverse-mode
-tape and makes the neural implementation much easier to inspect.
+The encoder's eight outputs are a compact learned description of the material
+at one UV coordinate. This eight-number material code is the *latent vector*.
+Baking the encoder over a UV grid produces the eight-channel latent texture
+used by the path tracer.
+
+For every element in a training batch, `prepareTrainingSample` does the
+following on the GPU:
+
+1. Jitter a UV coordinate inside that element's cell of a 2D batch grid.
+2. Randomly choose an incoming/outgoing direction pair `(wi, wo)` and mark the
+   sample invalid if either direction falls below the surface.
+3. Evaluate the MDL ceramic shader at `(UV, wi, wo)` to obtain the target RGB
+   material response—the correct answer for this training example.
+4. Ask the same shader for two layers of material descriptors. Each layer
+   contributes normal, tangent, albedo, roughness, and weight values. The two
+   layers plus a mip value form the encoder's 29 inputs.
+5. Write `features[29]`, `wi[3]`, `wo[3]`, `targetRGB[3]`, and `valid[1]` into
+   compact GPU tensors.
+
+`prepareTrainingSample` only creates supervised examples; it does not update
+the network. `calculateGradients` then reads those tensors, runs the neural
+model, compares its RGB prediction with the MDL target, and calls `bwd_diff`.
+`optimizerStep` applies the resulting gradients with Adam. Separating these
+stages keeps the large generated MDL shader outside Slang's reverse-mode tape.
 
 The model structures are generic over types constrained by `IVector<float>`.
 The `NEURAL_VECTOR_WAVE` specialization selects the matching vector and

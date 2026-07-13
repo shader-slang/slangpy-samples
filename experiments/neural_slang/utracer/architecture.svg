@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="800" viewBox="0 0 1400 800" role="img" aria-labelledby="title description">
-  <title id="title">neural.slang UTracer architecture</title>
-  <desc id="description">Training uses a ceramic MDL teacher, compact GPU tensors, an encoder-decoder network, reverse-mode differentiation, and a baked latent texture. Inference uses ray-hit UVs, bilinear latent lookup, and the decoder inside a path tracer. Both stages share FFLayer, IVector, PointerAddress storage, and conversion between portable linear and wave-optimal parameter layouts.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1250" viewBox="0 0 1600 1250" role="img" aria-labelledby="title description">
+  <title id="title">How the neural UTracer is trained and rendered</title>
+  <desc id="description">The fixed MDL ceramic shader generates supervised training records from random surface and direction queries. An encoder and decoder learn to reproduce the MDL response. Training saves network weights and a baked latent texture. At runtime the path tracer looks up the latent texture and runs only the decoder.</desc>
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -8,130 +8,167 @@
     </marker>
     <style>
       text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
-      .title { font-size: 30px; font-weight: 700; }
-      .lane-title { font-size: 18px; font-weight: 700; fill: #ffffff; letter-spacing: 0.04em; }
-      .box-title { font-size: 18px; font-weight: 700; }
-      .box-text { font-size: 15px; fill: #475569; }
-      .small { font-size: 13px; fill: #64748b; }
-      .code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 14px; fill: #334155; }
-      .connector { fill: none; stroke: #475569; stroke-width: 2.5; marker-end: url(#arrow); }
-      .dashed { stroke-dasharray: 7 6; }
+      .title { font-size: 34px; font-weight: 750; }
+      .subtitle { font-size: 18px; fill: #475569; }
+      .panel-title { font-size: 20px; font-weight: 750; fill: #ffffff; letter-spacing: 0.04em; }
+      .section-title { font-size: 18px; font-weight: 750; fill: #1e3a5f; }
+      .box-title { font-size: 19px; font-weight: 750; }
+      .box-text { font-size: 16px; fill: #475569; }
+      .small { font-size: 14px; fill: #64748b; }
+      .code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 15px; fill: #334155; }
+      .emphasis { font-size: 16px; font-weight: 700; fill: #9f1239; }
+      .flow { fill: none; stroke: #475569; stroke-width: 2.5; marker-end: url(#arrow); }
+      .target-flow { fill: none; stroke: #be123c; stroke-width: 2.5; stroke-dasharray: 8 7; marker-end: url(#arrow); }
+      .artifact-flow { fill: none; stroke: #0369a1; stroke-width: 2.5; stroke-dasharray: 8 7; marker-end: url(#arrow); }
     </style>
   </defs>
 
-  <rect width="1400" height="800" rx="20" fill="#f8fafc"/>
-  <text class="title" x="700" y="48" text-anchor="middle">neural.slang UTracer</text>
+  <rect width="1600" height="1250" rx="22" fill="#f8fafc"/>
+  <text class="title" x="800" y="47" text-anchor="middle">How the neural UTracer works</text>
+  <text class="subtitle" x="800" y="77" text-anchor="middle">Training asks an existing material shader for examples; rendering uses the learned approximation.</text>
 
-  <!-- Training lane -->
-  <rect x="30" y="75" width="1340" height="370" rx="18" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2"/>
-  <rect x="55" y="96" width="128" height="36" rx="18" fill="#2563eb"/>
-  <text class="lane-title" x="119" y="120" text-anchor="middle">TRAINING</text>
+  <!-- Training -->
+  <rect x="30" y="100" width="1540" height="600" rx="20" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2"/>
+  <rect x="55" y="120" width="150" height="38" rx="19" fill="#2563eb"/>
+  <text class="panel-title" x="130" y="146" text-anchor="middle">TRAINING</text>
+  <text class="section-title" x="70" y="190">A · Generate supervised examples</text>
 
-  <rect x="70" y="165" width="220" height="125" rx="14" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
-  <text class="box-title" x="180" y="195" text-anchor="middle">Ceramic MDL teacher</text>
-  <text class="box-text" x="180" y="225" text-anchor="middle">29 material features</text>
-  <text class="box-text" x="180" y="248" text-anchor="middle">directions (wi, wo)</text>
-  <text class="box-text" x="180" y="271" text-anchor="middle">reference BSDF</text>
+  <rect x="70" y="215" width="280" height="165" rx="15" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
+  <text class="box-title" x="210" y="250" text-anchor="middle">Random material query</text>
+  <text class="box-text" x="95" y="282">• surface coordinate: UV</text>
+  <text class="box-text" x="95" y="310">• incoming direction: wi</text>
+  <text class="box-text" x="95" y="338">• outgoing direction: wo</text>
+  <text class="small" x="210" y="365" text-anchor="middle">repeat many times to build a batch</text>
 
-  <path class="connector" d="M 290 228 H 335"/>
+  <path class="flow" d="M 350 297 H 415"/>
+  <text class="small" x="382" y="284" text-anchor="middle">ask</text>
 
-  <rect x="345" y="165" width="230" height="125" rx="14" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
-  <text class="box-title code" x="460" y="201" text-anchor="middle">prepareTrainingSample</text>
-  <text class="box-text" x="460" y="234" text-anchor="middle">compact GPU tensors</text>
-  <text class="small" x="460" y="260" text-anchor="middle">teacher stays outside</text>
-  <text class="small" x="460" y="279" text-anchor="middle">the reverse-mode tape</text>
+  <rect x="425" y="200" width="390" height="195" rx="15" fill="#ffffff" stroke="#60a5fa" stroke-width="2.5"/>
+  <text class="box-title" x="620" y="235" text-anchor="middle">Existing ceramic material shader</text>
+  <text class="emphasis" x="620" y="264" text-anchor="middle">not learned; used only as ground truth</text>
+  <text class="box-text" x="450" y="300">Given UV:</text>
+  <text class="code" x="555" y="300">29 material descriptors</text>
+  <text class="box-text" x="450" y="331">Given UV, wi, wo:</text>
+  <text class="code" x="610" y="331">target RGB response</text>
+  <text class="small" x="620" y="356" text-anchor="middle">generated from MDL (Material Definition Language)</text>
+  <text class="small" x="620" y="378" text-anchor="middle">used to manufacture training data only</text>
 
-  <path class="connector" d="M 575 228 H 620"/>
-  <text class="small" x="598" y="216" text-anchor="middle">batch</text>
+  <path class="flow" d="M 815 297 H 895"/>
+  <text class="small" x="855" y="284" text-anchor="middle">outputs</text>
 
-  <rect x="630" y="140" width="410" height="175" rx="16" fill="#dbeafe" stroke="#3b82f6" stroke-width="2.5"/>
-  <text class="box-title" x="835" y="170" text-anchor="middle">Network</text>
+  <rect x="905" y="200" width="360" height="195" rx="15" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
+  <text class="box-title" x="1085" y="235" text-anchor="middle">Training batch</text>
+  <text class="box-text" x="930" y="270">writes one compact record:</text>
+  <text class="code" x="950" y="300">features[29]</text>
+  <text class="code" x="950" y="327">wi[3], wo[3]</text>
+  <text class="code" x="950" y="354">targetRGB[3], valid[1]</text>
+  <text class="small" x="1085" y="382" text-anchor="middle">many records form one training batch</text>
 
-  <rect x="655" y="187" width="170" height="98" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
-  <text class="box-title" x="740" y="218" text-anchor="middle">Encoder</text>
-  <text class="code" x="740" y="246" text-anchor="middle">29 → 64 → 64</text>
-  <text class="code" x="740" y="268" text-anchor="middle">→ 64 → 8</text>
+  <text class="section-title" x="70" y="430">B · Fit the neural approximation</text>
 
-  <path class="connector" d="M 825 236 H 847"/>
-  <text class="small" x="836" y="226" text-anchor="middle">latent</text>
+  <rect x="250" y="455" width="680" height="155" rx="17" fill="#dbeafe" stroke="#3b82f6" stroke-width="2.5"/>
+  <text class="box-title" x="590" y="486" text-anchor="middle">Learned neural material</text>
 
-  <rect x="855" y="187" width="160" height="98" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
-  <text class="box-title" x="935" y="218" text-anchor="middle">Decoder</text>
-  <text class="code" x="935" y="246" text-anchor="middle">14 → 32 → 32</text>
-  <text class="code" x="935" y="268" text-anchor="middle">→ 3</text>
+  <rect x="275" y="500" width="330" height="40" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
+  <text class="box-text" x="440" y="526" text-anchor="middle">Encoder: features → material code (8)</text>
 
-  <path class="connector" d="M 1040 228 H 1080"/>
-  <text class="small" x="1060" y="216" text-anchor="middle">prediction</text>
+  <rect x="275" y="550" width="330" height="40" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
+  <text class="box-text" x="440" y="576" text-anchor="middle">Directions: wi, wo → 6 values</text>
 
-  <rect x="1090" y="165" width="230" height="125" rx="14" fill="#ffffff" stroke="#60a5fa" stroke-width="2"/>
-  <text class="box-title" x="1205" y="205" text-anchor="middle">Loss + bwd_diff</text>
-  <text class="box-text" x="1205" y="238" text-anchor="middle">compare reference BSDF</text>
-  <text class="box-text" x="1205" y="263" text-anchor="middle">update neural parameters</text>
+  <path class="flow" d="M 605 520 H 690"/>
+  <path class="flow" d="M 605 570 H 670 V 550 H 690"/>
 
-  <rect x="600" y="350" width="330" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
-  <text class="box-title" x="765" y="379" text-anchor="middle">Baked latent texture</text>
-  <text class="code" x="765" y="404" text-anchor="middle">Encoder(UV grid) → H × W × 8</text>
-  <path class="connector" d="M 740 285 V 337 H 765 V 348"/>
+  <rect x="700" y="500" width="205" height="90" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
+  <text class="box-title" x="802" y="527" text-anchor="middle">Decoder</text>
+  <text class="box-text" x="802" y="553" text-anchor="middle">material code +</text>
+  <text class="box-text" x="802" y="578" text-anchor="middle">directions → RGB</text>
 
-  <rect x="950" y="350" width="170" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
-  <text class="box-text" x="1035" y="374" text-anchor="middle" font-weight="700">Portable checkpoint</text>
-  <text class="code" x="1035" y="398" text-anchor="middle">LinearLayout</text>
-  <text class="small" x="1035" y="414" text-anchor="middle">always loaded/saved</text>
+  <path class="flow" d="M 1085 395 V 425 H 590 V 453"/>
+  <text class="small" x="855" y="417" text-anchor="middle">features and directions</text>
 
-  <path class="connector" d="M 1120 385 H 1160" marker-start="url(#arrow)"/>
-  <text class="small" x="1140" y="343" text-anchor="middle">converter</text>
+  <path class="flow" d="M 930 533 H 1015"/>
+  <text class="small" x="972" y="520" text-anchor="middle">prediction</text>
 
-  <rect x="1170" y="350" width="170" height="70" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
-  <text class="box-text" x="1255" y="374" text-anchor="middle" font-weight="700">Runtime buffer</text>
-  <text class="code" x="1255" y="398" text-anchor="middle">PointerAddress&lt;float&gt;</text>
-  <text class="small" x="1255" y="414" text-anchor="middle">OptimalLayout for wave</text>
-  <path class="connector" d="M 1205 290 V 348"/>
-  <path class="connector dashed" d="M 1170 350 V 330 H 1018 V 305"/>
+  <rect x="1025" y="455" width="395" height="155" rx="17" fill="#fff1f2" stroke="#fb7185" stroke-width="2.5"/>
+  <text class="box-title" x="1222" y="487" text-anchor="middle">Measure the prediction error</text>
+  <text class="box-text" x="1222" y="520" text-anchor="middle">neural prediction RGB</text>
+  <text class="box-text" x="1222" y="545" text-anchor="middle">versus reference material RGB</text>
+  <text class="box-text" x="1222" y="575" text-anchor="middle">use the difference to update network weights</text>
 
-  <!-- Inference lane -->
-  <rect x="30" y="465" width="1340" height="305" rx="18" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="2"/>
-  <rect x="55" y="486" width="138" height="36" rx="18" fill="#059669"/>
-  <text class="lane-title" x="124" y="510" text-anchor="middle">INFERENCE</text>
+  <path class="target-flow" d="M 1265 315 H 1460 V 532 H 1422"/>
+  <text class="small" x="1467" y="425" transform="rotate(90 1467 425)" text-anchor="middle">target RGB (the correct answer)</text>
+  <path class="target-flow" d="M 1220 610 V 638 H 590 V 612"/>
+  <text class="small" x="900" y="657" text-anchor="middle">repeat: the error updates encoder and decoder weights</text>
 
-  <rect x="70" y="555" width="180" height="105" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
-  <text class="box-title" x="160" y="590" text-anchor="middle">Ray hit</text>
-  <text class="box-text" x="160" y="620" text-anchor="middle">UV, wi, geometry</text>
-  <text class="small" x="160" y="643" text-anchor="middle">ray query</text>
+  <rect x="70" y="662" width="1290" height="26" rx="13" fill="#ffffff" stroke="#93c5fd"/>
+  <text class="box-text" x="715" y="681" text-anchor="middle">
+    Data generation creates examples; the learning step uses those examples to update the network weights.
+  </text>
 
-  <path class="connector" d="M 250 608 H 305"/>
+  <!-- Training artifacts -->
+  <rect x="30" y="720" width="1540" height="180" rx="20" fill="#f0f9ff" stroke="#bae6fd" stroke-width="2"/>
+  <rect x="55" y="740" width="250" height="38" rx="19" fill="#0369a1"/>
+  <text class="panel-title" x="180" y="766" text-anchor="middle">AFTER TRAINING</text>
 
-  <rect x="315" y="555" width="220" height="105" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
-  <text class="box-title" x="425" y="590" text-anchor="middle">Latent lookup</text>
-  <text class="box-text" x="425" y="620" text-anchor="middle">bilinear H × W × 8</text>
-  <text class="small" x="425" y="643" text-anchor="middle">baked encoder output</text>
-  <path class="connector dashed" d="M 765 420 V 525 H 425 V 553"/>
+  <rect x="150" y="795" width="330" height="78" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+  <text class="box-title" x="315" y="826" text-anchor="middle">Trained network weights</text>
+  <text class="small" x="315" y="853" text-anchor="middle">learned encoder + decoder parameters</text>
 
-  <path class="connector" d="M 535 608 H 590"/>
+  <path class="flow" d="M 480 834 H 615"/>
 
-  <rect x="600" y="535" width="250" height="145" rx="16" fill="#d1fae5" stroke="#10b981" stroke-width="2.5"/>
-  <text class="box-title" x="725" y="570" text-anchor="middle">Decoder</text>
-  <text class="code" x="725" y="601" text-anchor="middle">latent + (wi, wo)</text>
-  <text class="box-text" x="725" y="630" text-anchor="middle">FFLayer forward pass</text>
-  <text class="small" x="725" y="655" text-anchor="middle">ExpActivation output</text>
-  <path class="connector dashed" d="M 1255 420 V 500 H 725 V 533"/>
+  <rect x="625" y="787" width="350" height="94" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+  <text class="box-title" x="800" y="817" text-anchor="middle">Bake the encoder once</text>
+  <text class="box-text" x="800" y="844" text-anchor="middle">At each UV:</text>
+  <text class="box-text" x="800" y="868" text-anchor="middle">material features → trained encoder</text>
 
-  <path class="connector" d="M 850 608 H 905"/>
+  <path class="flow" d="M 975 834 H 1110"/>
 
-  <rect x="915" y="555" width="170" height="105" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
-  <text class="box-title" x="1000" y="590" text-anchor="middle">Neural BSDF</text>
-  <text class="box-text" x="1000" y="620" text-anchor="middle">RGB estimate</text>
-  <text class="small" x="1000" y="643" text-anchor="middle">per surface hit</text>
+  <rect x="1120" y="795" width="330" height="78" rx="14" fill="#ffffff" stroke="#38bdf8" stroke-width="2"/>
+  <text class="box-title" x="1285" y="826" text-anchor="middle">Baked material-code texture</text>
+  <text class="code" x="1285" y="853" text-anchor="middle">H × W texels × 8 latent values</text>
 
-  <path class="connector" d="M 1085 608 H 1135"/>
+  <!-- Inference -->
+  <rect x="30" y="920" width="1540" height="300" rx="20" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="2"/>
+  <rect x="55" y="940" width="170" height="38" rx="19" fill="#059669"/>
+  <text class="panel-title" x="140" y="966" text-anchor="middle">RENDERING</text>
+  <text class="section-title" x="250" y="966">At each path-tracing surface hit</text>
 
-  <rect x="1145" y="535" width="195" height="145" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
-  <text class="box-title" x="1242" y="570" text-anchor="middle">Path tracer</text>
-  <text class="box-text" x="1242" y="600" text-anchor="middle">path throughput</text>
-  <text class="box-text" x="1242" y="625" text-anchor="middle">next ray</text>
-  <text class="box-text" x="1242" y="650" text-anchor="middle">frame accumulation</text>
+  <rect x="65" y="1010" width="245" height="120" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
+  <text class="box-title" x="187" y="1041" text-anchor="middle">1 · Ray hit + sampling</text>
+  <text class="box-text" x="187" y="1071" text-anchor="middle">surface UV, incoming wi</text>
+  <text class="box-text" x="187" y="1098" text-anchor="middle">sample outgoing wo</text>
+  <text class="small" x="187" y="1120" text-anchor="middle">Monte Carlo direction sample</text>
 
-  <rect x="250" y="710" width="900" height="40" rx="20" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5"/>
-  <text class="box-text" x="700" y="736" text-anchor="middle">
-    FFLayer · IVector&lt;float&gt; → InlineVector + LinearLayout | WaveTangledVector + OptimalLayout
+  <path class="flow" d="M 310 1070 H 365"/>
+
+  <rect x="375" y="1010" width="245" height="120" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
+  <text class="box-title" x="497" y="1041" text-anchor="middle">2 · Read material code</text>
+  <text class="box-text" x="497" y="1071" text-anchor="middle">sample baked texture at UV</text>
+  <text class="box-text" x="497" y="1098" text-anchor="middle">8 latent values</text>
+
+  <path class="flow" d="M 620 1070 H 675"/>
+
+  <rect x="685" y="1010" width="285" height="120" rx="14" fill="#d1fae5" stroke="#10b981" stroke-width="2.5"/>
+  <text class="box-title" x="827" y="1041" text-anchor="middle">3 · Run trained decoder</text>
+  <text class="box-text" x="827" y="1071" text-anchor="middle">use saved decoder weights</text>
+  <text class="box-text" x="827" y="1098" text-anchor="middle">material code + directions → RGB</text>
+
+  <path class="flow" d="M 970 1070 H 1025"/>
+
+  <rect x="1035" y="1010" width="275" height="120" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
+  <text class="box-title" x="1172" y="1041" text-anchor="middle">4 · Advance the path</text>
+  <text class="box-text" x="1172" y="1071" text-anchor="middle">account for sampling probability</text>
+  <text class="box-text" x="1172" y="1098" text-anchor="middle">update contribution; next ray</text>
+
+  <path class="flow" d="M 1310 1070 H 1365"/>
+
+  <rect x="1375" y="1010" width="155" height="120" rx="14" fill="#ffffff" stroke="#34d399" stroke-width="2"/>
+  <text class="box-title" x="1452" y="1041" text-anchor="middle">5 · Pixel</text>
+  <text class="box-text" x="1452" y="1071" text-anchor="middle">accumulate</text>
+  <text class="box-text" x="1452" y="1098" text-anchor="middle">radiance</text>
+
+  <rect x="395" y="1160" width="810" height="38" rx="19" fill="#ffffff" stroke="#34d399" stroke-width="1.5"/>
+  <text class="box-text" x="800" y="1185" text-anchor="middle">
+    Rendering runs neither the MDL shader nor the encoder — only material-code lookup + decoder.
   </text>
 </svg>

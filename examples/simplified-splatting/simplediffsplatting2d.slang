@@ -43,7 +43,7 @@ static const uint SIMPLE_BLOBCOUNT = 200;
 
 struct Blobs
 {
-    GradInOutTensor<float, 1> blobsBuffer;
+    RWDiffTensor<float, 1> blobsBuffer;
 
     __subscript(uint idx) -> float
     {
@@ -132,7 +132,7 @@ struct Gaussian2D : IDifferentiable
     // Simple helper method to get the number of elements in the buffer
     static uint count(Blobs blobs)
     {
-        return blobs.blobsBuffer.primal.shape[0] / 9;
+        return blobs.blobsBuffer.shape[0] / 9;
     }
 
     /*
@@ -165,7 +165,7 @@ struct Gaussian2D : IDifferentiable
  * blobs, but it reduces the number of steps involved in determining the pixel color.
  */
  [Differentiable]
- float4 simpleSplatBlobs(GradInOutTensor<float, 1> blobsBuffer, uint2 pixelCoord, int2 texSize)
+ float4 simpleSplatBlobs(RWDiffTensor<float, 1> blobsBuffer, uint2 pixelCoord, int2 texSize)
  {
     Blobs blobs = {blobsBuffer};
 
@@ -188,7 +188,7 @@ struct Gaussian2D : IDifferentiable
 
 void renderBlobsToTexture(
     RWTexture2D<float4> output,
-    GradInOutTensor<float, 1> blobsBuffer,
+    RWDiffTensor<float, 1> blobsBuffer,
     uint2 pixelCoord)
 {
     uint2 imageSize;
@@ -233,22 +233,22 @@ float loss(uint2 pixelCoord, int2 imageSize, Blobs blobs, Texture2D<float4> targ
 // blobsBuffer:     a 1-dimensional tensor of floats, containing the Gaussian blobs
 [Differentiable]
 void perPixelLoss(
-    GradInOutTensor<float4, 2> output,
+    RWDiffTensor<float4, 2> output,
     uint2 pixelCoord,
-    GradInOutTensor<float, 1> blobsBuffer,
+    RWDiffTensor<float, 1> blobsBuffer,
     Texture2D<float4> targetTexture)
 {
     uint2 imageSize;
     targetTexture.GetDimensions(imageSize.x, imageSize.y);
-    output.set(
-        {pixelCoord.x, pixelCoord.y},
+    output.store(
+        uint2(pixelCoord.x, pixelCoord.y),
         loss(pixelCoord, imageSize, {blobsBuffer}, targetTexture));
 }
 
 /*
  * clearDerivativesMain() is a kernel that resets the derivative buffer to all 0s
  */
-void clearDerivs(uint3 dispatchThreadID, RWNDBuffer<uint, 1> derivBuffer)
+void clearDerivs(uint3 dispatchThreadID, IRWTensor<uint, 1> derivBuffer)
 {
     derivBuffer[dispatchThreadID.x] = asuint(0.f);
 }

@@ -61,7 +61,7 @@ groupshared float4 finalVal[WG_X * WG_Y];
 
 struct Blobs
 {
-    GradInOutTensor<float, 1> blobsBuffer;
+    RWDiffTensor<float, 1> blobsBuffer;
 
     __subscript(uint idx) -> float
     {
@@ -292,7 +292,7 @@ struct Gaussian2D : IDifferentiable
     // Simple helper method to get the number of elements in the buffer
     static uint count(Blobs blobs)
     {
-        return blobs.blobsBuffer.primal.shape[0] / 9;
+        return blobs.blobsBuffer.shape[0] / 9;
     }
 
     /*
@@ -516,7 +516,7 @@ float2 calcUV(uint2 dispatchThreadID, int2 renderSize, int2 imageSize)
  * of the intersection test for each lane in the wave.
  */
 [Differentiable]
-float4 splatBlobs(GradInOutTensor<float, 1> blobsBuffer, uint2 dispatchThreadID, int2 dispatchSize, int2 texSize)
+float4 splatBlobs(RWDiffTensor<float, 1> blobsBuffer, uint2 dispatchThreadID, int2 dispatchSize, int2 texSize)
 {
     Blobs blobs = {blobsBuffer};
 
@@ -549,7 +549,7 @@ float4 splatBlobs(GradInOutTensor<float, 1> blobsBuffer, uint2 dispatchThreadID,
 
 void renderBlobsToTexture(
     RWTexture2D<float4> output,
-    GradInOutTensor<float, 1> blobsBuffer,
+    RWDiffTensor<float, 1> blobsBuffer,
     uint2 dispatchThreadID)
 {
     CallShapeInfo call_id = CallShapeInfo.get_call_id();
@@ -593,9 +593,9 @@ float loss(uint2 dispatchThreadID, int2 imageSize, Blobs blobs, Texture2D<float4
 
 [Differentiable]
 void perPixelLoss(
-    GradInOutTensor<float4, 2> output,
+    RWDiffTensor<float4, 2> output,
     uint2 dispatchThreadID,
-    GradInOutTensor<float, 1> blobsBuffer,
+    RWDiffTensor<float, 1> blobsBuffer,
     Texture2D<float4> targetTexture)
 {
     CallShapeInfo call_id = CallShapeInfo.get_call_id();
@@ -603,15 +603,15 @@ void perPixelLoss(
 
     uint2 imageSize;
     targetTexture.GetDimensions(imageSize.x, imageSize.y);
-    output.set(
-        {callID.x, callID.y},
+    output.store(
+        uint2(callID.x, callID.y),
         loss(callID, imageSize, {blobsBuffer}, targetTexture));
 }
 
 /*
  * clearDerivativesMain() is a kernel that resets the derivative buffer to all 0s
  */
-void clearDerivs(uint3 dispatchThreadID, RWNDBuffer<uint, 1> derivBuffer)
+void clearDerivs(uint3 dispatchThreadID, IRWTensor<uint, 1> derivBuffer)
 {
     derivBuffer[dispatchThreadID.x] = asuint(0.f);
 }

@@ -230,7 +230,7 @@ float calculateL2Loss(no_diff float3 target, float3 input)
 float3 sampleTensorFloat3(Tensor<float3,2> tensor, int2 pixelPos)
 {
     // Get the color value from the tensor at the given pixel position.
-    return tensor.get( { pixelPos.y, pixelPos.x });
+    return tensor.load(int2(pixelPos.y, pixelPos.x));
 }
 
 float3 sampleTensorFloat3(Tensor<float3,2> tensor, float2 uv)
@@ -256,7 +256,7 @@ float3 downSampleFloat3(Tensor<float3, 2> input, int2 pixelPos)
 float sampleTensorFloat(Tensor<float,2> tensor, int2 pixelPos)
 {
     // Get the color value from the tensor at the given pixel position.
-    return tensor.get( { pixelPos.y, pixelPos.x });
+    return tensor.load(int2(pixelPos.y, pixelPos.x));
 }
 
 float sampleTensorFloat(Tensor<float,2> tensor, float2 uv)
@@ -475,10 +475,7 @@ float4 showTrainingProgress(Tensor<float3, 2> avgColor, Tensor<float3, 2> loss, 
 
     uint[2] shape = input.shape;
 
-    float3 col = input.get({
-        uint(shape[0]*uv.y),
-        uint(shape[1]*uv.x)
-    });
+    float3 col = input.load(uint2(uint(shape[0]*uv.y), uint(shape[1]*uv.x)));
 
     output[offset+pixel] = float4(col, 1.0f);
 }

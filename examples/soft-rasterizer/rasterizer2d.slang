@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+public module;
+
 import "slangpy";
 
 /// Simple Camera struct to convert between screen space and world space

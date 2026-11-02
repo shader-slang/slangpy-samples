@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+public module;
+
 import "slangpy";
 
 static const float INF_DISTANCE = 1e6;
